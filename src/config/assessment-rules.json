@@ -1,0 +1,507 @@
+{
+  "version": "1.0.0",
+  "lastReviewed": "2026-10-01",
+  "medicalReviewer": "Tim Konsultan Andrologi & Kesehatan Masyarakat (Pedoman WHO & IAUI)",
+  "disclaimer": "Ini bukan diagnosis. Hanya dokter yang dapat menilai kondisi Anda.",
+  "emotionalDistressKeywords": [
+    "putus asa",
+    "tidak berguna",
+    "ingin menyerah",
+    "depresi berat",
+    "bunuh diri",
+    "mengakhiri hidup",
+    "hancur",
+    "tidak sanggup lagi",
+    "malu hidup",
+    "benci diri sendiri"
+  ],
+  "emotionalSupportBanner": {
+    "title": "Anda Tidak Sendirian — Kami Peduli pada Kesejahteraan Anda",
+    "message": "Perjalanan program hamil memang bisa terasa sangat berat dan menguras emosi. Nilai diri Anda sama sekali tidak ditentukan oleh hasil pemeriksaan medis. Bila Anda merasa beban emosional yang sangat berat, mohon pertimbangkan untuk berbicara dengan konselor atau tenaga profesional.",
+    "contacts": [
+      {
+        "name": "Layanan SEJIWA / Kemenkes (Mental Health Hotline)",
+        "contact": "119 ext 8"
+      },
+      {
+        "name": "Into The Light Indonesia & Konseling Psikologi Puskesmas",
+        "contact": "Tersedia melalui Puskesmas & RS terdekat"
+      }
+    ]
+  },
+  "levels": {
+    "routine": {
+      "code": "routine",
+      "label": "Pertimbangkan pemeriksaan rutin",
+      "badgeColor": "success",
+      "summary": "Dari jawaban Anda, belum tampak faktor yang mendesak pemeriksaan segera. Anda dapat mempertimbangkan pemeriksaan dasar secara terencana sambil menjaga pola hidup sehat bersama pasangan.",
+      "nextSteps": [
+        "Pertahankan pola tidur cukup (7–8 jam) dan olahraga teratur intensitas sedang.",
+        "Diskusikan rencana waktu pemeriksaan dasar yang nyaman bersama pasangan lewat fitur Rencana Kita.",
+        "Baca panduan 'Apa Itu Analisis Semen' di Pustaka agar tahu apa yang perlu disiapkan bila ingin periksa."
+      ]
+    },
+    "within_1_2_months": {
+      "code": "within_1_2_months",
+      "label": "Sebaiknya periksa dalam 1 sampai 2 bulan",
+      "badgeColor": "warning",
+      "summary": "Dari jawaban Anda, sebaiknya periksa dalam 1 sampai 2 bulan. Ini bukan diagnosis, tetapi langkah kecil yang bisa membantu Anda dan pasangan mendapat kejelasan lebih awal.",
+      "nextSteps": [
+        "Pilih klinik, RS, atau laboratorium yang nyaman di halaman Cari Layanan.",
+        "Jadwalkan waktu pemeriksaan bersama pasangan (ingat persiapan masa pantang 2–7 hari sebelum tes).",
+        "Mulai kurangi faktor gaya hidup yang dapat memengaruhi pematangan sel sperma (siklus pematangan sekitar 74 hari)."
+      ]
+    },
+    "immediate": {
+      "code": "immediate",
+      "label": "Sebaiknya periksa segera",
+      "badgeColor": "urgent",
+      "summary": "Dari jawaban Anda, terdapat beberapa kondisi atau riwayat yang sebaiknya dikonsultasikan ke dokter dalam waktu dekat. Pemeriksaan lebih awal membantu dokter memberikan pendampingan yang paling tepat dan aman.",
+      "nextSteps": [
+        "Jadwalkan konsultasi dengan dokter umum, spesialis andrologi, atau spesialis urologi terdekat.",
+        "Gunakan fitur 'Buat Daftar Pertanyaan untuk Dokter' agar sesi konsultasi Anda terarah dan nyaman.",
+        "Jangan menghentikan atau memulai obat apa pun tanpa berdiskusi langsung dengan dokter."
+      ]
+    }
+  },
+  "rules": {
+    "immediateTriggers": [
+      {
+        "questionId": "reproductive_history",
+        "optionValues": ["undescended_testis_or_surgery", "varicocele_or_infection"]
+      },
+      {
+        "questionId": "physical_symptoms",
+        "optionValues": ["frequent_pain_or_swelling"]
+      },
+      {
+        "questionId": "medications_supplements",
+        "optionValues": ["testosterone_or_steroids"]
+      },
+      {
+        "questionId": "ttc_duration",
+        "optionValues": ["over_24_months"]
+      }
+    ],
+    "within1To2MonthsMandatoryRules": [
+      {
+        "id": "ttc_over_12_months",
+        "description": "Lama program hamil di atas 12 bulan",
+        "conditions": {
+          "ttc_duration": ["12_to_24_months", "over_24_months"]
+        }
+      },
+      {
+        "id": "ttc_over_6_months_partner_35",
+        "description": "Rentang waktu program hamil saat ini menyarankan evaluasi pararel lebih awal",
+        "conditions": {
+          "ttc_duration": ["6_to_12_months", "12_to_24_months", "over_24_months"],
+          "partner_context": ["over_35"]
+        }
+      }
+    ],
+    "scoreThresholds": {
+      "within_1_2_months": 5,
+      "immediate": 10
+    }
+  },
+  "questions": [
+    {
+      "id": "ttc_duration",
+      "order": 1,
+      "topic": "Durasi Program Hamil",
+      "question": "Sudah berapa lama Anda dan pasangan berupaya memiliki anak (berhubungan rutin tanpa kontrasepsi)?",
+      "helperText": "Informasi ini membantu menyesuaikan waktu evaluasi yang paling pas bagi Anda berdua.",
+      "options": [
+        {
+          "value": "under_6_months",
+          "label": "Baru merencanakan atau kurang dari 6 bulan",
+          "weight": 0
+        },
+        {
+          "value": "6_to_12_months",
+          "label": "Sekitar 6 sampai 12 bulan",
+          "weight": 2,
+          "factorTitle": "Durasi program hamil 6–12 bulan",
+          "whyRelevant": "Banyak pasangan mulai melakukan pemeriksaan dasar di rentang waktu ini agar tidak perlu menunggu terlalu lama untuk mendapat kepastian."
+        },
+        {
+          "value": "12_to_24_months",
+          "label": "Lebih dari 12 bulan (1–2 tahun)",
+          "weight": 5,
+          "factorTitle": "Durasi program hamil lebih dari 12 bulan",
+          "whyRelevant": "Pedoman medis internasional (WHO) menyarankan pemeriksaan paralel pada pria dan wanita bila kehamilan belum terjadi setelah 12 bulan."
+        },
+        {
+          "value": "over_24_months",
+          "label": "Lebih dari 2 tahun",
+          "weight": 8,
+          "factorTitle": "Durasi program hamil lebih dari 2 tahun",
+          "whyRelevant": "Pemeriksaan menyeluruh pada kedua pihak sangat dianjurkan agar waktu dan langkah program hamil berikutnya lebih terarah."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "partner_context",
+      "order": 2,
+      "topic": "Konteks Rentang Waktu Bersama",
+      "question": "Untuk menyesuaikan panduan waktu medis, apakah pasangan Anda saat ini berusia 35 tahun atau lebih?",
+      "helperText": "Data pasangan tidak akan ditampilkan di laporan atau dikirim ke mana pun—hanya dipakai menentukan rentang waktu anjuran periksa.",
+      "options": [
+        {
+          "value": "under_35",
+          "label": "Di bawah 35 tahun",
+          "weight": 0
+        },
+        {
+          "value": "over_35",
+          "label": "35 tahun atau lebih",
+          "weight": 2,
+          "factorTitle": "Prioritas waktu evaluasi bersama",
+          "whyRelevant": "Dalam pedoman kesehatan reproduksi, evaluasi dasar dianjurkan dilakukan lebih awal (setelah 6 bulan program hamil) agar perencanaan waktu pasangan lebih optimal."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "prior_pregnancy",
+      "order": 3,
+      "topic": "Riwayat Kehamilan",
+      "question": "Apakah Anda pernah memiliki riwayat kehamilan bersama pasangan saat ini atau hubungan sebelumnya?",
+      "helperText": "Baik yang berlanjut hingga lahir maupun yang mengalami keguguran.",
+      "options": [
+        {
+          "value": "yes_together",
+          "label": "Ya, pernah bersama pasangan saat ini",
+          "weight": 0
+        },
+        {
+          "value": "yes_previous",
+          "label": "Ya, pada hubungan sebelumnya",
+          "weight": 1
+        },
+        {
+          "value": "never",
+          "label": "Belum pernah",
+          "weight": 1
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "reproductive_history",
+      "order": 4,
+      "topic": "Riwayat Kesehatan Reproduksi",
+      "question": "Apakah Anda pernah mengalami kondisi medis atau operasi di area lipat paha atau reproduksi?",
+      "helperText": "Contohnya: hernia, varikokel (pelebaran pembuluh darah), gondongan setelah pubertas, atau operasi di area panggul.",
+      "options": [
+        {
+          "value": "none",
+          "label": "Tidak pernah",
+          "weight": 0
+        },
+        {
+          "value": "hernia_or_minor",
+          "label": "Pernah operasi hernia atau cedera ringan di area lipat paha",
+          "weight": 3,
+          "factorTitle": "Riwayat tindakan/kondisi di area lipat paha",
+          "whyRelevant": "Saluran reproduksi melewati area inguinal (lipat paha), sehingga pemeriksaan dokter dapat memastikan jalur dan fungsinya tetap optimal."
+        },
+        {
+          "value": "varicocele_or_infection",
+          "label": "Pernah didiagnosis varikokel, infeksi saluran kemih/reproduksi berulang, atau gondongan saat dewasa",
+          "weight": 6,
+          "factorTitle": "Riwayat varikokel atau infeksi terkait",
+          "whyRelevant": "Varikokel dan infeksi masa lalu adalah salah satu faktor medis pria yang paling sering ditemukan dan umumnya dapat ditangani oleh dokter."
+        },
+        {
+          "value": "undescended_testis_or_surgery",
+          "label": "Riwayat testis tidak turun saat kecil atau operasi pada testis",
+          "weight": 8,
+          "factorTitle": "Riwayat medis khusus pada area testis",
+          "whyRelevant": "Kondisi ini memerlukan evaluasi langsung oleh dokter spesialis untuk melihat fungsi produksi sel sperma saat ini."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "physical_symptoms",
+      "order": 5,
+      "topic": "Kenyamanan Fisik",
+      "question": "Apakah Anda pernah merasakan rasa tidak nyaman, pegal/berat, atau pembengkakan di area skrotum?",
+      "helperText": "Rasa pegal samar setelah berdiri lama kadang tidak disadari sebagai hal yang perlu diperiksa.",
+      "options": [
+        {
+          "value": "none",
+          "label": "Tidak ada keluhan",
+          "weight": 0
+        },
+        {
+          "value": "mild_occasional",
+          "label": "Kadang terasa pegal/berat setelah berdiri lama atau beraktivitas berat",
+          "weight": 3,
+          "factorTitle": "Keluhan rasa berat/pegal sesekali",
+          "whyRelevant": "Rasa pegal setelah berdiri lama kadang berkaitan dengan aliran pembuluh darah (seperti varikokel ringan) yang mudah diperiksa oleh dokter."
+        },
+        {
+          "value": "frequent_pain_or_swelling",
+          "label": "Sering terasa nyeri, ada benjolan, atau bengkak yang jelas",
+          "weight": 8,
+          "factorTitle": "Keluhan nyeri atau pembengkakan fisik",
+          "whyRelevant": "Keluhan fisik langsung sebaiknya diperiksa segera agar Anda merasa nyaman dan penyebabnya dapat ditangani lebih dini."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "smoking_habit",
+      "order": 6,
+      "topic": "Kebiasaan Merokok & Vape",
+      "question": "Bagaimana kebiasaan merokok tembakau atau rokok elektrik (vape) Anda dalam 3 bulan terakhir?",
+      "helperText": "Siklus pembentukan sperma baru memakan waktu sekitar 2,5 hingga 3 bulan.",
+      "options": [
+        {
+          "value": "never_or_quit",
+          "label": "Tidak merokok / sudah berhenti lebih dari 6 bulan",
+          "weight": 0
+        },
+        {
+          "value": "occasional_or_vape",
+          "label": "Kadang-kadang atau menggunakan vape/rokok ringan",
+          "weight": 2,
+          "factorTitle": "Paparan nikotin / vape",
+          "whyRelevant": "Zat oksidan dalam asap rokok dan uap nikotin dapat memengaruhi pergerakan (motilitas) dan kualitas sel sperma, namun kondisi ini sering membaik setelah dikurangi."
+        },
+        {
+          "value": "daily_heavy",
+          "label": "Rutin setiap hari (lebih dari setengah bungkus per hari)",
+          "weight": 3,
+          "factorTitle": "Kebiasaan merokok harian",
+          "whyRelevant": "Merokok rutin meningkatkan stres oksidatif pada sel reproduksi. Mengurangi rokok selama 3 bulan ke depan dapat membantu perbaikan kualitas sperma."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "alcohol_habit",
+      "order": 7,
+      "topic": "Konsumsi Alkohol",
+      "question": "Seberapa sering Anda mengonsumsi minuman beralkohol?",
+      "helperText": "Pilih yang paling mendekati keseharian Anda tanpa perlu merasa sungkan.",
+      "options": [
+        {
+          "value": "none",
+          "label": "Tidak pernah",
+          "weight": 0
+        },
+        {
+          "value": "social_occasional",
+          "label": "Jarang (kurang dari 1–2 kali sebulan)",
+          "weight": 0
+        },
+        {
+          "value": "weekly_regular",
+          "label": "Rutin setiap minggu (beberapa gelas per minggu atau lebih)",
+          "weight": 2,
+          "factorTitle": "Konsumsi alkohol mingguan",
+          "whyRelevant": "Konsumsi alkohol berlebih dapat memengaruhi keseimbangan hormon reproduksi dan bentuk (morfologi) sel sperma."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "heat_exposure",
+      "order": 8,
+      "topic": "Paparan Panas Berlebih",
+      "question": "Apakah Anda sering terpapar suhu panas di area pangkuan atau tempat kerja?",
+      "helperText": "Misalnya: memangku laptop berjam-jam, berendam air panas/sauna rutin, duduk mengemudi terus-menerus, atau bekerja dekat mesin panas.",
+      "options": [
+        {
+          "value": "rarely",
+          "label": "Jarang / tidak pernah",
+          "weight": 0
+        },
+        {
+          "value": "moderate_laptop_sitting",
+          "label": "Cukup sering memangku laptop atau duduk lebih dari 6 jam tanpa jeda",
+          "weight": 2,
+          "factorTitle": "Paparan panas dari kebiasaan duduk lama / laptop di pangkuan",
+          "whyRelevant": "Pembentukan sperma membutuhkan suhu sekitar 2°C lebih sejuk dari suhu tubuh. Meletakkan laptop di meja dan berdiri tiap 1 jam sangat membantu."
+        },
+        {
+          "value": "high_occupational_sauna",
+          "label": "Rutin sauna/berendam air panas atau bekerja di lingkungan bersuhu panas tinggi",
+          "weight": 3,
+          "factorTitle": "Paparan suhu panas rutin",
+          "whyRelevant": "Suhu tinggi yang berulang dapat menurunkan konsentrasi sperma sementara waktu, namun umumnya pulih setelah paparan panas dikurangi."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "physical_activity",
+      "order": 9,
+      "topic": "Aktivitas Fisik",
+      "question": "Bagaimana pola aktivitas fisik atau olahraga Anda setiap minggu?",
+      "helperText": "Aktivitas fisik membantu menjaga sirkulasi darah dan keseimbangan hormon tubuh.",
+      "options": [
+        {
+          "value": "active_moderate",
+          "label": "Rutin bergerak / olahraga 2–4 kali seminggu",
+          "weight": 0
+        },
+        {
+          "value": "sedentary",
+          "label": "Jarang berolahraga (kurang dari 1 kali seminggu, mayoritas duduk)",
+          "weight": 1,
+          "factorTitle": "Aktivitas fisik yang masih terbatas",
+          "whyRelevant": "Olahraga ringan-sedang seperti jalan cepat 30 menit terbukti membantu metabolisme dan vitalitas reproduksi."
+        },
+        {
+          "value": "extreme_cycling",
+          "label": "Olahraga sangat intens atau bersepeda jarak jauh (>5 jam/minggu)",
+          "weight": 2,
+          "factorTitle": "Tekanan mekanis / panas dari bersepeda intens",
+          "whyRelevant": "Bersepeda jarak jauh dalam waktu lama dapat memberi tekanan dan panas pada area panggul."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "bmi_category",
+      "order": 10,
+      "topic": "Berat & Tinggi Badan (Opsional)",
+      "question": "Apakah berat badan Anda saat ini berada dalam rentang ideal menurut perkiraan Anda?",
+      "helperText": "Pertanyaan ini opsional. Anda juga bisa menghitung IMT cepat di layar ini atau melewatinya.",
+      "options": [
+        {
+          "value": "normal",
+          "label": "Proporsional / IMT normal (18,5 – 24,9)",
+          "weight": 0
+        },
+        {
+          "value": "overweight_or_underweight",
+          "label": "Sedikit di bawah atau di atas berat ideal (IMT < 18,5 atau 25 – 29,9)",
+          "weight": 1,
+          "factorTitle": "Keseimbangan berat badan dan metabolisme",
+          "whyRelevant": "Jaringan lemak dan metabolisme tubuh ikut mengatur keseimbangan hormon testosteron alami."
+        },
+        {
+          "value": "obese",
+          "label": "Kelebihan berat badan cukup banyak (IMT ≥ 30)",
+          "weight": 2,
+          "factorTitle": "Faktor metabolisme dan berat badan",
+          "whyRelevant": "Penyesuaian berat badan secara bertahap (bahkan 5–10%) sering memberikan dampak positif pada profil hormon reproduksi pria."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "medications_supplements",
+      "order": 11,
+      "topic": "Obat Rutin & Suplemen",
+      "question": "Apakah Anda sedang mengonsumsi obat rutin dari dokter atau suplemen pembentuk otot/hormon?",
+      "helperText": "Hanya untuk catatan riwayat saat berkonsultasi ke dokter. Aplikasi ini tidak memberikan saran obat.",
+      "options": [
+        {
+          "value": "none_or_vitamins",
+          "label": "Tidak ada, atau hanya vitamin harian biasa",
+          "weight": 0
+        },
+        {
+          "value": "chronic_meds",
+          "label": "Ya, obat rutin untuk kondisi kesehatan (mis. tekanan darah, asam lambung, rambut rontok, dll.)",
+          "weight": 2,
+          "factorTitle": "Penggunaan obat rutin",
+          "whyRelevant": "Beberapa obat rutin berguna bagi kesehatan umum namun baik untuk diberitahukan kepada dokter saat program hamil agar dokter dapat meninjau keamanannya."
+        },
+        {
+          "value": "testosterone_or_steroids",
+          "label": "Ya, suntik/gel testosteron atau suplemen hormon/steroid kebugaran",
+          "weight": 8,
+          "factorTitle": "Penggunaan hormon testosteron luar / suplemen hormonal",
+          "whyRelevant": "Asupan testosteron dari luar justru memberi sinyal pada otak untuk menghentikan produksi sperma alami. Diskusikan dengan dokter untuk cara penghentian yang aman."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    },
+    {
+      "id": "sleep_and_stress",
+      "order": 12,
+      "topic": "Kualitas Tidur & Beban Pikiran",
+      "question": "Bagaimana kualitas tidur dan tingkat stres yang Anda rasakan dalam sebulan terakhir?",
+      "helperText": "Hormon reproduksi pria paling banyak diproduksi saat tidur nyenyak di malam hari.",
+      "options": [
+        {
+          "value": "good_rest",
+          "label": "Tidur cukup (7–8 jam) dan stres masih terkendali",
+          "weight": 0
+        },
+        {
+          "value": "moderate_stress_lack_sleep",
+          "label": "Sering tidur kurang dari 6 jam atau pekerjaan terasa cukup menekan",
+          "weight": 1,
+          "factorTitle": "Kualitas tidur dan beban stres harian",
+          "whyRelevant": "Kurang tidur dan hormon stres (kortisol) yang tinggi dapat menghambat produksi hormon reproduksi alami."
+        },
+        {
+          "value": "high_stress_insomnia",
+          "label": "Sulit tidur hampir setiap malam dan merasa sangat tertekan",
+          "weight": 2,
+          "factorTitle": "Kelelahan tidur dan beban pikiran yang tinggi",
+          "whyRelevant": "Kesehatan mental dan istirahat Anda sama pentingnya dengan kesehatan fisik. Mengambil jeda bersama pasangan sangat dianjurkan."
+        },
+        {
+          "value": "unknown",
+          "label": "Tidak tahu / Tidak ingin menjawab",
+          "weight": 0
+        }
+      ]
+    }
+  ]
+}

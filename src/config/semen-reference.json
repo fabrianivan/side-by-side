@@ -1,0 +1,79 @@
+{
+  "version": "1.0.0",
+  "source": "Pedoman Laboratorium WHO untuk Pemeriksaan dan Pemrosesan Semen Manusia, Edisi ke-6 (2021)",
+  "disclaimer": "Hasil satu kali tes bisa bervariasi. Diskusikan dengan dokter.",
+  "parameters": [
+    {
+      "key": "volume_ml",
+      "label": "Volume Ejakulat",
+      "unit": "mL",
+      "lowerReferenceLimit": 1.4,
+      "step": 0.1,
+      "placeholder": "Contoh: 2.5",
+      "plainExplanation": "Jumlah total cairan semen yang dikeluarkan dalam satu sampel. Sebagian besar cairan ini berasal dari kelenjar vesikula seminalis dan prostat yang berfungsi membawa serta memberi nutrisi bagi sel sperma.",
+      "belowRangeNote": "Volume di bawah 1,4 mL bisa dipengaruhi oleh pengumpulan sampel yang kurang lengkap, masa pantang yang terlalu singkat, atau kondisi saluran yang dapat diperiksa oleh dokter."
+    },
+    {
+      "key": "concentration_m_per_ml",
+      "label": "Konsentrasi Sperma",
+      "unit": "juta/mL",
+      "lowerReferenceLimit": 16,
+      "step": 0.5,
+      "placeholder": "Contoh: 22",
+      "plainExplanation": "Jumlah sel sperma dalam setiap 1 mililiter cairan semen. Angka rujukan bawah WHO adalah 16 juta/mL.",
+      "belowRangeNote": "Konsentrasi di bawah 16 juta/mL dapat dipengaruhi oleh faktor demam/panas 2–3 bulan terakhir, varikokel, hormon, atau gaya hidup. Dokter biasanya menyarankan pemeriksaan ulang atau evaluasi lanjutan."
+    },
+    {
+      "key": "total_motility_pct",
+      "label": "Motilitas Total (Gerak Sperma)",
+      "unit": "%",
+      "lowerReferenceLimit": 42,
+      "step": 1,
+      "placeholder": "Contoh: 48",
+      "plainExplanation": "Persentase sel sperma yang bergerak aktif (baik bergerak maju maupun bergerak di tempat). Sperma perlu bergerak aktif untuk mencapai sel telur.",
+      "belowRangeNote": "Motilitas di bawah 42% sering berkaitan dengan paparan rokok/oksidan, suhu panas di pangkuan, kurang tidur, atau jeda waktu pemeriksaan sampel."
+    },
+    {
+      "key": "progressive_motility_pct",
+      "label": "Motilitas Progresif (Gerak Maju)",
+      "unit": "%",
+      "lowerReferenceLimit": 30,
+      "step": 1,
+      "placeholder": "Contoh: 34",
+      "plainExplanation": "Persentase sel sperma yang berenang maju secara terarah (lurus atau melingkar besar), bukan sekadar bergetar di tempat.",
+      "belowRangeNote": "Bila motilitas progresif di bawah 30%, dokter dapat membantu mencari faktor penyebab yang bisa diperbaiki."
+    },
+    {
+      "key": "morphology_normal_pct",
+      "label": "Morfologi Normal (Bentuk Sperma)",
+      "unit": "%",
+      "lowerReferenceLimit": 4,
+      "step": 0.5,
+      "placeholder": "Contoh: 5",
+      "plainExplanation": "Persentase sel sperma yang memiliki bentuk kepala, leher, dan ekor yang ideal menurut kriteria ketat (Strict Kruger). Jangan kaget bila angkanya terlihat kecil: batas rujukan normal WHO memang ≥ 4%.",
+      "belowRangeNote": "Angka di bawah 4% sangat sering membuat pria cemas, padahal penilaian bentuk di laboratorium sangat ketat dan tetap menyisakan jutaan sel sperma berbentuk normal. Diskusikan hasilnya secara utuh bersama dokter."
+    }
+  ],
+  "lifestyleRecommendations": [
+    {
+      "id": "sleep_recovery",
+      "title": "Jaga Tidur Berkualitas 7–8 Jam",
+      "description": "Produksi hormon testosteron alami berlangsung paling optimal saat fase tidur dalam (deep sleep) di malam hari."
+    },
+    {
+      "id": "temperature_care",
+      "title": "Jaga Suhu Sejuk di Area Pangkuan",
+      "description": "Hindari memangku laptop langsung di paha, kurangi berendam air panas/sauna, dan berdiri merenggangkan tubuh setiap 1 jam bila bekerja duduk."
+    },
+    {
+      "id": "smoke_free",
+      "title": "Kurangi atau Hentikan Rokok & Vape",
+      "description": "Siklus pematangan sperma baru membutuhkan waktu sekitar 74 hari. Mengurangi paparan nikotin dan asap selama 3 bulan memberi ruang pemulihan alami bagi sel."
+    },
+    {
+      "id": "active_balance",
+      "title": "Olahraga Sedang & Kelola Stres Bersama",
+      "description": "Jalan cepat, berenang, atau olahraga ringan 30 menit sebanyak 3–4 kali seminggu membantu sirkulasi darah dan menurunkan hormon stres."
+    }
+  ]
+}

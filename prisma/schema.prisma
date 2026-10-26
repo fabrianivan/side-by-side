@@ -1,0 +1,169 @@
+// Prisma Schema — Side by Side ("Better together.")
+// Default menggunakan SQLite untuk kemudahan demo hackathon tanpa setup server DB eksternal.
+// Untuk produksi PostgreSQL: ubah provider menjadi "postgresql" dan gunakan DATABASE_URL postgresql://
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(cuid())
+  email         String?      @unique
+  password_hash String?
+  anon_token    String?      @unique
+  display_name  String?
+  role          String       @default("user") // "user" | "nakes"
+  locale        String       @default("id")   // "id" | "en"
+  created_at    DateTime     @default(now())
+
+  consents      Consent[]
+  assessments   Assessment[]
+  results       Result[]
+  reminders     Reminder[]
+  share_tokens  ShareToken[]
+  pairings_a    Pairing[]    @relation("PairingUserA")
+  pairings_b    Pairing[]    @relation("PairingUserB")
+}
+
+model Consent {
+  id         String   @id @default(cuid())
+  user_id    String
+  key        String   // "store_results" | "share_partner" | "share_nakes"
+  granted    Boolean  @default(false)
+  updated_at DateTime @updatedAt
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, key])
+}
+
+model Assessment {
+  id                     String   @id @default(cuid())
+  user_id                String
+  answers_json_encrypted String   // Terenkripsi AES-GCM; di Mode Anonim hanya disimpan di IndexedDB klien
+  level                  String   // "routine" | "within_1_2_months" | "immediate"
+  summary_factors_json   String?  // Faktor non-identitas yang dipilih untuk ringkasan
+  created_at             DateTime @default(now())
+
+  user                   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Result {
+  id                    String   @id @default(cuid())
+  user_id               String
+  test_date             DateTime
+  values_json_encrypted String   // Terenkripsi (konsentrasi, motilitas, morfologi, volume)
+  notes                 String?
+  attachment_name       String?
+  created_at            DateTime @default(now())
+
+  user                  User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Facility {
+  id                 String   @id @default(cuid())
+  name               String
+  type               String   // "Puskesmas" | "Klinik" | "RS"
+  city               String   // "Jakarta" | "Bandung" | "Surabaya" | dll.
+  address            String
+  latitude           Float?
+  longitude          Float?
+  services_json      String   // JSON string array: ["Andrologi", "Urologi", "Laboratorium"]
+  price_min          Int
+  price_max          Int
+  accepts_jkn        Boolean  @default(false)
+  hours              String
+  map_url            String
+  friendliness_score Float    // Skor kurasi 1.0 - 5.0
+  friendliness_notes String   // Alasan kurasi ramah pria (mis. ruang sampel privat, konseling nyaman)
+}
+
+model Pairing {
+  id                String     @id @default(cuid())
+  invite_code       String     @unique
+  user_a            String
+  user_b            String?
+  partner_a_alias   String     @default("Suami")
+  partner_b_alias   String     @default("Istri")
+  status            String     @default("pending") // "pending" | "active" | "revoked"
+  shared_items_json String     @default("{}")      // Kontrol granular per item (default tidak bagikan kuesioner/lab)
+  expires_at        DateTime
+  created_at        DateTime   @default(now())
+  revoked_at        DateTime?
+
+  userA             User       @relation("PairingUserA", fields: [user_a], references: [id], onDelete: Cascade)
+  userB             User?      @relation("PairingUserB", fields: [user_b], references: [id], onDelete: SetNull)
+  plan_steps        PlanStep[]
+}
+
+model PlanStep {
+  id         String    @id @default(cuid())
+  pairing_id String
+  step_key   String    // "cek_awal" | "pilih_layanan" | "jadwalkan" | "periksa" | "pahami_hasil" | "tindak_lanjut"
+  step_order Int
+  title      String
+  status_a   String    @default("not_started") // "not_started" | "in_progress" | "done"
+  status_b   String    @default("not_started") // "not_started" | "in_progress" | "done"
+  due_date   DateTime?
+  updated_at DateTime  @updatedAt
+
+  pairing    Pairing   @relation(fields: [pairing_id], references: [id], onDelete: Cascade)
+
+  @@unique([pairing_id, step_key])
+}
+
+model Reminder {
+  id         String   @id @default(cuid())
+  user_id    String
+  type       String   // "initial_checkup" | "semen_analysis" | "follow_up" | "lifestyle"
+  title      String
+  notes      String?
+  remind_at  DateTime
+  channel    String   @default("in_app") // "in_app" | "calendar" | "email"
+  completed  Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Article {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  title        String
+  summary      String
+  body_md      String
+  category     String   // "Dasar Kesuburan" | "Gaya Hidup" | "Persiapan Tes" | "Pasangan & Emosi" | "Privasi & Hak"
+  read_minutes Int      @default(3)
+  reviewer     String   // Narasumber medis peninjau & sumber acuan
+  updated_at   DateTime @default(now())
+}
+
+model QuestionTicket {
+  id         String   @id @default(cuid())
+  anon_token String
+  category   String   @default("Umum")
+  text       String
+  status     String   @default("terkirim") // "terkirim" | "dijawab"
+  reply_text String?
+  replied_by String?
+  created_at DateTime @default(now())
+}
+
+model ShareToken {
+  id                String   @id @default(cuid())
+  token_code        String   @unique
+  user_id           String
+  scope_json        String   // JSON array: ["history", "risk_factors", "lab_results"]
+  snapshot_json     String   // Ringkasan yang diizinkan pengguna saat token dibuat (tanpa bocor data di luar scope)
+  expires_at        DateTime // Berlaku 1 jam
+  revoked           Boolean  @default(false)
+  accessed_log_json String   @default("[]") // Array log akses: [{ accessed_at, viewer_role, viewer_name, action }]
+  created_at        DateTime @default(now())
+
+  user              User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}

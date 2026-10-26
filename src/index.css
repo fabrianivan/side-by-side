@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-teal: #0F8B8D;
+  --color-navy: #1B2A41;
+  --color-coral: #FF7A66;
+  --color-bg: #FFFFFF;
+  --color-soft-gray: #F4F7F8;
+  --color-text: #1B2A41;
+  --color-success: #2E9E6B;
+  --color-warning: #E0A100;
+  --radius-btn: 12px;
+  --radius-card: 16px;
+  --font-size-base: 16px;
+}
+
+html {
+  font-size: var(--font-size-base, 16px);
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  color: var(--color-text);
+  background-color: var(--color-soft-gray);
+  -webkit-font-smoothing: antialiased;
+}
+
+html.text-scale-lg {
+  --font-size-base: 18px;
+}
+
+html.text-scale-xl {
+  --font-size-base: 20px;
+}
+
+html.dark {
+  --color-bg: #121C2B;
+  --color-soft-gray: #0D1520;
+  --color-text: #F4F7F8;
+  color: #F4F7F8;
+  background-color: #0D1520;
+}
+
+/* Hormati preferensi reduced motion untuk aksesibilitas */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Target sentuh minimal 44px untuk elemen interaktif utama */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Focus ring yang jelas untuk navigasi keyboard WCAG AA */
+*:focus-visible {
+  outline: 2px solid #0F8B8D;
+  outline-offset: 2px;
+}

@@ -1,0 +1,297 @@
+export interface SeedFacility {
+  id: string;
+  name: string;
+  type: 'Puskesmas' | 'Klinik' | 'RS';
+  city: 'Jakarta' | 'Bandung' | 'Surabaya';
+  address: string;
+  latitude: number;
+  longitude: number;
+  services: ('Andrologi' | 'Urologi' | 'Laboratorium')[];
+  price_min: number;
+  price_max: number;
+  accepts_jkn: boolean;
+  hours: string;
+  map_url: string;
+  friendliness_score: number;
+  friendliness_notes: string;
+}
+
+export const seedFacilities: SeedFacility[] = [
+  // JAKARTA (6 Fasilitas)
+  {
+    id: 'fac-jkt-1',
+    name: 'RSUPN Dr. Cipto Mangunkusumo (Klinik Yasmin & Poli Urologi-Andrologi)',
+    type: 'RS',
+    city: 'Jakarta',
+    address: 'Jl. Pangeran Diponegoro No.71, Salemba, Jakarta Pusat',
+    latitude: -6.1972,
+    longitude: 106.8473,
+    services: ['Andrologi', 'Urologi', 'Laboratorium'],
+    price_min: 300000,
+    price_max: 850000,
+    accepts_jkn: true,
+    hours: 'Senin–Jumat 07.30–16.00, Sabtu 08.00–13.00',
+    map_url: 'https://maps.google.com/?q=RSCM+Kencana+Jakarta',
+    friendliness_score: 4.8,
+    friendliness_notes: 'Tersedia ruang pengambilan sampel privat di dalam area lab khusus, tim dokter spesialis andrologi & urologi berpengalaman, serta menerima rujukan JKN untuk indikasi medis urologi.'
+  },
+  {
+    id: 'fac-jkt-2',
+    name: 'Klinik Fertilitas & Andrologi Sehat Bersama Kemang',
+    type: 'Klinik',
+    city: 'Jakarta',
+    address: 'Jl. Kemang Raya No.42, Mampang Prapatan, Jakarta Selatan',
+    latitude: -6.2607,
+    longitude: 106.8134,
+    services: ['Andrologi', 'Laboratorium'],
+    price_min: 450000,
+    price_max: 900000,
+    accepts_jkn: false,
+    hours: 'Senin–Sabtu 08.00–19.00',
+    map_url: 'https://maps.google.com/?q=Kemang+Jakarta+Selatan',
+    friendliness_score: 4.9,
+    friendliness_notes: 'Pendaftaran menggunakan kode privasi tanpa memanggil nama di ruang tunggu, ruang sampel kedap suara dengan pintu langsung ke loket lab, dan sesi konseling pasangan yang hangat.'
+  },
+  {
+    id: 'fac-jkt-3',
+    name: 'Puskesmas Kecamatan Tebet (Layanan Konseling Calon Orang Tua & Rujukan)',
+    type: 'Puskesmas',
+    city: 'Jakarta',
+    address: 'Jl. Prof. DR. Soepomo SH No.54, Tebet, Jakarta Selatan',
+    latitude: -6.2351,
+    longitude: 106.8462,
+    services: ['Laboratorium'],
+    price_min: 50000,
+    price_max: 200000,
+    accepts_jkn: true,
+    hours: 'Senin–Jumat 07.30–16.00',
+    map_url: 'https://maps.google.com/?q=Puskesmas+Kecamatan+Tebet',
+    friendliness_score: 4.5,
+    friendliness_notes: 'Cocok untuk konsultasi awal dokter umum tanpa biaya (bagi peserta JKN aktif) serta pembuatan rujukan berjenjang ke Poli Urologi RS rujukan.'
+  },
+  {
+    id: 'fac-jkt-4',
+    name: 'RS Pondok Indah (Klinik Urologi & Laboratorium Andrologi)',
+    type: 'RS',
+    city: 'Jakarta',
+    address: 'Jl. Metro Duta Kav. UE, Pondok Indah, Jakarta Selatan',
+    latitude: -6.2836,
+    longitude: 106.7815,
+    services: ['Andrologi', 'Urologi', 'Laboratorium'],
+    price_min: 600000,
+    price_max: 1250000,
+    accepts_jkn: false,
+    hours: 'Senin–Sabtu 07.00–20.00',
+    map_url: 'https://maps.google.com/?q=RS+Pondok+Indah+Jakarta',
+    friendliness_score: 4.8,
+    friendliness_notes: 'Ruang tunggu nyaman dan tenang, jadwal perjanjian tepat waktu via aplikasi, serta pengiriman hasil laboratorium terenkripsi.'
+  },
+  {
+    id: 'fac-jkt-5',
+    name: 'RSUD Tarakan Jakarta (Poli Urologi & Lab Patologi Klinik)',
+    type: 'RS',
+    city: 'Jakarta',
+    address: 'Jl. Kyai Caringin No.7, Cideng, Gambir, Jakarta Pusat',
+    latitude: -6.1714,
+    longitude: 106.8101,
+    services: ['Urologi', 'Laboratorium'],
+    price_min: 250000,
+    price_max: 600000,
+    accepts_jkn: true,
+    hours: 'Senin–Jumat 07.30–15.30, Sabtu 07.30–12.00',
+    map_url: 'https://maps.google.com/?q=RSUD+Tarakan+Jakarta',
+    friendliness_score: 4.4,
+    friendliness_notes: 'Menerima pasien JKN maupun mandiri dengan biaya terjangkau, tenaga kesehatan ramah dan terbiasa menangani edukasi kesehatan reproduksi pria.'
+  },
+  {
+    id: 'fac-jkt-6',
+    name: 'Laboratorium Klinik Prodia Kramat (Unit Pemeriksaan Andrologi)',
+    type: 'Klinik',
+    city: 'Jakarta',
+    address: 'Jl. Kramat Raya No.150, Kenari, Senen, Jakarta Pusat',
+    latitude: -6.1881,
+    longitude: 106.8442,
+    services: ['Laboratorium'],
+    price_min: 350000,
+    price_max: 550000,
+    accepts_jkn: false,
+    hours: 'Senin–Sabtu 06.30–15.00 (Pengambilan sampel semen pkl 08.00–12.00)',
+    map_url: 'https://maps.google.com/?q=Prodia+Kramat+Jakarta',
+    friendliness_score: 4.7,
+    friendliness_notes: 'Prosedur standar WHO 2021, ruang sampel bersih dan tenang di lantai terpisah dari antrean pengambilan darah umum.'
+  },
+
+  // BANDUNG (5 Fasilitas)
+  {
+    id: 'fac-bdg-1',
+    name: 'RSUP Dr. Hasan Sadikin (Poli Urologi & Klinik Aster Fertilitas)',
+    type: 'RS',
+    city: 'Bandung',
+    address: 'Jl. Pasteur No.38, Pasteur, Kec. Sukajadi, Kota Bandung',
+    latitude: -6.8965,
+    longitude: 107.5988,
+    services: ['Andrologi', 'Urologi', 'Laboratorium'],
+    price_min: 275000,
+    price_max: 750000,
+    accepts_jkn: true,
+    hours: 'Senin–Jumat 07.30–15.30',
+    map_url: 'https://maps.google.com/?q=RSHS+Bandung',
+    friendliness_score: 4.7,
+    friendliness_notes: 'Pusat rujukan utama Jawa Barat dengan tim multidisiplin (Urologi, Andrologi, dan Konselor), menerima rujukan JKN untuk evaluasi urologi.'
+  },
+  {
+    id: 'fac-bdg-2',
+    name: 'RSIA Limijati Bandung (Pusat Kesehatan Reproduksi Pasangan)',
+    type: 'RS',
+    city: 'Bandung',
+    address: 'Jl. LLRE Martadinata No.39,itarum, Kec. Bandung Wetan, Kota Bandung',
+    latitude: -6.9056,
+    longitude: 107.6143,
+    services: ['Andrologi', 'Urologi', 'Laboratorium'],
+    price_min: 400000,
+    price_max: 900000,
+    accepts_jkn: false,
+    hours: 'Senin–Sabtu 08.00–18.00',
+    map_url: 'https://maps.google.com/?q=RSIA+Limijati+Bandung',
+    friendliness_score: 4.9,
+    friendliness_notes: 'Suasana klinik tenang dan modern, banyak pasangan datang berdua sehingga pria tidak merasa canggung, ruang pengumpulan sampel sangat privat.'
+  },
+  {
+    id: 'fac-bdg-3',
+    name: 'Klinik Utama Pratama Harmoni Dago',
+    type: 'Klinik',
+    city: 'Bandung',
+    address: 'Jl. Ir. H. Juanda No.112, Coblong, Kota Bandung',
+    latitude: -6.8898,
+    longitude: 107.6130,
+    services: ['Andrologi', 'Laboratorium'],
+    price_min: 300000,
+    price_max: 600000,
+    accepts_jkn: true,
+    hours: 'Senin–Sabtu 08.00–20.00',
+    map_url: 'https://maps.google.com/?q=Dago+Bandung',
+    friendliness_score: 4.6,
+    friendliness_notes: 'Menyediakan jadwal konsultasi sore/malam bagi karyawan yang bekerja di jam kantor, menerima JKN untuk konsultasi awal dan rujukan.'
+  },
+  {
+    id: 'fac-bdg-4',
+    name: 'Puskesmas Garuda Bandung (Poli Kesehatan Keluarga & Rujukan)',
+    type: 'Puskesmas',
+    city: 'Bandung',
+    address: 'Jl. Dadali No.81, Garuda, Kec. Andir, Kota Bandung',
+    latitude: -6.9122,
+    longitude: 107.5761,
+    services: ['Laboratorium'],
+    price_min: 35000,
+    price_max: 150000,
+    accepts_jkn: true,
+    hours: 'Senin–Sabtu 07.30–14.30',
+    map_url: 'https://maps.google.com/?q=Puskesmas+Garuda+Bandung',
+    friendliness_score: 4.3,
+    friendliness_notes: 'Dokter umum terlatih menggunakan pendekatan konseling tanpa penghakiman dan membantu menyiapkan rujukan JKN bila ditemukan indikasi klinis.'
+  },
+  {
+    id: 'fac-bdg-5',
+    name: 'RS Advent Bandung (Layanan Urologi & Laboratorium Terpadu)',
+    type: 'RS',
+    city: 'Bandung',
+    address: 'Jl. Cihampelas No.161, Cipaganti, Kec. Coblong, Kota Bandung',
+    latitude: -6.8931,
+    longitude: 107.6039,
+    services: ['Urologi', 'Laboratorium'],
+    price_min: 320000,
+    price_max: 700000,
+    accepts_jkn: true,
+    hours: 'Senin–Jumat 08.00–17.00, Minggu 08.00–12.00',
+    map_url: 'https://maps.google.com/?q=RS+Advent+Bandung',
+    friendliness_score: 4.6,
+    friendliness_notes: 'Buka pada hari Minggu pagi untuk pasien yang sulit izin kerja di hari biasa, serta melayani peserta JKN maupun umum.'
+  },
+
+  // SURABAYA (5 Fasilitas)
+  {
+    id: 'fac-sby-1',
+    name: 'RSUD Dr. Soetomo (Poli Andrologi, Urologi & Graha Amerta)',
+    type: 'RS',
+    city: 'Surabaya',
+    address: 'Jl. Mayjen Prof. Dr. Moestopo No.6-8, Airlangga, Kec. Gubeng, Surabaya',
+    latitude: -7.2682,
+    longitude: 102.7581,
+    services: ['Andrologi', 'Urologi', 'Laboratorium'],
+    price_min: 250000,
+    price_max: 750000,
+    accepts_jkn: true,
+    hours: 'Senin–Jumat 07.30–15.30',
+    map_url: 'https://maps.google.com/?q=RSUD+Dr+Soetomo+Surabaya',
+    friendliness_score: 4.8,
+    friendliness_notes: 'Salah satu pusat pendidikan dan layanan Spesialis Andrologi tertua dan terlengkap di Indonesia, menerima JKN serta konsultasi komprehensif.'
+  },
+  {
+    id: 'fac-sby-2',
+    name: 'RS Universitas Airlangga (Poli Andrologi & Urologi Terpadu)',
+    type: 'RS',
+    city: 'Surabaya',
+    address: 'Kampus C Unair, Jl. Dharmahusada Permai, Mulyorejo, Surabaya',
+    latitude: -7.2697,
+    longitude: 112.7845,
+    services: ['Andrologi', 'Urologi', 'Laboratorium'],
+    price_min: 280000,
+    price_max: 680000,
+    accepts_jkn: true,
+    hours: 'Senin–Jumat 07.30–16.00, Sabtu 08.00–12.00',
+    map_url: 'https://maps.google.com/?q=RS+Universitas+Airlangga+Surabaya',
+    friendliness_score: 4.8,
+    friendliness_notes: 'Memiliki dokter Spesialis Andrologi tetap dengan pendekatan edukatif, ruang sampel laboratorium terpisah dari ruang tunggu utama.'
+  },
+  {
+    id: 'fac-sby-3',
+    name: 'Klinik Spesialis Andrologi & Fertilitas Mitra Husada Darmo',
+    type: 'Klinik',
+    city: 'Surabaya',
+    address: 'Jl. Raya Darmo No.96, Keputran, Kec. Tegalsari, Surabaya',
+    latitude: -7.2856,
+    longitude: 112.7399,
+    services: ['Andrologi', 'Laboratorium'],
+    price_min: 350000,
+    price_max: 750000,
+    accepts_jkn: false,
+    hours: 'Senin–Sabtu 08.00–20.00',
+    map_url: 'https://maps.google.com/?q=Jl+Raya+Darmo+Surabaya',
+    friendliness_score: 4.9,
+    friendliness_notes: 'Dirancang khusus ramah pria dengan sistem reservasi per jam sehingga tidak berpapasan dengan pasien lain di ruang tunggu.'
+  },
+  {
+    id: 'fac-sby-4',
+    name: 'Puskesmas Gayungan Surabaya (Layanan Konseling Keluarga & Rujukan)',
+    type: 'Puskesmas',
+    city: 'Surabaya',
+    address: 'Jl. Gayungsari Barat No.124, Gayungan, Surabaya',
+    latitude: -7.3324,
+    longitude: 112.7219,
+    services: ['Laboratorium'],
+    price_min: 30000,
+    price_max: 120000,
+    accepts_jkn: true,
+    hours: 'Senin–Sabtu 07.30–14.30',
+    map_url: 'https://maps.google.com/?q=Puskesmas+Gayungan+Surabaya',
+    friendliness_score: 4.4,
+    friendliness_notes: 'Pintu masuk awal yang ramah bagi warga Surabaya untuk cek kesehatan dasar (gula darah, tensi, konseling program hamil) dengan JKN.'
+  },
+  {
+    id: 'fac-sby-5',
+    name: 'RS Premier Surabaya (Klinik Urologi, Andrologi & Lab Diagnostik)',
+    type: 'RS',
+    city: 'Surabaya',
+    address: 'Jl. Nginden Intan Barat No.Blok B, Ngenden Jangkungan, Sukolilo, Surabaya',
+    latitude: -7.3046,
+    longitude: 112.7654,
+    services: ['Andrologi', 'Urologi', 'Laboratorium'],
+    price_min: 450000,
+    price_max: 1100000,
+    accepts_jkn: false,
+    hours: 'Senin–Sabtu 07.30–19.30',
+    map_url: 'https://maps.google.com/?q=RS+Premier+Surabaya',
+    friendliness_score: 4.7,
+    friendliness_notes: 'Layanan privat dengan hasil analisis semen yang dilengkapi penjelasan visual dan sesi tanya-jawab dokter yang tidak terburu-buru.'
+  }
+];

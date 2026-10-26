@@ -1,0 +1,18 @@
+{
+  "name": "Side by Side — Better together",
+  "short_name": "Side by Side",
+  "description": "Ruang aman dan privat untuk memahami kesehatan reproduksi bersama pasangan.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F7F8",
+  "theme_color": "#0F8B8D",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

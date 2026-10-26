@@ -1,0 +1,134 @@
+{
+  "partnerInviteTemplates": [
+    {
+      "id": "warm_husband",
+      "tone": "Hangat",
+      "senderRole": "Suami ke Istri",
+      "title": "Ajakan hangat untuk mulai bersama",
+      "message": "Aku mau kita cek bareng, bukan karena ada yang salah, tapi biar kita tahu langkah terbaik buat rencana kita berdua. Aku baru pakai panduan di Side by Side biar kita bisa susun jadwal yang nyaman."
+    },
+    {
+      "id": "warm_wife",
+      "tone": "Hangat",
+      "senderRole": "Istri ke Suami",
+      "title": "Ajakan lembut dari istri (tanpa menyalahkan)",
+      "message": "Sayang, perjalanan program hamil ini milik kita berdua. Aku pengen kita sama-sama tenang dan punya informasi yang utuh. Kalau kamu siap, yuk kita lihat panduan privat di Side by Side bareng-bareng, santai aja sesuai ritmemu."
+    },
+    {
+      "id": "casual",
+      "tone": "Santai",
+      "senderRole": "Umum / Pasangan",
+      "title": "Nada santai & ringan",
+      "message": "Eh, aku nemu aplikasi web privat namanya Side by Side. Isinya enak banget, nggak menghakimi dan datanya aman. Coba cek bareng yuk, lumayan biar kita nggak nebak-nebak soal langkah promil selanjutnya."
+    },
+    {
+      "id": "practical",
+      "tone": "Praktis",
+      "senderRole": "Umum / Pasangan",
+      "title": "Nada praktis & fokus solusi",
+      "message": "Biar program hamil kita lebih efisien dan hemat waktu, dokter menyarankan evaluasi dasar dari dua sisi sekaligus. Aku sudah buat checklist persiapan di Side by Side—ini kode undangannya supaya kita bisa pantau jadwal bareng tanpa ribet."
+    }
+  ],
+  "supportiveQuickNotes": [
+    "Terima kasih sudah mau melangkah bareng. Kita jalani pelan-pelan ya.",
+    "Apa pun hasilnya nanti, kita tetap satu tim.",
+    "Jangan lupa istirahat malam ini, kesehatanmu yang paling utama.",
+    "Bangga sama kamu yang sudah berani ambil langkah pertama hari ini."
+  ],
+  "counselingTemplates": [
+    {
+      "id": "gaya_hidup",
+      "topic": "Gaya Hidup & Siklus Spermatogenesis",
+      "title": "Edukasi Siklus 74 Hari & Modifikasi Gaya Hidup",
+      "content": "Ringkasan Konseling Gaya Hidup:\n1. Jelaskan bahwa proses pembentukan sel sperma baru (spermatogenesis) membutuhkan waktu sekitar 74 hari (2,5–3 bulan), sehingga perubahan kebiasaan hari ini akan mulai terlihat hasilnya pada pemeriksaan 3 bulan mendatang.\n2. Anjurkan pengurangan paparan panas pada area skrotum (hindari memangku laptop, berendam air panas/sauna rutin, dan ambil jeda berdiri tiap 1 jam bila bekerja duduk lama).\n3. Dukung penghentian/pengurangan rokok maupun vape secara bertahap untuk menurunkan stres oksidatif pada sel sperma.\n4. Anjurkan tidur cukup 7–8 jam per malam dan aktivitas fisik intensitas sedang (3–4 kali/minggu)."
+    },
+    {
+      "id": "kecemasan",
+      "topic": "Validasi Kecemasan & Normalisasi Pemeriksaan",
+      "title": "Menurunkan Rasa Malu dan Kecemasan Pasien",
+      "content": "Ringkasan Konseling Pengelolaan Kecemasan:\n1. Apresiasi keberanian pasien yang telah datang memeriksakan diri lebih awal—sampaikan bahwa kesuburan adalah urusan pasangan (faktor pria berperan pada sekitar 40–50% kasus), dan kondisi reproduksi sama sekali tidak mencerminkan maskulinitas atau kejantanan.\n2. Tekankan bahwa hasil analisis semen satu kali dapat berfluktuasi secara alami (misalnya karena kelelahan, demam dalam 2 bulan terakhir, atau durasi pantang yang kurang pas).\n3. Hindari istilah yang menyalahkan; fokuskan diskusi pada faktor-faktor yang dapat dimodifikasi dan ditindaklanjuti secara medis."
+    },
+    {
+      "id": "komunikasi_pasangan",
+      "topic": "Komunikasi Sehat Bersama Pasangan",
+      "title": "Pendampingan Komunikasi Suami-Istri Tanpa Menyalahkan",
+      "content": "Ringkasan Konseling Komunikasi Pasangan:\n1. Dorong pasangan untuk menggunakan bahasa 'kita' ('rencana evaluasi kita') alih-alih mencari siapa yang memiliki masalah.\n2. Sepakati waktu jeda pembicaraan program hamil di rumah agar hubungan emosional suami-istri tetap hangat dan tidak melulu berpusat pada jadwal medis.\n3. Gunakan daftar langkah bersama (seperti Rencana Kita) agar beban mengingat jadwal tidak ditanggung oleh satu pihak saja."
+    },
+    {
+      "id": "rencana_tindak_lanjut",
+      "topic": "Rencana Tindak Lanjut & Rujukan Berjenjang",
+      "title": "Panduan Tindak Lanjut Klinis & Rujukan Spesialis",
+      "content": "Ringkasan Rencana Tindak Lanjut:\n1. Bila belum dilakukan analisis semen dasar: jadwalkan pemeriksaan laboratorium dengan persiapan masa pantang (abstinensia seksual) selama 2 hingga 7 hari.\n2. Bila terdapat hasil di bawah rentang rujukan WHO 2021 atau ditemukan kecurigaan klinis (mis. varikokel, riwayat operasi inguinal, atau gangguan hormonal): arahkan untuk konsultasi terarah ke Dokter Spesialis Andrologi (Sp.And) atau Spesialis Urologi (Sp.U).\n3. Jadwalkan evaluasi ulang dalam 8–12 minggu pasca perbaikan gaya hidup atau sesuai indikasi dokter spesialis."
+    }
+  ],
+  "doctorQuestionsList": [
+    {
+      "category": "Memahami Kondisi Dasar",
+      "questions": [
+        "Berdasarkan riwayat kami saat ini, apakah saya sudah perlu menjalani pemeriksaan analisis semen dasar?",
+        "Apakah ada pemeriksaan fisik sederhana (seperti memeriksa kemungkinan varikokel) yang sebaiknya dilakukan hari ini?"
+      ]
+    },
+    {
+      "category": "Persiapan & Prosedur Tes",
+      "questions": [
+        "Berapa hari masa pantang (abstinensia) yang paling ideal bagi saya sebelum pengambilan sampel di laboratorium?",
+        "Apakah pengambilan sampel harus dilakukan di ruang khusus klinik, atau boleh diambil di rumah dengan syarat waktu tertentu?"
+      ]
+    },
+    {
+      "category": "Membaca Hasil & Gaya Hidup",
+      "questions": [
+        "Dari parameter konsentrasi, motilitas (gerak), dan morfologi (bentuk), bagian mana yang paling perlu kami perhatikan?",
+        "Perubahan kebiasaan harian apa (tidur, olahraga, suhu kerja, atau rokok) yang paling berdampak untuk saya perbaiki dalam 3 bulan ke depan?",
+        "Apakah obat rutin yang sedang saya konsumsi saat ini aman dilanjutkan selama program hamil?"
+      ]
+    },
+    {
+      "category": "Langkah Berikutnya",
+      "questions": [
+        "Kapan waktu yang tepat bagi kami untuk kontrol kembali atau mengulang pemeriksaan laboratorium?",
+        "Apakah saya perlu dirujuk ke Dokter Spesialis Andrologi (Sp.And) atau Urologi (Sp.U) untuk evaluasi lebih lanjut?"
+      ]
+    }
+  ],
+  "examinationGuide": {
+    "steps": [
+      {
+        "stepNumber": 1,
+        "title": "Apa Itu Analisis Semen?",
+        "summary": "Pemeriksaan laboratorium sederhana dan tanpa rasa sakit untuk melihat jumlah, gerakan, dan bentuk sel sperma di bawah mikroskop.",
+        "details": "Analisis semen bukan tes kejantanan. Tes ini adalah langkah awal paling praktis (dan jauh lebih tidak invasif dibanding banyak pemeriksaan pada wanita) untuk membantu dokter memahami kondisi kesuburan pasangan secara utuh."
+      },
+      {
+        "stepNumber": 2,
+        "title": "Siapa yang Melakukan & Memeriksa?",
+        "summary": "Pengantar dapat diberikan oleh dokter umum, dokter kandungan pasangan, spesialis andrologi (Sp.And), atau urologi (Sp.U).",
+        "details": "Sampel Anda akan diperiksa oleh analis laboratorium medis terlatih secara rahasia. Untuk pembacaan hasil yang mendalam, Anda dapat berkonsultasi dengan Dokter Spesialis Andrologi atau Urologi."
+      },
+      {
+        "stepNumber": 3,
+        "title": "Persiapan Sebelum Tes (Masa Pantang 2–7 Hari)",
+        "summary": "Tidak mengeluarkan sperma (ejakulasi) selama 2 sampai 7 hari sebelum jadwal pemeriksaan.",
+        "details": "Jika kurang dari 2 hari, jumlah sel sperma mungkin tampak lebih sedikit dari biasanya. Jika lebih dari 7 hari, jumlah sperma memang banyak tetapi persentase gerak aktifnya bisa menurun. Hindari juga demam tinggi, begadang, atau sauna menjelang tes."
+      },
+      {
+        "stepNumber": 4,
+        "title": "Apa yang Terjadi Saat Pengambilan Sampel di Klinik?",
+        "summary": "Anda akan diberikan wadah steril bertutup dan diarahkan ke ruangan pribadi yang terkunci dari dalam.",
+        "details": "Cara terbaik mengumpulkan sampel adalah melalui masturbasi langsung ke dalam wadah steril tanpa menggunakan pelumas, sabun, atau air liur (karena dapat merusak sel sperma). Pastikan seluruh cairan tertampung, terutama tetesan pertama yang paling kaya sel sperma."
+      },
+      {
+        "stepNumber": 5,
+        "title": "Berapa Lama Hasilnya Keluar?",
+        "summary": "Sampel langsung diperiksa dalam waktu 30–60 menit, dan laporan hasil umumnya selesai dalam 1 hingga 2 hari kerja.",
+        "details": "Beberapa rumah sakit atau laboratorium klinik bahkan dapat mengirimkan hasil di hari yang sama secara digital dengan kata sandi rahasia."
+      }
+    ],
+    "costAndInsuranceInfo": {
+      "rangeSummary": "Rp 250.000 – Rp 850.000 (Analisis Semen Dasar) | Rp 150.000 – Rp 500.000 (Konsultasi Dokter)",
+      "jknSummary": "Konsultasi awal dan pemeriksaan indikasi medis umum (seperti keluhan nyeri skrotum, infeksi, atau evaluasi varikokel di Poli Urologi dengan rujukan Puskesmas/FKTP) umumnya dapat ditanggung JKN/BPJS Kesehatan. Namun, pemeriksaan analisis semen murni untuk program ingin anak (infertilitas) di sebagian fasilitas dikategorikan sebagai layanan mandiri/umum.",
+      "disclaimer": "Estimasi biaya dan cakupan JKN/asuransi ditampilkan sebagai informasi umum dan dapat berbeda per fasilitas kesehatan."
+    }
+  }
+}

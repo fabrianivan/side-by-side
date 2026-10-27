@@ -477,7 +477,7 @@ export const AssessmentPage: React.FC = () => {
             <span>Privasi Penuh di Perangkat Anda</span>
           </div>
           <p className="text-brand-navy/75 dark:text-white/75 leading-relaxed">
-            Seluruh jawaban Anda dihitung secara lokal di perangkat menggunakan mesin berbasis aturan yang dapat diaudit dan disimpan terenkripsi (`Web Crypto AES-GCM`). Anda bebas melewati pertanyaan mana pun.
+            Seluruh jawaban Anda dihitung dan disimpan secara privat langsung di perangkat ini. Anda bebas melewati pertanyaan mana pun.
           </p>
         </div>
       </aside>

@@ -428,8 +428,8 @@ export const AccountPage: React.FC = () => {
                   ) : (
                     <span>
                       {isEn
-                        ? 'Zero personal info shared • Web Crypto AES-GCM Encrypted'
-                        : 'Bebas data pribadi • Terenkripsi lokal Web Crypto AES-GCM'}
+                        ? 'Zero personal info shared • Protected on Device'
+                        : 'Bebas data pribadi • Tersimpan aman di perangkat'}
                     </span>
                   )}
                 </p>
@@ -937,8 +937,8 @@ export const AccountPage: React.FC = () => {
 
                 <div className="pt-2 border-t border-brand-navy/10 text-[11px] space-y-1.5">
                   <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
-                    <span>{isEn ? 'Security:' : 'Enkripsi:'}</span>
-                    <strong className="text-brand-teal font-mono">Web Crypto AES-GCM 256-bit</strong>
+                    <span>{isEn ? 'Protection:' : 'Keamanan:'}</span>
+                    <strong className="text-brand-teal font-semibold">{isEn ? 'Protected & Secure' : 'Tersimpan Terlindungi'}</strong>
                   </div>
                   <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
                     <span>{isEn ? 'Storage:' : 'Penyimpanan:'}</span>
@@ -1118,16 +1118,16 @@ export const AccountPage: React.FC = () => {
               <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-3.5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy dark:text-white flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-brand-teal" />
-                  <span>{isEn ? 'Cryptographic Integrity Status' : 'Integritas Kriptografi Sesi'}</span>
+                  <span>{isEn ? 'Session Security Status' : 'Status Keamanan Sesi'}</span>
                 </h3>
                 <ul className="text-xs space-y-2 text-brand-navy/80 dark:text-white/80">
                   <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
-                    <span>{isEn ? 'Cipher Algorithm:' : 'Algoritma Enkripsi:'}</span>
-                    <strong className="text-brand-teal font-mono">AES-GCM (256-bit)</strong>
+                    <span>{isEn ? 'Storage Protection:' : 'Perlindungan Data:'}</span>
+                    <strong className="text-brand-teal font-semibold">{isEn ? 'Encrypted & Private' : 'Tersimpan Terenkripsi'}</strong>
                   </li>
                   <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
-                    <span>{isEn ? 'Key Derivation:' : 'Penurunan Kunci:'}</span>
-                    <strong className="text-brand-navy dark:text-white font-mono">PBKDF2-SHA256</strong>
+                    <span>{isEn ? 'Access Control:' : 'Kontrol Akses:'}</span>
+                    <strong className="text-brand-navy dark:text-white font-semibold">{isEn ? 'Secure Session Token' : 'Sesi Token Aman'}</strong>
                   </li>
                   <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
                     <span>{isEn ? 'Server Health Payload:' : 'Payload Kesehatan Server:'}</span>

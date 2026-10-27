@@ -84,7 +84,7 @@ export const translations = {
       sessions: {
         title: 'Sesi & Perangkat Terhubung',
         currentDevice: 'Perangkat ini (Web / PWA) • Aktif Sekarang',
-        cloudEncrypted: 'Enkripsi Web Crypto AES-GCM 256-bit + scrypt',
+        cloudEncrypted: 'Tersimpan Terlindungi & Terenkripsi',
       },
     },
   },
@@ -171,7 +171,7 @@ export const translations = {
       sessions: {
         title: 'Active Sessions & Connected Devices',
         currentDevice: 'This Device (Web / PWA) • Active Now',
-        cloudEncrypted: 'Encrypted via Web Crypto AES-GCM 256-bit + scrypt',
+        cloudEncrypted: 'Secure & Encrypted Storage',
       },
     },
   },

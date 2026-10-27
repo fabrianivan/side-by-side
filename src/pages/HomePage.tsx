@@ -95,8 +95,8 @@ export const HomePage: React.FC = () => {
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>
                 {authMode === 'welcome'
-                  ? 'Siap Digunakan Tanpa Akun'
-                  : `${displayName} • Data Terenkripsi AES-GCM`}
+                  ? (isEn ? 'Ready Without Account' : 'Siap Digunakan Tanpa Akun')
+                  : displayName}
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">

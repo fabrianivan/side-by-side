@@ -62,7 +62,7 @@ export const SettingsPage: React.FC = () => {
     if (pinField.length < 4) return;
     await setupPin(pinField);
     setPinField('');
-    setPinSavedMessage('PIN keamanan (PBKDF2 + AES-GCM) berhasil diaktifkan!');
+    setPinSavedMessage('PIN keamanan berhasil diaktifkan!');
     setTimeout(() => setPinSavedMessage(''), 3500);
   };
 
@@ -163,7 +163,7 @@ export const SettingsPage: React.FC = () => {
           <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-1">
             <div className="font-bold text-brand-teal">1. Data Apa yang Disimpan?</div>
             <p className="text-brand-navy/80 dark:text-white/80 leading-relaxed">
-              Jawaban kuesioner Cek Awal, catatan angka laboratorium, dan jadwal pengingat. Pada Mode Anonim, seluruhnya disimpan terenkripsi AES-GCM di IndexedDB perangkat ini.
+              Jawaban kuesioner Cek Awal, catatan angka laboratorium, dan jadwal pengingat. Pada Mode Anonim, seluruhnya disimpan secara aman di perangkat ini.
             </p>
           </div>
           <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-1">
@@ -232,7 +232,7 @@ export const SettingsPage: React.FC = () => {
         {/* Bukti Transparansi Enkripsi Sisi Klien (Web Crypto AES-GCM Vault Inspector) */}
         <details className="p-4 rounded-card bg-brand-navy text-white text-xs space-y-3">
           <summary className="font-bold cursor-pointer flex items-center justify-between">
-            <span>🔐 Lihat Bukti Enkripsi Perangkat (Web Crypto AES-GCM 256-bit Vault)</span>
+            <span>🔐 Bukti Penyimpanan Terenkripsi Perangkat</span>
             <span className="text-brand-coral text-[11px]">Klik untuk periksa ciphertext</span>
           </summary>
           <p className="text-white/80 leading-relaxed pt-1">
@@ -262,10 +262,10 @@ export const SettingsPage: React.FC = () => {
       <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
         <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
           <Lock className="w-5 h-5 text-brand-coral" />
-          <span>Kunci PIN & Enkripsi Perangkat</span>
+          <span>Kunci PIN & Keamanan Perangkat</span>
         </h2>
         <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-          Atur PIN 4–6 digit untuk mengunci layar aplikasi dan membungkus kunci enkripsi Web Crypto (`PBKDF2` + `AES-GCM`).
+          Atur PIN 4–6 digit untuk mengunci layar aplikasi dan melindungi data pada perangkat Anda.
         </p>
 
           {pinSavedMessage && (
@@ -454,7 +454,7 @@ export const SettingsPage: React.FC = () => {
               <span>Zona Penghapusan Permanen (Hak untuk Dilupakan)</span>
             </h2>
             <p className="text-xs text-brand-navy/80 dark:text-white/80 leading-relaxed">
-              Menghapus seluruh data lokal terenkripsi (IndexedDB, kunci AES-GCM, LocalStorage) serta seluruh catatan terkait di server secara permanen.
+              Menghapus seluruh data lokal serta seluruh catatan terkait di server secara permanen.
             </p>
           </div>
 

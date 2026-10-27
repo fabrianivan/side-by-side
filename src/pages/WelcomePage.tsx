@@ -126,7 +126,7 @@ export const WelcomePage: React.FC = () => {
             </div>
             <h3 className="font-bold text-sm">1. Privasi Dulu</h3>
             <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              Bisa dipakai tanpa akun. Jawaban Anda dienkripsi di perangkat (IndexedDB + Web Crypto AES-GCM) dan tidak dikirim ke server.
+              Bisa dipakai tanpa akun. Jawaban Anda disimpan aman langsung di perangkat dan tidak dikirim ke server.
             </p>
           </div>
 

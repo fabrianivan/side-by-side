@@ -16,9 +16,14 @@ const queryClient = new QueryClient({
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Abaikan jika gagal di lingkungan non-HTTPS lokal
-    });
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => {
+        reg.update();
+      })
+      .catch(() => {
+        // Abaikan jika gagal di lingkungan non-HTTPS lokal
+      });
   });
 }
 

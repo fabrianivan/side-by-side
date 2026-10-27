@@ -11,6 +11,7 @@ import { WelcomePage } from '../pages/WelcomePage';
 import { FacilitiesPage } from '../pages/FacilitiesPage';
 import { ResultsPage } from '../pages/ResultsPage';
 import { NakesDashboardPage } from '../pages/NakesDashboardPage';
+import { AccountPage } from '../pages/AccountPage';
 import { encryptPayload, decryptPayload, wipeAllLocalData } from '../lib/crypto-storage';
 import { designTokens } from '../styles/design-tokens';
 
@@ -182,5 +183,27 @@ describe('Uji Alur Utama, Privasi & Aksesibilitas Dasar (Side by Side)', () => {
     expect(
       screen.getByText(/Tiket Pertanyaan Anonim Masuk/i)
     ).toBeInTheDocument();
+  });
+
+  it('Alur 8: Halaman Akun dalam mode akun (login) menyembunyikan tab dan form masuk akun, menampilkan profil & preferensi', async () => {
+    // Simulasikan pengguna yang sudah masuk dengan akun Rendra
+    localStorage.setItem('sbs_auth_mode', 'account');
+    localStorage.setItem('sbs_display_name', 'Rendra Pratama');
+    localStorage.setItem('sbs_user_email', 'rendra@demo.id');
+
+    renderWithProviders(<AccountPage />, ['/akun']);
+
+    // Tab "Masuk / Buat Akun" TIDAK boleh muncul ketika pengguna sudah login
+    expect(screen.queryByRole('button', { name: /Masuk \/ Buat Akun/i })).not.toBeInTheDocument();
+
+    // Tab yang tersedia saat login adalah Profil, Kata Sandi & Keamanan, Hak Privasi
+    expect(screen.getByRole('button', { name: /Profil & Tampilan/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Kata Sandi & Keamanan/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Hak Privasi \(UU PDP\)/i })).toBeInTheDocument();
+
+    // Data profil pengguna terlihat langsung
+    expect(screen.getByText('Rendra Pratama')).toBeInTheDocument();
+    expect(screen.getByText('rendra@demo.id')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Keluar Akun/i })).toBeInTheDocument();
   });
 });

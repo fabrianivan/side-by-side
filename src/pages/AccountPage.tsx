@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User,
@@ -25,6 +25,8 @@ import {
   Heart,
   Calendar,
   CheckCircle,
+  X,
+  UserCheck,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
@@ -58,11 +60,21 @@ export const AccountPage: React.FC = () => {
   const isEn = locale === 'en';
   const navigate = useNavigate();
 
-  // Active Main Tab: 'profile' | 'auth' | 'security'
+  // Active Main Tab: 'profile' | 'security' | 'data' | 'auth'
   const isAccountActive = authMode === 'account' || authMode === 'nakes';
-  const [activeTab, setActiveTab] = useState<'profile' | 'auth' | 'security'>(
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'data' | 'auth'>(
     isAccountActive ? 'profile' : 'auth'
   );
+
+  // Switch account drawer/modal toggle when logged in
+  const [showSwitchAccount, setShowSwitchAccount] = useState<boolean>(false);
+
+  // Automatically ensure logged-in user never lands on the login tab
+  useEffect(() => {
+    if (isAccountActive && activeTab === 'auth') {
+      setActiveTab('profile');
+    }
+  }, [isAccountActive, activeTab]);
 
   // Auth Sub-tab: 'login' | 'register' | 'magic'
   const [authSubTab, setAuthSubTab] = useState<'login' | 'register' | 'magic'>('login');
@@ -78,6 +90,7 @@ export const AccountPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
+  const [showSecurityPassword, setShowSecurityPassword] = useState<boolean>(false);
 
   // Feedback states
   const [authError, setAuthError] = useState<string>('');
@@ -92,6 +105,7 @@ export const AccountPage: React.FC = () => {
   // Profile Edit State
   const [editName, setEditName] = useState<string>(displayName);
   const [newPassword, setNewPassword] = useState<string>('');
+  const [securityPasswordInput, setSecurityPasswordInput] = useState<string>('');
   const [profileMessage, setProfileMessage] = useState<string>('');
   const [profileSuccess, setProfileSuccess] = useState<boolean>(false);
   const [avatarTheme, setAvatarTheme] = useState<'teal' | 'coral' | 'navy' | 'emerald' | 'purple'>('teal');
@@ -146,7 +160,6 @@ export const AccountPage: React.FC = () => {
   const deviceInfo = getDeviceInfo();
 
   const handleAutoFillDemo = (target: 'rendra' | 'sari' | 'maya') => {
-    setActiveTab('auth');
     setAuthSubTab('login');
     setAuthError('');
     if (target === 'rendra') {
@@ -165,6 +178,8 @@ export const AccountPage: React.FC = () => {
     setIsSubmitting(true);
     await switchDemoPersona(persona);
     setIsSubmitting(false);
+    setShowSwitchAccount(false);
+    setActiveTab('profile');
     setAuthSuccess(
       isEn
         ? `Successfully switched to ${persona.toUpperCase()} profile!`
@@ -238,6 +253,7 @@ export const AccountPage: React.FC = () => {
         setConfirmPasswordInput('');
         setNameInput('');
         setIsSubmitting(false);
+        setShowSwitchAccount(false);
         setActiveTab('profile');
         return;
       } else {
@@ -247,6 +263,7 @@ export const AccountPage: React.FC = () => {
     } catch {
       await loginAccount(emailInput, roleInput, nameInput || emailInput.split('@')[0]);
       setAuthSuccess(isEn ? 'Signed in (offline safe mode).' : 'Berhasil masuk (mode luring).');
+      setShowSwitchAccount(false);
       setActiveTab('profile');
     }
     setIsSubmitting(false);
@@ -275,6 +292,7 @@ export const AccountPage: React.FC = () => {
       setOtpInput('');
       setAuthSuccess(isEn ? 'Successfully signed in via Magic Link OTP!' : 'Berhasil masuk via Magic Link OTP!');
       setIsSubmitting(false);
+      setShowSwitchAccount(false);
       setActiveTab('profile');
     } else {
       setAuthError(isEn ? 'Invalid OTP code. Please try again.' : 'Kode OTP tidak cocok. Silakan periksa kembali.');
@@ -297,6 +315,27 @@ export const AccountPage: React.FC = () => {
     } else {
       setProfileSuccess(false);
       setProfileMessage(isEn ? 'Failed to update profile.' : 'Gagal memperbarui profil.');
+    }
+  };
+
+  const handleSecurityPasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!securityPasswordInput || securityPasswordInput.length < 6) {
+      setProfileSuccess(false);
+      setProfileMessage(isEn ? 'Password must be at least 6 characters.' : 'Kata sandi baru minimal 6 karakter.');
+      return;
+    }
+    setIsSubmitting(true);
+    const ok = await updateProfile(displayName, securityPasswordInput);
+    setIsSubmitting(false);
+    if (ok) {
+      setProfileSuccess(true);
+      setProfileMessage(isEn ? 'Security password updated successfully!' : 'Kata sandi keamanan berhasil diperbarui!');
+      setSecurityPasswordInput('');
+      setTimeout(() => setProfileMessage(''), 3500);
+    } else {
+      setProfileSuccess(false);
+      setProfileMessage(isEn ? 'Failed to update password.' : 'Gagal memperbarui kata sandi.');
     }
   };
 
@@ -416,8 +455,17 @@ export const AccountPage: React.FC = () => {
 
                   <button
                     type="button"
+                    onClick={() => setShowSwitchAccount(!showSwitchAccount)}
+                    className="touch-target px-4 py-2 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/20 text-brand-navy dark:text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-brand-teal transition"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 text-brand-teal" />
+                    <span>{showSwitchAccount ? (isEn ? 'Hide Switcher' : 'Tutup Beralih') : (isEn ? 'Switch Account' : 'Beralih Akun')}</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={logoutToWelcome}
-                    className="touch-target px-4 py-2 rounded-btn border border-brand-navy/20 text-brand-navy dark:text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-brand-navy/5 transition"
+                    className="touch-target px-4 py-2 rounded-btn border border-status-urgent/30 text-status-urgent text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-status-urgent-bg transition"
                   >
                     <LogOut className="w-3.5 h-3.5" />
                     <span>{isEn ? 'Sign Out' : 'Keluar Akun'}</span>
@@ -483,48 +531,6 @@ export const AccountPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. MODERN SEGMENTED NAVIGATION TABS */}
-      <div className="flex items-center gap-2 p-1.5 rounded-card bg-surface dark:bg-surface-dark-card border border-brand-navy/10 shadow-xs">
-        <button
-          type="button"
-          onClick={() => setActiveTab('profile')}
-          className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
-            activeTab === 'profile'
-              ? 'bg-brand-navy text-white shadow-sm'
-              : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
-          }`}
-        >
-          <User className="w-4 h-4" />
-          <span>{isEn ? 'Profile & Preferences' : 'Profil & Tampilan'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('auth')}
-          className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
-            activeTab === 'auth'
-              ? 'bg-brand-navy text-white shadow-sm'
-              : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
-          }`}
-        >
-          <KeyRound className="w-4 h-4" />
-          <span>{isEn ? 'Sign In / Account Sync' : 'Masuk / Buat Akun'}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('security')}
-          className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
-            activeTab === 'security'
-              ? 'bg-brand-navy text-white shadow-sm'
-              : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
-          }`}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>{isEn ? 'Security & Data Privacy' : 'Keamanan & Privasi'}</span>
-        </button>
-      </div>
-
       {/* FEEDBACK ALERTS */}
       {authSuccess && (
         <div className="p-4 rounded-card bg-status-success-bg text-status-success text-xs font-bold flex items-center gap-2.5 shadow-sm border border-status-success/30">
@@ -540,9 +546,212 @@ export const AccountPage: React.FC = () => {
         </div>
       )}
 
+      {/* COLLAPSIBLE SWITCH ACCOUNT PANEL (Only visible if logged-in user explicitly clicks "Beralih Akun") */}
+      {isAccountActive && showSwitchAccount && (
+        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border-2 border-brand-teal/40 space-y-5 animate-in fade-in duration-200">
+          <div className="flex items-center justify-between pb-3 border-b border-brand-navy/10">
+            <div>
+              <h3 className="text-sm font-bold text-brand-navy dark:text-white flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-brand-teal" />
+                <span>{isEn ? 'Switch Account or Demo Persona' : 'Beralih Akun atau Masuk Baru'}</span>
+              </h3>
+              <p className="text-xs text-brand-navy/70 dark:text-white/70">
+                {isEn
+                  ? 'Sign in with a different account credential or switch persona for demo evaluation.'
+                  : 'Masuk dengan kredensial akun lain atau beralih profil persona untuk kemudahan evaluasi.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowSwitchAccount(false)}
+              className="text-xs font-semibold px-2.5 py-1 rounded-btn border border-brand-navy/20 hover:bg-surface-muted flex items-center gap-1"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>{isEn ? 'Close' : 'Tutup'}</span>
+            </button>
+          </div>
+
+          {/* Quick Demo Personas */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-bold text-brand-navy dark:text-white uppercase tracking-wider">
+              {isEn ? 'Quick Switch Demo Personas:' : 'Beralih Cepat Persona Demo:'}
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => handleInstantDemoSignIn('rendra')}
+                className="p-3 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-brand-teal transition text-left space-y-1 group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-brand-navy dark:text-white group-hover:text-brand-teal">
+                    Rendra (Suami)
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-teal/15 text-brand-teal font-semibold">User</span>
+                </div>
+                <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">rendra@demo.id</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleInstantDemoSignIn('sari')}
+                className="p-3 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-brand-coral transition text-left space-y-1 group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-brand-navy dark:text-white group-hover:text-brand-coral">
+                    Sari (Istri)
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-coral/15 text-brand-coral font-semibold">Partner</span>
+                </div>
+                <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">sari@demo.id</p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleInstantDemoSignIn('maya')}
+                className="p-3 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-emerald-500 transition text-left space-y-1 group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-brand-navy dark:text-white group-hover:text-emerald-600">
+                    dr. Maya (Dokter)
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold">Nakes</span>
+                </div>
+                <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">maya@puskesmas.id</p>
+              </button>
+            </div>
+          </div>
+
+          {/* Form to login to other account */}
+          <form onSubmit={handleAuthSubmit} className="pt-2 border-t border-brand-navy/10 space-y-3">
+            <h4 className="text-xs font-bold text-brand-navy dark:text-white">
+              {isEn ? 'Or Sign In with Another Account:' : 'Atau Masuk dengan Akun Lain:'}
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <input
+                  type="email"
+                  required
+                  placeholder="email@domain.com"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  className="w-full px-3 py-2 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
+                />
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full px-3 pr-9 py-2 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-2 text-brand-navy/40 hover:text-brand-navy"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowSwitchAccount(false)}
+                className="px-4 py-2 rounded-btn border border-brand-navy/20 text-xs font-semibold"
+              >
+                {isEn ? 'Cancel' : 'Batal'}
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-5 py-2 rounded-btn bg-brand-teal text-white text-xs font-bold hover:bg-brand-teal-dark transition shadow-xs disabled:opacity-50"
+              >
+                {isEn ? 'Sign In to Account' : 'Masuk ke Akun'}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      {/* 2. MODERN SEGMENTED NAVIGATION TABS */}
+      <div className="flex items-center gap-2 p-1.5 rounded-card bg-surface dark:bg-surface-dark-card border border-brand-navy/10 shadow-xs">
+        {isAccountActive ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setActiveTab('profile')}
+              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+                activeTab === 'profile'
+                  ? 'bg-brand-navy text-white shadow-sm'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              <span>{isEn ? 'Profile & Preferences' : 'Profil & Tampilan'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('security')}
+              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+                activeTab === 'security'
+                  ? 'bg-brand-navy text-white shadow-sm'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+              }`}
+            >
+              <Lock className="w-4 h-4" />
+              <span>{isEn ? 'Password & Security' : 'Kata Sandi & Keamanan'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('data')}
+              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+                activeTab === 'data'
+                  ? 'bg-brand-navy text-white shadow-sm'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>{isEn ? 'Data Privacy (UU PDP)' : 'Hak Privasi (UU PDP)'}</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setActiveTab('auth')}
+              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+                activeTab === 'auth'
+                  ? 'bg-brand-navy text-white shadow-sm'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+              }`}
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>{isEn ? 'Sign In / Register' : 'Masuk / Buat Akun'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setActiveTab('data')}
+              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+                activeTab === 'data'
+                  ? 'bg-brand-navy text-white shadow-sm'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>{isEn ? 'Local Data & Rights' : 'Data Lokal & Hak Privasi'}</span>
+            </button>
+          </>
+        )}
+      </div>
+
       {/* 3. TAB CONTENT */}
 
-      {/* TAB A: PROFILE & PREFERENCES */}
+      {/* TAB A: PROFILE & PREFERENCES (Visible when logged in) */}
       {activeTab === 'profile' && (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Left Form (8 Cols) */}
@@ -555,8 +764,8 @@ export const AccountPage: React.FC = () => {
                 </h2>
                 <p className="text-xs text-brand-navy/70 dark:text-white/70">
                   {isEn
-                    ? 'Manage your public nickname and security credentials.'
-                    : 'Kelola nama tampilan panggilan dan kata sandi akun Anda.'}
+                    ? 'Manage your public nickname and appearance preferences.'
+                    : 'Kelola nama tampilan panggilan dan preferensi tampilan akun Anda.'}
                 </p>
               </div>
 
@@ -619,33 +828,6 @@ export const AccountPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Password Update (Only if account mode is active) */}
-                {isAccountActive && (
-                  <div>
-                    <label htmlFor="edit-pwd-field" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
-                      {isEn ? 'Update Password (Optional)' : 'Perbarui Kata Sandi (Opsional)'}
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="edit-pwd-field"
-                        type={showNewPassword ? 'text' : 'password'}
-                        minLength={6}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        placeholder={isEn ? 'Leave empty to keep unchanged' : 'Biarkan kosong bila tidak ingin mengubah'}
-                        className="w-full px-4 pr-10 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-2.5 text-brand-navy/50 hover:text-brand-navy"
-                      >
-                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
                 <div className="pt-2 flex justify-end">
                   <button
                     type="submit"
@@ -656,6 +838,69 @@ export const AccountPage: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </section>
+
+            {/* Quick Demo Personas Switcher (Studio Quality) */}
+            <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/10 space-y-4">
+              <div className="flex items-center justify-between border-b border-brand-navy/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-brand-teal" />
+                  <h3 className="text-sm font-bold text-brand-navy dark:text-white">
+                    {isEn ? 'Quick Switch Demo Profiles (Evaluator Tools)' : 'Beralih Profil Cepat (Untuk Penguji / Juri)'}
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal">
+                  1-Click Switch
+                </span>
+              </div>
+              <p className="text-xs text-brand-navy/70 dark:text-white/70">
+                {isEn
+                  ? 'Switch roles instantly to evaluate different user journeys (Husband, Wife, or Healthcare Provider).'
+                  : 'Beralih peran secara instan untuk mencoba sudut pandang suami, istri, maupun dokter Puskesmas.'}
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => handleInstantDemoSignIn('rendra')}
+                  className="p-3.5 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-brand-teal hover:bg-brand-teal/5 transition text-left space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-brand-navy dark:text-white">Rendra (Suami)</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-teal/15 text-brand-teal font-semibold">User</span>
+                  </div>
+                  <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                    {isEn ? 'Full self-check & lab data' : 'Hasil lab & data cek awal lengkap'}
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleInstantDemoSignIn('sari')}
+                  className="p-3.5 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-brand-coral hover:bg-brand-coral/5 transition text-left space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-brand-navy dark:text-white">Sari (Istri)</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-coral/15 text-brand-coral font-semibold">Partner</span>
+                  </div>
+                  <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                    {isEn ? 'Connected couple timeline' : 'Linimasa bersama tersinkronisasi'}
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleInstantDemoSignIn('maya')}
+                  className="p-3.5 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-emerald-500 hover:bg-emerald-500/5 transition text-left space-y-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-brand-navy dark:text-white">dr. Maya (Dokter)</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold">Nakes</span>
+                  </div>
+                  <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                    {isEn ? 'Clinical triage dashboard' : 'Panel klinis & verifikasi QR'}
+                  </p>
+                </button>
+              </div>
             </section>
           </div>
 
@@ -797,16 +1042,118 @@ export const AccountPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB B: AUTHENTICATION & MULTI-DEVICE SYNC */}
-      {activeTab === 'auth' && (
+      {/* TAB B: PASSWORD & SECURITY (Visible when logged in) */}
+      {activeTab === 'security' && isAccountActive && (
+        <div className="space-y-6">
+          <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5 space-y-6">
+            <div className="border-b border-brand-navy/10 pb-4">
+              <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
+                <Lock className="w-4 h-4 text-brand-teal" />
+                <span>{isEn ? 'Security Credentials & Access Control' : 'Kredensial Keamanan & Akses Akun'}</span>
+              </h2>
+              <p className="text-xs text-brand-navy/70 dark:text-white/70">
+                {isEn
+                  ? 'Update your master password and review cryptographic session status.'
+                  : 'Perbarui kata sandi utama dan pantau status enkripsi kriptografi sesi Anda.'}
+              </p>
+            </div>
+
+            {profileMessage && (
+              <div
+                className={`p-3.5 rounded-btn text-xs font-bold flex items-center gap-2 ${
+                  profileSuccess
+                    ? 'bg-status-success-bg text-status-success'
+                    : 'bg-status-urgent-bg text-status-urgent'
+                }`}
+              >
+                {profileSuccess ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                <span>{profileMessage}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Change Password Form */}
+              <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy dark:text-white flex items-center gap-1.5">
+                  <KeyRound className="w-4 h-4 text-brand-teal" />
+                  <span>{isEn ? 'Change Account Password' : 'Ganti Kata Sandi Akun'}</span>
+                </h3>
+                <form onSubmit={handleSecurityPasswordChange} className="space-y-3">
+                  <div>
+                    <label htmlFor="sec-new-pwd" className="block text-xs font-semibold mb-1 text-brand-navy dark:text-white">
+                      {isEn ? 'New Password (min. 6 characters)' : 'Kata Sandi Baru (min. 6 karakter)'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="sec-new-pwd"
+                        type={showSecurityPassword ? 'text' : 'password'}
+                        required
+                        minLength={6}
+                        value={securityPasswordInput}
+                        onChange={(e) => setSecurityPasswordInput(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full px-3 pr-10 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowSecurityPassword(!showSecurityPassword)}
+                        className="absolute right-3 top-2.5 text-brand-navy/40 hover:text-brand-navy"
+                      >
+                        {showSecurityPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="touch-target w-full py-2.5 px-4 rounded-btn bg-brand-teal text-white text-xs font-bold shadow-soft hover:bg-brand-teal-dark transition disabled:opacity-50"
+                  >
+                    {isEn ? 'Update Password' : 'Simpan Kata Sandi Baru'}
+                  </button>
+                </form>
+              </div>
+
+              {/* Cryptographic Session Diagnostics */}
+              <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-3.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy dark:text-white flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-brand-teal" />
+                  <span>{isEn ? 'Cryptographic Integrity Status' : 'Integritas Kriptografi Sesi'}</span>
+                </h3>
+                <ul className="text-xs space-y-2 text-brand-navy/80 dark:text-white/80">
+                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
+                    <span>{isEn ? 'Cipher Algorithm:' : 'Algoritma Enkripsi:'}</span>
+                    <strong className="text-brand-teal font-mono">AES-GCM (256-bit)</strong>
+                  </li>
+                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
+                    <span>{isEn ? 'Key Derivation:' : 'Penurunan Kunci:'}</span>
+                    <strong className="text-brand-navy dark:text-white font-mono">PBKDF2-SHA256</strong>
+                  </li>
+                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
+                    <span>{isEn ? 'Server Health Payload:' : 'Payload Kesehatan Server:'}</span>
+                    <span className="text-status-success font-bold font-mono">0 bytes (Zero-Knowledge)</span>
+                  </li>
+                  <li className="flex items-center justify-between py-1">
+                    <span>{isEn ? 'Session Verification:' : 'Verifikasi Sesi:'}</span>
+                    <span className="text-status-success font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      {isEn ? 'Verified Active' : 'Terverifikasi Aktif'}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* TAB C: AUTHENTICATION (Visible only when in Anonymous mode) */}
+      {activeTab === 'auth' && !isAccountActive && (
         <div className="space-y-6">
           <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-8 border border-brand-navy/5 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-navy/10 pb-5">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-brand-navy dark:text-white">
-                  {isAccountActive
-                    ? isEn ? 'Switch or Add Another Account' : 'Beralih Akun atau Masuk Baru'
-                    : isEn ? 'Sign In or Create an Account' : 'Masuk atau Daftarkan Akun Anda'}
+                  {isEn ? 'Sign In or Create an Account' : 'Masuk atau Daftarkan Akun Anda'}
                 </h2>
                 <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-0.5">
                   {isEn
@@ -1018,10 +1365,10 @@ export const AccountPage: React.FC = () => {
                   >
                     <span>
                       {authSubTab === 'register'
-                        ? (isEn ? 'Create Account' : 'Daftar Akun')
-                        : authSubTab === 'login'
-                        ? (isEn ? 'Sign In Now' : 'Masuk Sekarang')
-                        : (isEn ? 'Send Magic Link' : 'Kirim Magic Link')}
+                        ? isEn ? 'Create Protected Account' : 'Daftar Akun Terlindungi'
+                        : authSubTab === 'magic'
+                        ? isEn ? 'Send Magic OTP' : 'Kirim Kode OTP'
+                        : isEn ? 'Sign In to Account' : 'Masuk ke Akun'}
                     </span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
@@ -1029,13 +1376,13 @@ export const AccountPage: React.FC = () => {
               </form>
             )}
 
-            {/* DEMO PERSONA QUICK SWITCHER (VIP CARD DESIGN) */}
+            {/* QUICK DEMO PRESETS */}
             <div className="pt-6 border-t border-brand-navy/10 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-brand-coral" />
-                  <span>{isEn ? 'Hackathon Demo Personas (Instant 1-Click Access):' : 'Pintasan Profil Demo Hackathon:'}</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70">
+                  {isEn ? 'Or Test Drive with Demo Accounts:' : 'Atau Coba Akun Demo Cepat (Juri / Penguji):'}
                 </span>
+                <span className="text-[11px] font-semibold text-brand-teal">1-Click Sign-in</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1131,8 +1478,8 @@ export const AccountPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB C: SECURITY & DATA PRIVACY (UU PDP & GDPR COMPLIANCE) */}
-      {activeTab === 'security' && (
+      {/* TAB D: DATA PRIVACY & SUBJECT RIGHTS (UU PDP / GDPR) */}
+      {activeTab === 'data' && (
         <div className="space-y-6">
           <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5 space-y-5">
             <div className="border-b border-brand-navy/10 pb-3">

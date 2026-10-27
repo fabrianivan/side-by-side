@@ -1,6 +1,6 @@
 /**
  * Enkripsi Sisi Klien (Web Crypto AES-GCM 256-bit) + Penyimpanan IndexedDB untuk Mode Anonim.
- * Memenuhi prinsip Privasi Dulu & UU PDP: jawaban kuesioner dan catatan hasil disimpan
+ * Memenuhi prinsip Privasi Dulu: jawaban kuesioner dan catatan hasil disimpan
  * terenkripsi di perangkat tanpa dikirim ke server pada mode anonim.
  */
 

@@ -305,11 +305,11 @@ Ketika Anda berada di bawah tekanan kerja atau kecemasan berkepanjangan, tubuh m
     summary: 'Bagaimana kami menjaga kerahasiaan data Anda dengan enkripsi perangkat, persetujuan granular, dan kendali penuh di tangan Anda.',
     category: 'Privasi & Hak',
     read_minutes: 3,
-    reviewer: 'Ditinjau oleh: Tim Keamanan Privasi & Etika Kesehatan Digital Side by Side | Acuan: UU No. 27 Tahun 2022 (UU PDP)',
+    reviewer: 'Ditinjau oleh: Tim Keamanan Privasi & Etika Kesehatan Digital Side by Side',
     updated_at: '2026-10-12',
     body_md: `### Data Kesehatan Reproduksi Adalah Milik Anda Sepenuhnya
 
-Kami memahami bahwa kekhawatiran akan bocornya privasi adalah salah satu alasan utama orang enggan mencari informasi kesehatan reproduksi. Oleh karena itu, **Side by Side** dirancang dengan prinsip *Privacy by Design* yang selaras dengan Undang-Undang Pelindungan Data Pribadi (UU PDP).
+Kami memahami bahwa kekhawatiran akan bocornya privasi adalah salah satu alasan utama orang enggan mencari informasi kesehatan reproduksi. Oleh karena itu, **Side by Side** dirancang dengan prinsip *Privacy by Design* yang mengutamakan kerahasiaan dan kedaulatan data pengguna.
 
 ### Lima Komitmen Privasi Side by Side
 

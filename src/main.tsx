@@ -15,6 +15,14 @@ const queryClient = new QueryClient({
 });
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/sw.js')
@@ -22,7 +30,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
         reg.update();
       })
       .catch(() => {
-        // Abaikan jika gagal di lingkungan non-HTTPS lokal
+        // Safe fallback
       });
   });
 }

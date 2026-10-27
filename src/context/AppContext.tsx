@@ -117,6 +117,8 @@ interface AppContextValue {
   discreetMode: boolean;
   hasPin: boolean;
   isLocked: boolean;
+  autoLock: boolean;
+  setAutoLock: (enabled: boolean) => void;
   consents: ConsentState;
   assessmentAnswers: AssessmentAnswers;
   assessmentResult: AssessmentEvaluationResult | null;
@@ -239,7 +241,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [darkMode, setDarkModeState] = useState<boolean>(() => localStorage.getItem('sbs_dark_mode') === 'true');
   const [discreetMode, setDiscreetModeState] = useState<boolean>(() => localStorage.getItem('sbs_discreet_mode') === 'true');
   const [hasPin, setHasPin] = useState<boolean>(() => hasSecurityPin());
-  const [isLocked, setIsLocked] = useState<boolean>(false);
+  const [autoLock, setAutoLockState] = useState<boolean>(() => {
+    return localStorage.getItem('sbs_auto_lock') === 'true';
+  });
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    if (!hasSecurityPin()) return false;
+    const isExplicitlyLocked = localStorage.getItem('sbs_is_locked') === 'true';
+    const isAutoLock = localStorage.getItem('sbs_auto_lock') === 'true';
+    return isExplicitlyLocked || isAutoLock;
+  });
 
   const [consents, setConsents] = useState<ConsentState>(DEFAULT_CONSENTS);
   const [assessmentAnswers, setAssessmentAnswers] = useState<AssessmentAnswers>({});
@@ -575,25 +585,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDiscreetModeState(discreet);
   }, []);
 
+  const setAutoLock = useCallback((enabled: boolean) => {
+    setAutoLockState(enabled);
+    if (enabled) {
+      localStorage.setItem('sbs_auto_lock', 'true');
+    } else {
+      localStorage.setItem('sbs_auto_lock', 'false');
+    }
+  }, []);
+
   const setupPin = useCallback(async (pin: string) => {
     await setSecurityPin(pin);
     setHasPin(true);
+    localStorage.setItem('sbs_auto_lock', 'true');
+    localStorage.setItem('sbs_is_locked', 'true');
+    setAutoLockState(true);
+    setIsLocked(true);
   }, []);
 
   const removePin = useCallback(() => {
     clearSecurityPin();
     setHasPin(false);
     setIsLocked(false);
+    localStorage.removeItem('sbs_is_locked');
+    localStorage.removeItem('sbs_auto_lock');
   }, []);
 
   const lockApp = useCallback(() => {
     setIsLocked(true);
+    localStorage.setItem('sbs_is_locked', 'true');
   }, []);
 
   const unlockApp = useCallback(async (pin: string) => {
     const ok = await verifySecurityPin(pin);
     if (ok) {
       setIsLocked(false);
+      localStorage.removeItem('sbs_is_locked');
       return true;
     }
     return false;
@@ -982,7 +1009,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCycleStartDateState(new Date().toISOString().slice(0, 10));
     setDiscreetModeState(false);
     setHasPin(false);
+    setAutoLockState(false);
     setIsLocked(false);
+    localStorage.removeItem('sbs_is_locked');
+    localStorage.removeItem('sbs_auto_lock');
   }, [userId]);
 
   return (
@@ -999,6 +1029,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         discreetMode,
         hasPin,
         isLocked,
+        autoLock,
+        setAutoLock,
         consents,
         assessmentAnswers,
         assessmentResult,

@@ -12,7 +12,8 @@ import { FacilitiesPage } from '../pages/FacilitiesPage';
 import { ResultsPage } from '../pages/ResultsPage';
 import { NakesDashboardPage } from '../pages/NakesDashboardPage';
 import { AccountPage } from '../pages/AccountPage';
-import { encryptPayload, decryptPayload, wipeAllLocalData } from '../lib/crypto-storage';
+import { Layout } from '../components/Layout';
+import { encryptPayload, decryptPayload, wipeAllLocalData, setSecurityPin } from '../lib/crypto-storage';
 import { designTokens } from '../styles/design-tokens';
 
 function renderWithProviders(ui: React.ReactElement, initialEntries = ['/']) {
@@ -205,5 +206,42 @@ describe('Uji Alur Utama, Privasi & Aksesibilitas Dasar (Side by Side)', () => {
     expect(screen.getByText('Rendra Pratama')).toBeInTheDocument();
     expect(screen.getByText('rendra@demo.id')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Keluar Akun/i })).toBeInTheDocument();
+  });
+
+  it('Alur 9: Sistem PIN Lock tetap terkunci saat halaman dimuat ulang (refresh) dan berhasil dibuka dengan PIN yang benar', async () => {
+    // Siapkan PIN keamanan di storage dan kunci layar
+    await setSecurityPin('2468');
+    localStorage.setItem('sbs_is_locked', 'true');
+
+    // Render halaman seperti saat pengguna me-refresh browser
+    renderWithProviders(
+      <Layout>
+        <div>Konten Utama Rahasia</div>
+      </Layout>,
+      ['/']
+    );
+
+    // Layar kunci harus langsung aktif dan konten utama tidak boleh terlihat
+    expect(screen.getByText('Layar Terkunci Privasi')).toBeInTheDocument();
+    expect(screen.queryByText('Konten Utama Rahasia')).not.toBeInTheDocument();
+
+    // Masukkan PIN yang salah
+    const pinInput = screen.getByLabelText(/PIN Keamanan/i);
+    fireEvent.change(pinInput, { target: { value: '0000' } });
+    fireEvent.click(screen.getByRole('button', { name: /Buka Kunci/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/PIN tidak sesuai/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Konten Utama Rahasia')).not.toBeInTheDocument();
+
+    // Masukkan PIN yang benar
+    fireEvent.change(pinInput, { target: { value: '2468' } });
+    fireEvent.click(screen.getByRole('button', { name: /Buka Kunci/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Konten Utama Rahasia')).toBeInTheDocument();
+    });
+    expect(localStorage.getItem('sbs_is_locked')).toBeNull();
   });
 });

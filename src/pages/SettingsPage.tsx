@@ -29,6 +29,8 @@ export const SettingsPage: React.FC = () => {
     textScale,
     darkMode,
     hasPin,
+    autoLock,
+    setAutoLock,
     consents,
     assessmentAnswers,
     assessmentResult,
@@ -292,21 +294,35 @@ export const SettingsPage: React.FC = () => {
           </form>
 
           {hasPin && (
-            <div className="flex gap-2 pt-1">
-              <button
-                type="button"
-                onClick={lockApp}
-                className="touch-target flex-1 py-2 px-3 rounded-btn bg-brand-navy text-white text-xs font-bold"
-              >
-                Kunci Layar Sekarang
-              </button>
-              <button
-                type="button"
-                onClick={removePin}
-                className="touch-target py-2 px-3 rounded-btn border border-status-urgent text-status-urgent text-xs font-bold"
-              >
-                Nonaktifkan PIN
-              </button>
+            <div className="space-y-3 pt-2 border-t border-brand-navy/10">
+              <label className="flex items-center justify-between p-3 rounded-btn bg-surface-muted dark:bg-surface-dark cursor-pointer border border-brand-navy/10">
+                <span className="text-xs font-semibold text-brand-navy dark:text-white">
+                  Kunci otomatis saat membuka atau memuat ulang (refresh) halaman
+                </span>
+                <input
+                  type="checkbox"
+                  checked={autoLock}
+                  onChange={(e) => setAutoLock(e.target.checked)}
+                  className="w-4 h-4 accent-brand-teal rounded"
+                />
+              </label>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={lockApp}
+                  className="touch-target flex-1 py-2 px-3 rounded-btn bg-brand-navy text-white text-xs font-bold hover:bg-brand-navy-light transition"
+                >
+                  Kunci Layar Sekarang
+                </button>
+                <button
+                  type="button"
+                  onClick={removePin}
+                  className="touch-target py-2 px-3 rounded-btn border border-status-urgent text-status-urgent text-xs font-bold hover:bg-status-urgent-bg transition"
+                >
+                  Nonaktifkan PIN
+                </button>
+              </div>
             </div>
           )}
         </section>

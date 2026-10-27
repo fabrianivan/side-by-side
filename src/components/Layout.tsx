@@ -35,6 +35,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     lockApp,
     unlockApp,
     setupPin,
+    removePin,
     switchDemoPersona,
   } = useApp();
 
@@ -130,11 +131,28 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
             <button
               type="submit"
-              className="touch-target w-full py-3 px-4 rounded-btn bg-brand-teal text-white font-semibold hover:bg-brand-teal-dark transition"
+              className="touch-target w-full py-3 px-4 rounded-btn bg-brand-teal text-white font-semibold hover:bg-brand-teal-dark transition shadow-xs"
             >
-              Buka Kunci
+              {isEn ? 'Unlock Screen' : 'Buka Kunci'}
             </button>
           </form>
+
+          {/* Opsi Reset PIN bila lupa */}
+          <div className="pt-2 text-center border-t border-brand-navy/10">
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(isEn ? 'Reset and clear PIN lock on this device?' : 'Reset dan hapus kunci PIN dari perangkat ini?')) {
+                  removePin();
+                  setPinInput('');
+                  setPinError('');
+                }
+              }}
+              className="text-xs text-brand-navy/60 dark:text-white/60 hover:text-status-urgent transition"
+            >
+              {isEn ? 'Forgot PIN? Reset PIN Lock' : 'Lupa PIN? Reset Kunci PIN'}
+            </button>
+          </div>
         </div>
       </div>
     );

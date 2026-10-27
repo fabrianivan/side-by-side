@@ -64,7 +64,7 @@ export const ShareNakesPage: React.FC = () => {
       <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-2">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-3 py-1 rounded-full">
           <ShieldCheck className="w-4 h-4" />
-          Kendali Privasi Pasien (UU PDP) • Tautan Berlaku 1 Jam
+          Kendali Privasi Pasien • Tautan Berlaku 1 Jam
         </span>
         <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
           Bagikan Ringkasan Pasien ke Tenaga Kesehatan

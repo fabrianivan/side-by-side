@@ -199,7 +199,7 @@ describe('Uji Alur Utama, Privasi & Aksesibilitas Dasar (Side by Side)', () => {
     // Tab yang tersedia saat login adalah Profil, Kata Sandi & Keamanan, Hak Privasi
     expect(screen.getByRole('button', { name: /Profil & Tampilan/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Kata Sandi & Keamanan/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Hak Privasi \(UU PDP\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Hak Privasi/i })).toBeInTheDocument();
 
     // Data profil pengguna terlihat langsung
     expect(screen.getByText('Rendra Pratama')).toBeInTheDocument();

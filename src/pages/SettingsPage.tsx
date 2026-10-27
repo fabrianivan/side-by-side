@@ -67,7 +67,7 @@ export const SettingsPage: React.FC = () => {
 
   const handleExportJson = () => {
     const exportPayload = {
-      app: 'Side by Side — Ekspor Data Pribadi (Hak Akses UU PDP)',
+      app: 'Side by Side — Ekspor Data Pribadi',
       exportedAt: new Date().toISOString(),
       mode: authMode,
       user: { id: userId, email: userEmail, displayName },
@@ -106,7 +106,7 @@ export const SettingsPage: React.FC = () => {
       <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-2">
         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-3 py-1 rounded-full">
           <ShieldCheck className="w-4 h-4" />
-          Pusat Kendali Privasi & Pengaturan (Patuh UU PDP)
+          Pusat Kendali Privasi & Pengaturan
         </span>
         <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
           Pengaturan & Data Anda
@@ -419,7 +419,7 @@ export const SettingsPage: React.FC = () => {
               Portabilitas & Ekspor Data Saya (JSON / PDF)
             </h2>
             <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              Sesuai hak subjek data dalam UU PDP, Anda dapat mengunduh salinan lengkap data Anda dalam format JSON terstruktur atau mencetak ringkasan PDF kapan saja.
+              Sebagai hak privasi Anda, Anda dapat mengunduh salinan lengkap data Anda dalam format JSON terstruktur atau mencetak ringkasan PDF kapan saja.
             </p>
           </div>
 

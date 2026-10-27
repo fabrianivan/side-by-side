@@ -341,7 +341,7 @@ export const AccountPage: React.FC = () => {
 
   const handleExportDataJson = () => {
     const payload = {
-      app: 'Side by Side — Account & Health Data Export (UU PDP Compliant)',
+      app: 'Side by Side — Account & Health Data Export',
       exportedAt: new Date().toISOString(),
       account: { userId, userEmail, displayName, authMode },
       consents,
@@ -715,7 +715,7 @@ export const AccountPage: React.FC = () => {
               }`}
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>{isEn ? 'Data Privacy (UU PDP)' : 'Hak Privasi (UU PDP)'}</span>
+              <span>{isEn ? 'Data Privacy' : 'Hak Privasi'}</span>
             </button>
           </>
         ) : (
@@ -1018,11 +1018,11 @@ export const AccountPage: React.FC = () => {
               )}
             </div>
 
-            {/* Card 3: Jaminan Privasi UU PDP */}
+            {/* Card 3: Jaminan Privasi */}
             <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 space-y-2.5">
               <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-brand-teal" />
-                <span>{isEn ? 'Privacy Shield (UU PDP)' : 'Jaminan Privasi UU PDP'}</span>
+                <span>{isEn ? 'Privacy Shield' : 'Jaminan Privasi'}</span>
               </h3>
               <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
                 {isAccountActive
@@ -1356,7 +1356,7 @@ export const AccountPage: React.FC = () => {
 
                 <div className="pt-3 flex flex-wrap items-center justify-between gap-3">
                   <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
-                    {isEn ? 'Client encryption & PDP Act privacy preserved.' : 'Enkripsi data & kepatuhan UU PDP terjamin.'}
+                    {isEn ? 'Client encryption & privacy preserved.' : 'Enkripsi data & hak privasi terjamin.'}
                   </span>
                   <button
                     type="submit"
@@ -1478,19 +1478,19 @@ export const AccountPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB D: DATA PRIVACY & SUBJECT RIGHTS (UU PDP / GDPR) */}
+      {/* TAB D: DATA PRIVACY & SUBJECT RIGHTS */}
       {activeTab === 'data' && (
         <div className="space-y-6">
           <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5 space-y-5">
             <div className="border-b border-brand-navy/10 pb-3">
               <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-brand-teal" />
-                <span>{isEn ? 'Data Privacy & Subject Rights (UU PDP / GDPR)' : 'Hak Subjek Data & Keamanan Privasi'}</span>
+                <span>{isEn ? 'Data Privacy & Subject Rights' : 'Hak Privasi & Kendali Data'}</span>
               </h2>
               <p className="text-xs text-brand-navy/70 dark:text-white/70">
                 {isEn
                   ? 'Exercise your legal right to export your complete records or permanently wipe all account data.'
-                  : 'Gunakan hak legal Anda untuk mengunduh seluruh data kesehatan atau menghapusnya secara permanen.'}
+                  : 'Gunakan hak Anda untuk mengunduh seluruh data kesehatan atau menghapusnya secara permanen.'}
               </p>
             </div>
 

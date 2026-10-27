@@ -321,7 +321,7 @@ export const WelcomePage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-brand-navy dark:text-white">
-              Data Anda & Persetujuan Granular (Patuh Prinsip UU PDP)
+              Data Anda & Persetujuan Granular
             </h2>
             <p className="text-xs text-brand-navy/75 dark:text-white/75 mt-0.5">
               Semua opsi di bawah ini bernilai <strong>NONAKTIF (OFF) secara default</strong>. Anda memegang kendali penuh kapan saja.

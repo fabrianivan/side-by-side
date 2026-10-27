@@ -2,63 +2,76 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Calendar,
-  Flame,
-  CheckCircle2,
   Clock,
   Sparkles,
-  Heart,
-  ShieldCheck,
-  ChevronRight,
   TrendingUp,
-  AlertCircle,
   Bell,
   Check,
+  CheckCircle2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
 
 interface HabitItem {
   key: string;
-  title: string;
-  subtitle: string;
-  benefit: string;
+  titleId: string;
+  titleEn: string;
+  subtitleId: string;
+  subtitleEn: string;
+  benefitId: string;
+  benefitEn: string;
   category: 'temperature' | 'nutrition' | 'fitness' | 'sleep' | 'toxin';
 }
 
 const HABIT_ITEMS: HabitItem[] = [
   {
     key: 'cool_temp',
-    title: 'Menjaga Suhu Skrotum Tetap Sejuk',
-    subtitle: 'Tidak memangku laptop di paha, pilih celana dalam longgar/katun, hindari air panas.',
-    benefit: 'Suhu optimal testis adalah 2–4°C lebih dingin dari suhu tubuh normal.',
+    titleId: 'Menjaga Suhu Skrotum Tetap Sejuk',
+    titleEn: 'Keep Scrotal Temperature Cool',
+    subtitleId: 'Tidak memangku laptop di paha, pilih celana dalam longgar/katun, hindari air panas.',
+    subtitleEn: 'Avoid laptops on lap, wear loose breathable underwear, avoid hot baths or saunas.',
+    benefitId: 'Suhu optimal testis adalah 2–4°C lebih dingin dari suhu tubuh normal.',
+    benefitEn: 'Optimal testicular temperature is 2–4°C cooler than core body temperature.',
     category: 'temperature',
   },
   {
     key: 'hydration_antioxidant',
-    title: 'Cukupi Hidrasi & Antioksidan Harian',
-    subtitle: 'Minum 2 liter air, konsumsi buah tomat (likopen), kacang-kacangan (zinc), dan sayuran hijau.',
-    benefit: 'Antioksidan melindungi membran sel sperma dari stres oksidatif dan kerusakan DNA.',
+    titleId: 'Cukupi Hidrasi & Antioksidan Harian',
+    titleEn: 'Daily Hydration & Antioxidant Nutrition',
+    subtitleId: 'Minum 2 liter air, konsumsi buah tomat (likopen), kacang-kacangan (zinc), dan sayuran hijau.',
+    subtitleEn: 'Drink 2L of water, consume tomatoes (lycopene), nuts/seeds (zinc), and leafy greens.',
+    benefitId: 'Antioksidan melindungi membran sel sperma dari stres oksidatif dan kerusakan DNA.',
+    benefitEn: 'Antioxidants protect the delicate sperm membrane from oxidative stress and DNA fragmentation.',
     category: 'nutrition',
   },
   {
     key: 'exercise',
-    title: 'Aktivitas Fisik Moderat 30 Menit',
-    subtitle: 'Jalan santai, jogging ringan, atau senam peregangan tubuh.',
-    benefit: 'Meningkatkan aliran darah dan menjaga sensitivitas insulin tanpa memicu panas berlebih di perineum.',
+    titleId: 'Aktivitas Fisik Moderat 30 Menit',
+    titleEn: 'Moderate Physical Activity (30 Mins)',
+    subtitleId: 'Jalan santai, jogging ringan, atau senam peregangan tubuh.',
+    subtitleEn: 'Brisk walking, light jogging, or core stretching.',
+    benefitId: 'Meningkatkan aliran darah dan menjaga sensitivitas insulin tanpa memicu panas berlebih di perineum.',
+    benefitEn: 'Improves pelvic blood flow and insulin sensitivity without creating excess groin friction heat.',
     category: 'fitness',
   },
   {
     key: 'sleep_rest',
-    title: 'Tidur Berkualitas 7–8 Jam Malam Hari',
-    subtitle: 'Hindari layar gadget 30 menit sebelum tidur, ruangan redup dan sejuk.',
-    benefit: 'Puncak sintesis testosteron dan hormon reproduksi pria diproduksi selama fase tidur nyenyak (REM).',
+    titleId: 'Tidur Berkualitas 7–8 Jam Malam Hari',
+    titleEn: 'Quality Restorative Sleep (7–8 Hours)',
+    subtitleId: 'Hindari layar gadget 30 menit sebelum tidur, ruangan redup dan sejuk.',
+    subtitleEn: 'Dim screens 30 mins before bed, maintain a cool, quiet sleeping environment.',
+    benefitId: 'Puncak sintesis testosteron dan hormon reproduksi pria diproduksi selama fase tidur nyenyak (REM).',
+    benefitEn: 'Peak nocturnal testosterone synthesis and LH secretion occur during restorative deep REM sleep.',
     category: 'sleep',
   },
   {
     key: 'no_smoke',
-    title: 'Hindari Rokok, Vape, & Batasi Alkohol',
-    subtitle: 'Jauhkan diri dari asap rokok dan konsumsi alkohol berlebihan hari ini.',
-    benefit: 'Mengurangi Sperm DNA Fragmentation Index (DFI) dan menjaga motilitas sperma.',
+    titleId: 'Hindari Rokok, Vape, & Batasi Alkohol',
+    titleEn: 'Avoid Smoking, Vaping, & Minimize Alcohol',
+    subtitleId: 'Jauhkan diri dari asap rokok dan konsumsi alkohol berlebihan hari ini.',
+    subtitleEn: 'Protect your bloodstream from cigarette smoke toxins and heavy alcohol intake.',
+    benefitId: 'Mengurangi Sperm DNA Fragmentation Index (DFI) dan menjaga motilitas sperma.',
+    benefitEn: 'Lowers Sperm DNA Fragmentation Index (DFI) and preserves progressive motility.',
     category: 'toxin',
   },
 ];
@@ -74,56 +87,68 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
   } = useApp();
   const t = getTranslations(locale);
   const navigate = useNavigate();
+  const isEn = locale === 'en';
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [reminderAdded, setReminderAdded] = useState<boolean>(false);
 
-  // Kalkulasi hari siklus
+  // Cycle day calculations
   const startMs = new Date(cycleStartDate).getTime();
   const currentMs = new Date(selectedDate).getTime();
   const diffDays = Math.max(1, Math.min(74, Math.floor((currentMs - startMs) / (1000 * 60 * 60 * 24)) + 1));
   const progressPct = Math.min(100, Math.round((diffDays / 74) * 100));
 
-  // Tentukan fase biologis saat ini
   const getCurrentPhase = (day: number) => {
     if (day <= 18) {
       return {
         number: 1,
-        name: 'Fase Mitosis (Spermatogonia)',
-        range: 'Hari 1 – 18',
-        detail:
-          'Sel punca sperma membelah dan membentuk cetak biru genetik awal. Tahap ini sangat sensitif terhadap panas testis dan demam tinggi.',
-        focus: 'Prioritas: Jaga skrotum tetap sejuk dan hidrasi optimal.',
+        name: isEn ? 'Phase 1: Spermatogonia Mitosis' : 'Fase 1: Mitosis (Spermatogonia)',
+        range: isEn ? 'Days 1 – 18' : 'Hari 1 – 18',
+        detail: isEn
+          ? 'Stem cells divide and establish the initial genetic blueprint. Highly sensitive to scrotal heat and high fevers.'
+          : 'Sel punca sperma membelah dan membentuk cetak biru genetik awal. Tahap ini sangat sensitif terhadap panas testis dan demam tinggi.',
+        focus: isEn
+          ? 'Priority: Keep scrotum cool and maintain daily hydration.'
+          : 'Prioritas: Jaga skrotum tetap sejuk dan hidrasi optimal.',
       };
     }
     if (day <= 42) {
       return {
         number: 2,
-        name: 'Fase Meiosis (Pengemasan DNA)',
-        range: 'Hari 19 – 42',
-        detail:
-          'Materi genetik (kromosom) dibagi dua secara presisi. Antioksidan sangat krusial di tahap ini untuk mencegah kerusakan rantai DNA sperma.',
-        focus: 'Prioritas: Asupan Zinc, Selenium, Likopen, dan Vitamin C & E.',
+        name: isEn ? 'Phase 2: Meiosis & DNA Packaging' : 'Fase 2: Meiosis (Pengemasan DNA)',
+        range: isEn ? 'Days 19 – 42' : 'Hari 19 – 42',
+        detail: isEn
+          ? 'Chromosomes divide precisely in half. Antioxidants are critical in this phase to prevent single and double-strand DNA breaks.'
+          : 'Materi genetik (kromosom) dibagi dua secara presisi. Antioksidan sangat krusial di tahap ini untuk mencegah kerusakan rantai DNA sperma.',
+        focus: isEn
+          ? 'Priority: Zinc, Selenium, Lycopene, and Vitamins C & E.'
+          : 'Prioritas: Asupan Zinc, Selenium, Likopen, dan Vitamin C & E.',
       };
     }
     if (day <= 64) {
       return {
         number: 3,
-        name: 'Fase Spermiogenesis (Pembentukan Ekor & Energi)',
-        range: 'Hari 43 – 64',
-        detail:
-          'Sel bulat berubah menjadi bentuk sperma motil dengan kepala oval dan ekor cambuk bertenaga mitokondria untuk berenang maju.',
-        focus: 'Prioritas: Olahraga moderat 30 menit, kurangi stres dan rokok.',
+        name: isEn ? 'Phase 3: Spermiogenesis & Flagellum Development' : 'Fase 3: Spermiogenesis (Ekor & Energi)',
+        range: isEn ? 'Days 43 – 64' : 'Hari 43 – 64',
+        detail: isEn
+          ? 'Round spermatids transform into streamlined swimmers with acrosome caps and mitochondrial-powered motility tails.'
+          : 'Sel bulat berubah menjadi bentuk sperma motil dengan kepala oval dan ekor cambuk bertenaga mitokondria untuk berenang maju.',
+        focus: isEn
+          ? 'Priority: 30 minutes of aerobic activity, stress moderation, and smoke avoidance.'
+          : 'Prioritas: Olahraga moderat 30 menit, kurangi stres dan rokok.',
       };
     }
     return {
       number: 4,
-      name: 'Fase Pematangan Epididimis & Kesiapan Tes',
-      range: 'Hari 65 – 74',
-      detail:
-        'Sperma matang berpindah ke saluran epididimis dan siap untuk ejakulasi atau uji analisis semen laboratorium.',
-      focus: 'Prioritas: Masa pantang (abstinensia) 2–7 hari sebelum uji laboratorium.',
+      name: isEn ? 'Phase 4: Epididymal Transit & Test Readiness' : 'Fase 4: Pematangan Epididimis & Kesiapan Tes',
+      range: isEn ? 'Days 65 – 74' : 'Hari 65 – 74',
+      detail: isEn
+        ? 'Fully formed sperm travel through the epididymis gaining forward motility, primed for ejaculation or lab analysis.'
+        : 'Sperma matang berpindah ke saluran epididimis dan siap untuk ejakulasi atau uji analisis semen laboratorium.',
+      focus: isEn
+        ? 'Priority: Maintain 2–7 days of abstinence before laboratory collection.'
+        : 'Prioritas: Masa pantang (abstinensia) 2–7 hari sebelum uji laboratorium.',
     };
   };
 
@@ -138,10 +163,14 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
     const testDate = new Date(startMs + 74 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
     await addReminder({
       type: 'semen_analysis',
-      title: 'Evaluasi Hasil Analisis Semen Siklus 74 Hari',
-      facilityName: 'Laboratorium Klinik / Rumah Sakit Pilihan',
+      title: isEn
+        ? 'Day 74 Spermatogenesis Cycle Evaluation & Semen Analysis'
+        : 'Evaluasi Hasil Analisis Semen Siklus 74 Hari',
+      facilityName: isEn ? 'Preferred Laboratory / Clinic' : 'Laboratorium Klinik / Rumah Sakit Pilihan',
       remindAt: testDate,
-      notes: 'Siklus sperma baru telah matang sempurna. Pastikan masa pantang 2–7 hari sebelum pengambilan sampel.',
+      notes: isEn
+        ? 'Your fresh sperm generation has matured. Ensure 2–7 days of abstinence prior to sample collection.'
+        : 'Siklus sperma baru telah matang sempurna. Pastikan masa pantang 2–7 hari sebelum pengambilan sampel.',
     });
     setReminderAdded(true);
     setTimeout(() => setReminderAdded(false), 3000);
@@ -155,13 +184,15 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-2.5 py-1 rounded-full">
               <Clock className="w-3.5 h-3.5" />
-              <span>Siklus Biologis Tubuh Pria (~72–74 Hari)</span>
+              <span>{isEn ? 'Male Biological Lifecycle (~72–74 Days)' : 'Siklus Biologis Tubuh Pria (~72–74 Hari)'}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
-              Pelacak Siklus Spermatogenesis & Kebiasaan Sehat
+              {isEn ? '72-Day Spermatogenesis Roadmap & Habit Tracker' : 'Pelacak Siklus Spermatogenesis & Kebiasaan Sehat'}
             </h1>
             <p className="text-sm text-brand-navy/75 dark:text-white/75">
-              Tubuh pria membutuhkan waktu sekitar 72 hingga 74 hari untuk memproduksi sperma matang seutuhnya. Kebiasaan sehat hari ini membentuk sperma 2 bulan ke depan.
+              {isEn
+                ? 'The male body requires approximately 72 to 74 days to regenerate and mature sperm cells. Positive habits cultivated today will reflect in your sperm 2 months from now.'
+                : 'Tubuh pria membutuhkan waktu sekitar 72 hingga 74 hari untuk memproduksi sperma matang seutuhnya. Kebiasaan sehat hari ini membentuk sperma 2 bulan ke depan.'}
             </p>
           </div>
 
@@ -173,28 +204,32 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
               className="touch-target px-4 py-2.5 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center gap-1.5 shadow-soft hover:bg-brand-navy-light transition disabled:opacity-75"
             >
               {reminderAdded ? <Check className="w-4 h-4 text-brand-teal" /> : <Bell className="w-4 h-4" />}
-              <span>{reminderAdded ? 'Pengingat Dijadwalkan!' : 'Jadwalkan Tes Hari ke-74'}</span>
+              <span>
+                {reminderAdded
+                  ? (isEn ? 'Reminder Scheduled!' : 'Pengingat Dijadwalkan!')
+                  : (isEn ? 'Schedule Day 74 Test' : 'Jadwalkan Tes Hari ke-74')}
+              </span>
             </button>
           </div>
         </div>
       </section>
 
-      {/* Progress Siklus 72 Hari Card */}
+      {/* 72-Day Progress Card */}
       <section className="bg-gradient-to-br from-brand-navy to-brand-navy-light text-white rounded-card shadow-soft-lg p-6 sm:p-7 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-brand-teal text-white">
-              Fase {currentPhase.number} dari 4 • {currentPhase.range}
+              {isEn ? `Phase ${currentPhase.number} of 4 • ${currentPhase.range}` : `Fase ${currentPhase.number} dari 4 • ${currentPhase.range}`}
             </span>
             <h2 className="text-xl sm:text-2xl font-bold mt-2 text-white">
-              Hari ke-{diffDays} dari 74 Hari ({progressPct}% Selesai)
+              {isEn ? `Day ${diffDays} of 74 Days (${progressPct}% Complete)` : `Hari ke-${diffDays} dari 74 Hari (${progressPct}% Selesai)`}
             </h2>
           </div>
 
-          {/* Pengatur Tanggal Mulai */}
+          {/* Date Selector */}
           <div className="bg-white/10 p-2.5 rounded-btn border border-white/15 text-xs flex items-center gap-2">
             <Calendar className="w-4 h-4 text-brand-teal-light" />
-            <span className="text-white/80">Mulai Siklus:</span>
+            <span className="text-white/80">{isEn ? 'Cycle Started:' : 'Mulai Siklus:'}</span>
             <input
               type="date"
               value={cycleStartDate}
@@ -204,7 +239,7 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Progress Bar Visual */}
+        {/* Visual Progress Bar */}
         <div className="space-y-2">
           <div className="w-full bg-white/20 h-3 rounded-full overflow-hidden">
             <div
@@ -213,13 +248,13 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
             />
           </div>
           <div className="flex justify-between text-[11px] text-white/70">
-            <span>Hari 1 (Mulai Kebiasaan)</span>
-            <span>Hari 36 (Fase Meiosis)</span>
-            <span>Hari 74 (Sperma Matang & Evaluasi)</span>
+            <span>{isEn ? 'Day 1 (Habit Start)' : 'Hari 1 (Mulai Kebiasaan)'}</span>
+            <span>{isEn ? 'Day 36 (Meiosis Peak)' : 'Hari 36 (Fase Meiosis)'}</span>
+            <span>{isEn ? 'Day 74 (Matured & Test Evaluation)' : 'Hari 74 (Sperma Matang & Evaluasi)'}</span>
           </div>
         </div>
 
-        {/* Kotak Info Fase Aktif */}
+        {/* Active Phase Box */}
         <div className="p-4 rounded-btn bg-white/10 border border-white/15 space-y-1.5 text-xs">
           <div className="font-bold text-brand-coral flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
@@ -230,41 +265,49 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 4 Tahapan Milestone Spermatogenesis */}
+      {/* 4 Biological Milestones */}
       <section className="space-y-3">
         <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-brand-teal" />
-          <span>Perjalanan Biologis Sperma Anda</span>
+          <span>{isEn ? 'Your Biological Sperm Development Journey' : 'Perjalanan Biologis Sperma Anda'}</span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
               phase: 1,
-              title: 'Mitosis Spermatogonia',
-              range: 'Hari 1–18',
+              title: isEn ? 'Spermatogonia Mitosis' : 'Mitosis Spermatogonia',
+              range: isEn ? 'Days 1–18' : 'Hari 1–18',
               active: diffDays <= 18,
-              desc: 'Pembelahan sel punca awal di tubulus seminiferus testis.',
+              desc: isEn
+                ? 'Initial stem cell division in the seminiferous tubules of the testes.'
+                : 'Pembelahan sel punca awal di tubulus seminiferus testis.',
             },
             {
               phase: 2,
-              title: 'Meiosis & DNA Pack',
-              range: 'Hari 19–42',
+              title: isEn ? 'Meiosis & DNA Pack' : 'Meiosis & DNA Pack',
+              range: isEn ? 'Days 19–42' : 'Hari 19–42',
               active: diffDays > 18 && diffDays <= 42,
-              desc: 'Pemisahan kromosom & perlindungan rantai genetik oleh antioksidan.',
+              desc: isEn
+                ? 'Chromosome halving & critical genetic protection by antioxidants.'
+                : 'Pemisahan kromosom & perlindungan rantai genetik oleh antioksidan.',
             },
             {
               phase: 3,
-              title: 'Spermiogenesis & Ekor',
-              range: 'Hari 43–64',
+              title: isEn ? 'Spermiogenesis & Tail' : 'Spermiogenesis & Ekor',
+              range: isEn ? 'Days 43–64' : 'Hari 43–64',
               active: diffDays > 42 && diffDays <= 64,
-              desc: 'Pembentukan struktur kepala akrosom dan mitokondria ekor penggerak.',
+              desc: isEn
+                ? 'Acrosomal cap formation and mitochondrial motor packaging.'
+                : 'Pembentukan struktur kepala akrosom dan mitokondria ekor penggerak.',
             },
             {
               phase: 4,
-              title: 'Epididimis & Siap Tes',
-              range: 'Hari 65–74',
+              title: isEn ? 'Epididymal Maturation' : 'Epididimis & Siap Tes',
+              range: isEn ? 'Days 65–74' : 'Hari 65–74',
               active: diffDays > 64,
-              desc: 'Pematangan kemampuan berenang progresif dan kesiapan evaluasi.',
+              desc: isEn
+                ? 'Acquiring progressive forward motility and lab test readiness.'
+                : 'Pematangan kemampuan berenang progresif dan kesiapan evaluasi.',
             },
           ].map((item) => (
             <div
@@ -277,7 +320,7 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.active ? 'bg-brand-teal text-white' : 'bg-brand-navy/10 text-brand-navy dark:text-white'}`}>
-                  Fase {item.phase}
+                  {isEn ? `Phase ${item.phase}` : `Fase ${item.phase}`}
                 </span>
                 <span className="text-[11px] font-semibold text-brand-navy/60 dark:text-white/60">
                   {item.range}
@@ -294,21 +337,23 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Checklist Kebiasaan Harian (Daily Micro-Habits) */}
+      {/* Daily Micro-Habits Checklist */}
       <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-brand-teal" />
-              <span>Checklist Kebiasaan Harian</span>
+              <span>{isEn ? 'Daily Micro-Habits Checklist' : 'Checklist Kebiasaan Harian'}</span>
             </h2>
             <p className="text-xs text-brand-navy/70 dark:text-white/70">
-              Checklist sederhana untuk mendukung kualitas sperma setiap hari. Data tersimpan privat di perangkat Anda.
+              {isEn
+                ? 'Simple daily actions to safeguard sperm quality. Saved privately and encrypted on your device.'
+                : 'Checklist sederhana untuk mendukung kualitas sperma setiap hari. Data tersimpan privat di perangkat Anda.'}
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-brand-navy/60 dark:text-white/60">Pilih Tanggal:</span>
+            <span className="text-brand-navy/60 dark:text-white/60">{isEn ? 'Select Date:' : 'Pilih Tanggal:'}</span>
             <input
               type="date"
               value={selectedDate}
@@ -318,17 +363,21 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Skor Kepatuhan Hari Ini */}
+        {/* Adherence Score */}
         <div className="p-3.5 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex items-center justify-between">
           <span className="text-xs font-semibold text-brand-navy dark:text-white">
-            Progress Kebiasaan ({selectedDate === todayStr ? 'Hari Ini' : selectedDate}):
+            {isEn
+              ? `Habits Completed (${selectedDate === todayStr ? 'Today' : selectedDate}):`
+              : `Progress Kebiasaan (${selectedDate === todayStr ? 'Hari Ini' : selectedDate}):`}
           </span>
           <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-brand-teal text-white">
-            {todayCheckedList.length} dari {HABIT_ITEMS.length} Selesai
+            {isEn
+              ? `${todayCheckedList.length} of ${HABIT_ITEMS.length} Complete`
+              : `${todayCheckedList.length} dari ${HABIT_ITEMS.length} Selesai`}
           </span>
         </div>
 
-        {/* Daftar Habit Cards */}
+        {/* Habit List */}
         <div className="space-y-3">
           {HABIT_ITEMS.map((habit) => {
             const isChecked = todayCheckedList.includes(habit.key);
@@ -361,14 +410,14 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
                           : 'text-brand-navy dark:text-white'
                       }`}
                     >
-                      {habit.title}
+                      {isEn ? habit.titleEn : habit.titleId}
                     </h3>
                   </div>
                   <p className="text-[11px] text-brand-navy/75 dark:text-white/75 leading-relaxed">
-                    {habit.subtitle}
+                    {isEn ? habit.subtitleEn : habit.subtitleId}
                   </p>
                   <p className="text-[10px] text-brand-teal font-semibold pt-0.5">
-                    💡 Kenapa ini penting: {habit.benefit}
+                    💡 {isEn ? `Why this matters: ${habit.benefitEn}` : `Kenapa ini penting: ${habit.benefitId}`}
                   </p>
                 </div>
               </div>

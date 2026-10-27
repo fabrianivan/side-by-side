@@ -35,6 +35,7 @@ export const HomePage: React.FC = () => {
 
   const t = getTranslations(locale);
   const navigate = useNavigate();
+  const isEn = locale === 'en';
 
   // Tentukan "Satu Langkah Kecil Berikutnya" secara dinamis
   const getNextStepCard = () => {
@@ -362,71 +363,79 @@ export const HomePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-brand-teal text-white">
-              Edukasi Klinis Terpadu
+              {isEn ? 'Integrated Clinical Education' : 'Edukasi Klinis Terpadu'}
             </span>
             <h2 className="text-base sm:text-lg font-bold text-brand-navy dark:text-white mt-1">
-              Alat Interaktif & Pelacak Mandiri
+              {isEn ? 'Interactive Tools & Biological Trackers' : 'Alat Interaktif & Pelacak Mandiri'}
             </h2>
           </div>
           <p className="text-xs text-brand-navy/70 dark:text-white/70 max-w-md">
-            Dirancang berdasarkan pedoman resmi WHO 2021 dan panduan klinis andrologi untuk memberikan pemahaman menyeluruh.
+            {isEn
+              ? 'Calibrated against WHO 2021 manual standards and andrology guidelines for objective, stigma-free understanding.'
+              : 'Dirancang berdasarkan pedoman resmi WHO 2021 dan panduan klinis andrologi untuk memberikan pemahaman menyeluruh.'}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
-            to="/simulator"
+            to={isEn ? '/semen-calculator' : '/simulator'}
             className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/10 hover:border-brand-teal hover:shadow-soft-lg transition space-y-2 group"
           >
             <div className="w-10 h-10 rounded-btn bg-brand-teal-light text-brand-teal flex items-center justify-center group-hover:scale-105 transition">
               <Sliders className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-sm text-brand-navy dark:text-white group-hover:text-brand-teal transition">
-              Simulator Sperma WHO (2021)
+              {isEn ? 'WHO Semen Analysis Simulator' : 'Simulator Sperma WHO (2021)'}
             </h3>
             <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
-              Kalkulator slider interaktif untuk volume, konsentrasi, motilitas, morfologi, dan skor potensi konsepsi alami (TMSC).
+              {isEn
+                ? 'Interactive parameter sliders for volume, concentration, motility, morphology, and Total Motile Sperm Count (TMSC).'
+                : 'Kalkulator slider interaktif untuk volume, konsentrasi, motilitas, morfologi, dan skor potensi konsepsi alami (TMSC).'}
             </p>
             <div className="text-xs font-bold text-brand-teal flex items-center gap-1 pt-1">
-              <span>Buka Simulator</span>
+              <span>{isEn ? 'Open Simulator' : 'Buka Simulator'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </Link>
 
           <Link
-            to="/siklus-72-hari"
+            to={isEn ? '/cycle-tracker' : '/siklus-72-hari'}
             className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/10 hover:border-brand-teal hover:shadow-soft-lg transition space-y-2 group"
           >
             <div className="w-10 h-10 rounded-btn bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral flex items-center justify-center group-hover:scale-105 transition">
               <Clock className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-sm text-brand-navy dark:text-white group-hover:text-brand-coral transition">
-              Siklus Biologis 72 Hari & Kebiasaan
+              {isEn ? '72-Day Biological Cycle & Habits' : 'Siklus Biologis 72 Hari & Kebiasaan'}
             </h3>
             <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
-              Pelajari 4 fase pematangan sperma dari sel punca hingga siap tes lab, dilengkapi checklist kebiasaan protektif harian.
+              {isEn
+                ? 'Explore the 4 biological phases from spermatogonia stem cells to lab readiness, with a daily protective habits checklist.'
+                : 'Pelajari 4 fase pematangan sperma dari sel punca hingga siap tes lab, dilengkapi checklist kebiasaan protektif harian.'}
             </p>
             <div className="text-xs font-bold text-brand-coral-dark dark:text-brand-coral flex items-center gap-1 pt-1">
-              <span>Buka Pelacak Siklus</span>
+              <span>{isEn ? 'Open Cycle Tracker' : 'Buka Pelacak Siklus'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </Link>
 
           <Link
-            to="/checklist-dokter"
+            to={isEn ? '/doctor-checklist' : '/checklist-dokter'}
             className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/10 hover:border-brand-teal hover:shadow-soft-lg transition space-y-2 group"
           >
             <div className="w-10 h-10 rounded-btn bg-brand-navy/10 dark:bg-white/10 text-brand-navy dark:text-white flex items-center justify-center group-hover:scale-105 transition">
               <FileText className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-sm text-brand-navy dark:text-white group-hover:text-brand-teal transition">
-              Daftar Pertanyaan untuk Dokter
+              {isEn ? 'Doctor Consultation Questions' : 'Daftar Pertanyaan untuk Dokter'}
             </h3>
             <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
-              Generator pertanyaan konsultasi dokter andrologi/urologi sesuai kondisi Anda, siap dicetak atau disalin ke HP.
+              {isEn
+                ? 'Dynamic question builder tailored to your clinical situation, ready to print or copy to your smartphone.'
+                : 'Generator pertanyaan konsultasi dokter andrologi/urologi sesuai kondisi Anda, siap dicetak atau disalin ke HP.'}
             </p>
             <div className="text-xs font-bold text-brand-navy dark:text-white flex items-center gap-1 pt-1">
-              <span>Buat Checklist Dokter</span>
+              <span>{isEn ? 'Build Doctor Checklist' : 'Buat Checklist Dokter'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </Link>

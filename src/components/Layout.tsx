@@ -31,6 +31,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     activePersona,
     displayName,
     locale,
+    setLocale,
     discreetMode,
     setDiscreetMode,
     hasPin,
@@ -267,8 +268,32 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </div>
           </button>
 
-          {/* Tombol Cepat Privasi: Mode Samaran & Kunci PIN */}
+          {/* Tombol Cepat Privasi: Mode Samaran & Kunci PIN & Bahasa */}
           <div className="flex items-center gap-2">
+            {/* Language Switcher */}
+            <div className="flex items-center rounded-btn border border-brand-navy/15 bg-surface-muted dark:bg-surface-dark p-0.5 text-xs font-bold shrink-0">
+              <button
+                type="button"
+                onClick={() => setLocale('id')}
+                className={`px-2 py-1 rounded transition ${
+                  locale === 'id' ? 'bg-brand-teal text-white shadow-xs' : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy'
+                }`}
+                title="Bahasa Indonesia"
+              >
+                ID
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocale('en')}
+                className={`px-2 py-1 rounded transition ${
+                  locale === 'en' ? 'bg-brand-teal text-white shadow-xs' : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy'
+                }`}
+                title="English"
+              >
+                EN
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={() => setDiscreetMode(!discreetMode)}

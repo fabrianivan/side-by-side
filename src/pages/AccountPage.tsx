@@ -28,6 +28,10 @@ import {
   X,
   UserCheck,
   Database,
+  Users,
+  ArrowLeftRight,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
@@ -67,8 +71,9 @@ export const AccountPage: React.FC = () => {
     isAccountActive ? 'profile' : 'auth'
   );
 
-  // Switch account drawer/modal toggle when logged in
-  const [showSwitchAccount, setShowSwitchAccount] = useState<boolean>(false);
+  // Switch account modal state & custom email form toggle
+  const [showSwitchModal, setShowSwitchModal] = useState<boolean>(false);
+  const [showCustomLoginForm, setShowCustomLoginForm] = useState<boolean>(false);
 
   // Automatically ensure logged-in user never lands on the login tab
   useEffect(() => {
@@ -179,7 +184,7 @@ export const AccountPage: React.FC = () => {
     setIsSubmitting(true);
     await switchDemoPersona(persona);
     setIsSubmitting(false);
-    setShowSwitchAccount(false);
+    setShowSwitchModal(false);
     setActiveTab('profile');
     setAuthSuccess(
       isEn
@@ -254,7 +259,7 @@ export const AccountPage: React.FC = () => {
         setConfirmPasswordInput('');
         setNameInput('');
         setIsSubmitting(false);
-        setShowSwitchAccount(false);
+        setShowSwitchModal(false);
         setActiveTab('profile');
         return;
       } else {
@@ -264,7 +269,7 @@ export const AccountPage: React.FC = () => {
     } catch {
       await loginAccount(emailInput, roleInput, nameInput || emailInput.split('@')[0]);
       setAuthSuccess(isEn ? 'Signed in (offline safe mode).' : 'Berhasil masuk (mode luring).');
-      setShowSwitchAccount(false);
+      setShowSwitchModal(false);
       setActiveTab('profile');
     }
     setIsSubmitting(false);
@@ -293,7 +298,7 @@ export const AccountPage: React.FC = () => {
       setOtpInput('');
       setAuthSuccess(isEn ? 'Successfully signed in via Magic Link OTP!' : 'Berhasil masuk via Magic Link OTP!');
       setIsSubmitting(false);
-      setShowSwitchAccount(false);
+      setShowSwitchModal(false);
       setActiveTab('profile');
     } else {
       setAuthError(isEn ? 'Invalid OTP code. Please try again.' : 'Kode OTP tidak cocok. Silakan periksa kembali.');
@@ -440,27 +445,27 @@ export const AccountPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Actions (Sign Out / Switch Mode / Sync) */}
+            {/* Quick Actions (Switch Account / Sync / Sign Out) */}
             <div className="flex flex-wrap sm:flex-col gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowSwitchModal(true)}
+                className="touch-target px-4 py-2 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/15 text-brand-navy dark:text-white text-xs font-semibold flex items-center justify-center gap-2 hover:border-brand-teal hover:bg-brand-teal/5 transition shadow-xs"
+              >
+                <Users className="w-3.5 h-3.5 text-brand-teal" />
+                <span>{isEn ? 'Switch Account' : 'Ganti Akun'}</span>
+              </button>
+
               {isAccountActive ? (
                 <>
                   <button
                     type="button"
                     onClick={() => syncCloudData()}
                     disabled={isSyncing}
-                    className="touch-target px-4 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-brand-teal-dark transition disabled:opacity-50"
+                    className="touch-target px-4 py-2 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs hover:bg-brand-teal-dark transition disabled:opacity-50"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
                     <span>{isSyncing ? (isEn ? 'Syncing...' : 'Menyinkronkan...') : (isEn ? 'Sync Cloud' : 'Sinkronkan')}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowSwitchAccount(!showSwitchAccount)}
-                    className="touch-target px-4 py-2 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/20 text-brand-navy dark:text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:border-brand-teal transition"
-                  >
-                    <KeyRound className="w-3.5 h-3.5 text-brand-teal" />
-                    <span>{showSwitchAccount ? (isEn ? 'Hide Switcher' : 'Tutup Beralih') : (isEn ? 'Switch Account' : 'Beralih Akun')}</span>
                   </button>
 
                   <button
@@ -547,134 +552,7 @@ export const AccountPage: React.FC = () => {
         </div>
       )}
 
-      {/* COLLAPSIBLE SWITCH ACCOUNT PANEL (Only visible if logged-in user explicitly clicks "Beralih Akun") */}
-      {isAccountActive && showSwitchAccount && (
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border-2 border-brand-teal/40 space-y-5 animate-in fade-in duration-200">
-          <div className="flex items-center justify-between pb-3 border-b border-brand-navy/10">
-            <div>
-              <h3 className="text-sm font-bold text-brand-navy dark:text-white flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-brand-teal" />
-                <span>{isEn ? 'Switch Account or Demo Persona' : 'Beralih Akun atau Masuk Baru'}</span>
-              </h3>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70">
-                {isEn
-                  ? 'Sign in with a different account credential or switch persona for demo evaluation.'
-                  : 'Masuk dengan kredensial akun lain atau beralih profil persona untuk kemudahan evaluasi.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowSwitchAccount(false)}
-              className="text-xs font-semibold px-2.5 py-1 rounded-btn border border-brand-navy/20 hover:bg-surface-muted flex items-center gap-1"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>{isEn ? 'Close' : 'Tutup'}</span>
-            </button>
-          </div>
 
-          {/* Quick Demo Personas */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-bold text-brand-navy dark:text-white uppercase tracking-wider">
-              {isEn ? 'Quick Switch Demo Personas:' : 'Beralih Cepat Persona Demo:'}
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => handleInstantDemoSignIn('rendra')}
-                className="p-3 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-brand-teal transition text-left space-y-1 group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-brand-navy dark:text-white group-hover:text-brand-teal">
-                    Rendra (Suami)
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-teal/15 text-brand-teal font-semibold">User</span>
-                </div>
-                <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">rendra@demo.id</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleInstantDemoSignIn('sari')}
-                className="p-3 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-brand-coral transition text-left space-y-1 group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-brand-navy dark:text-white group-hover:text-brand-coral">
-                    Sari (Istri)
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-coral/15 text-brand-coral font-semibold">Partner</span>
-                </div>
-                <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">sari@demo.id</p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleInstantDemoSignIn('maya')}
-                className="p-3 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-emerald-500 transition text-left space-y-1 group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-brand-navy dark:text-white group-hover:text-emerald-600">
-                    dr. Maya (Dokter)
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold">Nakes</span>
-                </div>
-                <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">maya@puskesmas.id</p>
-              </button>
-            </div>
-          </div>
-
-          {/* Form to login to other account */}
-          <form onSubmit={handleAuthSubmit} className="pt-2 border-t border-brand-navy/10 space-y-3">
-            <h4 className="text-xs font-bold text-brand-navy dark:text-white">
-              {isEn ? 'Or Sign In with Another Account:' : 'Atau Masuk dengan Akun Lain:'}
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <input
-                  type="email"
-                  required
-                  placeholder="email@domain.com"
-                  value={emailInput}
-                  onChange={(e) => setEmailInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
-                />
-              </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  placeholder="••••••••"
-                  value={passwordInput}
-                  onChange={(e) => setPasswordInput(e.target.value)}
-                  className="w-full px-3 pr-9 py-2 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2.5 top-2 text-brand-navy/40 hover:text-brand-navy"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => setShowSwitchAccount(false)}
-                className="px-4 py-2 rounded-btn border border-brand-navy/20 text-xs font-semibold"
-              >
-                {isEn ? 'Cancel' : 'Batal'}
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-5 py-2 rounded-btn bg-brand-teal text-white text-xs font-bold hover:bg-brand-teal-dark transition shadow-xs disabled:opacity-50"
-              >
-                {isEn ? 'Sign In to Account' : 'Masuk ke Akun'}
-              </button>
-            </div>
-          </form>
-        </section>
-      )}
 
       {/* 2. MODERN SEGMENTED NAVIGATION TABS */}
       <div className="flex items-center gap-2 p-1.5 rounded-card bg-surface dark:bg-surface-dark-card border border-brand-navy/10 shadow-xs">
@@ -841,67 +719,31 @@ export const AccountPage: React.FC = () => {
               </form>
             </section>
 
-            {/* Quick Demo Personas Switcher (Studio Quality) */}
-            <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/10 space-y-4">
-              <div className="flex items-center justify-between border-b border-brand-navy/10 pb-3">
-                <div className="flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-brand-teal" />
-                  <h3 className="text-sm font-bold text-brand-navy dark:text-white">
-                    {isEn ? 'Quick Switch Demo Profiles (Evaluator Tools)' : 'Beralih Profil Cepat (Untuk Penguji / Juri)'}
-                  </h3>
+            {/* Quick Demo Personas / Switch Account Hub */}
+            <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-brand-teal/10 text-brand-teal flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal">
-                  1-Click Switch
-                </span>
+                <div>
+                  <h3 className="text-xs font-bold text-brand-navy dark:text-white">
+                    {isEn ? 'Switch Account or Demo Persona' : 'Ganti Akun & Persona Demo'}
+                  </h3>
+                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70">
+                    {isEn
+                      ? 'Instantly switch between Husband, Wife, or Healthcare Provider profiles.'
+                      : 'Beralih instan antara profil Suami, Istri, atau Dokter Puskesmas untuk kemudahan evaluasi.'}
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70">
-                {isEn
-                  ? 'Switch roles instantly to evaluate different user journeys (Husband, Wife, or Healthcare Provider).'
-                  : 'Beralih peran secara instan untuk mencoba sudut pandang suami, istri, maupun dokter Puskesmas.'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleInstantDemoSignIn('rendra')}
-                  className="p-3.5 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-brand-teal hover:bg-brand-teal/5 transition text-left space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-brand-navy dark:text-white">Rendra (Suami)</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-teal/15 text-brand-teal font-semibold">User</span>
-                  </div>
-                  <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
-                    {isEn ? 'Full self-check & lab data' : 'Hasil lab & data cek awal lengkap'}
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleInstantDemoSignIn('sari')}
-                  className="p-3.5 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-brand-coral hover:bg-brand-coral/5 transition text-left space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-brand-navy dark:text-white">Sari (Istri)</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-coral/15 text-brand-coral font-semibold">Partner</span>
-                  </div>
-                  <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
-                    {isEn ? 'Connected couple timeline' : 'Linimasa bersama tersinkronisasi'}
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleInstantDemoSignIn('maya')}
-                  className="p-3.5 rounded-btn border border-brand-navy/15 bg-surface-muted/50 dark:bg-surface-dark hover:border-emerald-500 hover:bg-emerald-500/5 transition text-left space-y-1.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-brand-navy dark:text-white">dr. Maya (Dokter)</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold">Nakes</span>
-                  </div>
-                  <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
-                    {isEn ? 'Clinical triage dashboard' : 'Panel klinis & verifikasi QR'}
-                  </p>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowSwitchModal(true)}
+                className="px-4 py-2 rounded-btn bg-brand-teal/10 hover:bg-brand-teal text-brand-teal hover:text-white border border-brand-teal/30 text-xs font-bold transition flex items-center justify-center gap-2 shrink-0 shadow-xs"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5" />
+                <span>{isEn ? 'Switch Account' : 'Ganti Akun'}</span>
+              </button>
             </section>
           </div>
 
@@ -1595,6 +1437,294 @@ export const AccountPage: React.FC = () => {
               </div>
             </div>
           </section>
+        </div>
+      )}
+
+      {/* 4. STUDIO-GRADE FLOATING SWITCH ACCOUNT MODAL */}
+      {showSwitchModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={() => setShowSwitchModal(false)}
+        >
+          <div
+            className="bg-surface dark:bg-surface-dark-card w-full max-w-md rounded-2xl shadow-2xl border border-brand-navy/15 dark:border-white/10 overflow-hidden animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-5 pb-4 border-b border-brand-navy/10 dark:border-white/10 flex items-center justify-between bg-surface-muted/30 dark:bg-surface-dark">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-brand-teal/15 text-brand-teal flex items-center justify-center shadow-xs">
+                  <Users className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-brand-navy dark:text-white">
+                    {isEn ? 'Switch Account' : 'Ganti Akun'}
+                  </h3>
+                  <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                    {isEn ? 'Select persona or switch account' : 'Pilih persona demo atau masuk ke akun lain'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSwitchModal(false)}
+                className="w-8 h-8 rounded-lg text-brand-navy/60 dark:text-white/60 hover:text-brand-navy dark:hover:text-white hover:bg-brand-navy/5 dark:hover:bg-white/10 flex items-center justify-center transition"
+                aria-label={isEn ? 'Close modal' : 'Tutup jendela'}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Content */}
+            <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* Active Account Card */}
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-brand-navy/50 dark:text-white/50 mb-1.5">
+                  {isEn ? 'Currently Active' : 'Akun Sedang Digunakan'}
+                </div>
+                <div className="p-3.5 rounded-xl border-2 border-brand-teal/70 bg-brand-teal/5 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-teal to-teal-700 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
+                      {displayName ? displayName.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-brand-navy dark:text-white truncate">
+                        {displayName}
+                      </div>
+                      <div className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono truncate">
+                        {userEmail || (isEn ? 'Anonymous Mode (Local)' : 'Mode Anonim (Perangkat)')}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-teal text-white shrink-0 shadow-xs">
+                    <Check className="w-3 h-3" />
+                    <span>{isEn ? 'Active' : 'Aktif'}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Demo Personas for Evaluators */}
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-brand-navy/50 dark:text-white/50 mb-1.5 flex items-center justify-between">
+                  <span>{isEn ? 'Demo Personas (1-Click Switch)' : 'Persona Demo (Beralih 1-Klik)'}</span>
+                  <span className="text-[10px] font-semibold text-brand-teal">
+                    {isEn ? 'Instant' : 'Instan'}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {/* Persona: Rendra (Suami) */}
+                  <button
+                    type="button"
+                    onClick={() => handleInstantDemoSignIn('rendra')}
+                    disabled={userEmail === 'rendra@demo.id'}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition group ${
+                      userEmail === 'rendra@demo.id'
+                        ? 'border-brand-teal/30 bg-brand-teal/5 opacity-60 cursor-default'
+                        : 'border-brand-navy/10 hover:border-brand-teal hover:bg-brand-teal/5 bg-surface-muted/40 dark:bg-surface-dark hover:shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-teal to-teal-700 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        R
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-brand-navy dark:text-white truncate">Rendra</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-teal/15 text-brand-teal font-semibold shrink-0">
+                            Suami
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono truncate">
+                          rendra@demo.id
+                        </p>
+                      </div>
+                    </div>
+                    {userEmail === 'rendra@demo.id' ? (
+                      <span className="text-[11px] font-bold text-brand-teal shrink-0">
+                        {isEn ? 'Active' : 'Aktif'}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-brand-teal group-hover:translate-x-0.5 transition flex items-center gap-0.5 shrink-0">
+                        <span>{isEn ? 'Switch' : 'Beralih'}</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Persona: Sari (Istri) */}
+                  <button
+                    type="button"
+                    onClick={() => handleInstantDemoSignIn('sari')}
+                    disabled={userEmail === 'sari@demo.id'}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition group ${
+                      userEmail === 'sari@demo.id'
+                        ? 'border-brand-coral/30 bg-brand-coral/5 opacity-60 cursor-default'
+                        : 'border-brand-navy/10 hover:border-brand-coral hover:bg-brand-coral/5 bg-surface-muted/40 dark:bg-surface-dark hover:shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-coral to-orange-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        S
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-brand-navy dark:text-white truncate">Sari</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-coral/15 text-brand-coral font-semibold shrink-0">
+                            Istri
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono truncate">
+                          sari@demo.id
+                        </p>
+                      </div>
+                    </div>
+                    {userEmail === 'sari@demo.id' ? (
+                      <span className="text-[11px] font-bold text-brand-coral shrink-0">
+                        {isEn ? 'Active' : 'Aktif'}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-brand-coral group-hover:translate-x-0.5 transition flex items-center gap-0.5 shrink-0">
+                        <span>{isEn ? 'Switch' : 'Beralih'}</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Persona: dr. Maya (Nakes) */}
+                  <button
+                    type="button"
+                    onClick={() => handleInstantDemoSignIn('maya')}
+                    disabled={userEmail === 'maya@puskesmas.id'}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition group ${
+                      userEmail === 'maya@puskesmas.id'
+                        ? 'border-emerald-500/30 bg-emerald-500/5 opacity-60 cursor-default'
+                        : 'border-brand-navy/10 hover:border-emerald-500 hover:bg-emerald-500/5 bg-surface-muted/40 dark:bg-surface-dark hover:shadow-xs'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-700 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        M
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-brand-navy dark:text-white truncate">dr. Maya</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold shrink-0">
+                            Nakes
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono truncate">
+                          maya@puskesmas.id
+                        </p>
+                      </div>
+                    </div>
+                    {userEmail === 'maya@puskesmas.id' ? (
+                      <span className="text-[11px] font-bold text-emerald-600 shrink-0">
+                        {isEn ? 'Active' : 'Aktif'}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-emerald-600 group-hover:translate-x-0.5 transition flex items-center gap-0.5 shrink-0">
+                        <span>{isEn ? 'Switch' : 'Beralih'}</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Custom Account Sign In Toggle (Accordion) */}
+              <div className="pt-2 border-t border-brand-navy/10 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomLoginForm(!showCustomLoginForm)}
+                  className="w-full py-2 text-xs font-semibold text-brand-navy/80 dark:text-white/80 hover:text-brand-teal flex items-center justify-between transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <KeyRound className="w-3.5 h-3.5 text-brand-teal" />
+                    <span>{isEn ? 'Sign in with another email' : 'Masuk dengan email lain'}</span>
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                      showCustomLoginForm ? 'rotate-180 text-brand-teal' : ''
+                    }`}
+                  />
+                </button>
+
+                {showCustomLoginForm && (
+                  <form
+                    onSubmit={handleAuthSubmit}
+                    className="pt-2 space-y-3 animate-in fade-in duration-150"
+                  >
+                    <div>
+                      <label className="block text-[11px] font-medium text-brand-navy/70 dark:text-white/70 mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="nama@domain.com"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-brand-navy/15 text-xs text-brand-navy bg-white dark:bg-surface-dark dark:text-white focus:outline-none focus:border-brand-teal"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-brand-navy/70 dark:text-white/70 mb-1">
+                        {isEn ? 'Password' : 'Kata Sandi'}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          placeholder="••••••••"
+                          value={passwordInput}
+                          onChange={(e) => setPasswordInput(e.target.value)}
+                          className="w-full px-3 pr-9 py-2 rounded-xl border border-brand-navy/15 text-xs text-brand-navy bg-white dark:bg-surface-dark dark:text-white focus:outline-none focus:border-brand-teal"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-2.5 top-2 text-brand-navy/40 hover:text-brand-navy"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-2.5 rounded-xl bg-brand-teal text-white text-xs font-bold hover:bg-brand-teal-dark transition shadow-xs disabled:opacity-50"
+                    >
+                      {isSubmitting ? (isEn ? 'Signing in...' : 'Memproses...') : (isEn ? 'Sign In to Account' : 'Masuk ke Akun')}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 bg-surface-muted/40 dark:bg-surface-dark border-t border-brand-navy/10 dark:border-white/10 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSwitchModal(false);
+                  logoutToWelcome();
+                }}
+                className="text-xs font-semibold text-status-urgent hover:underline flex items-center gap-1.5 px-2 py-1"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{isEn ? 'Sign Out' : 'Keluar Akun'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSwitchModal(false)}
+                className="px-4 py-1.5 rounded-lg border border-brand-navy/20 text-xs font-semibold hover:bg-surface-muted transition"
+              >
+                {isEn ? 'Close' : 'Tutup'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

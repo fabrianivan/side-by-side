@@ -13,6 +13,9 @@ import { ShareNakesPage } from './pages/ShareNakesPage';
 import { NakesDashboardPage } from './pages/NakesDashboardPage';
 import { AccountPage } from './pages/AccountPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { SemenSimulatorPage } from './pages/SemenSimulatorPage';
+import { SpermatogenesisTrackerPage } from './pages/SpermatogenesisTrackerPage';
+import { DoctorChecklistPage } from './pages/DoctorChecklistPage';
 
 export function App() {
   return (
@@ -46,6 +49,21 @@ export function App() {
           {/* Lab Results & Trend (ID & EN) */}
           <Route path="/hasil" element={<ResultsPage />} />
           <Route path="/results" element={<ResultsPage />} />
+
+          {/* Interactive Semen Analysis Simulator (ID & EN) */}
+          <Route path="/simulator" element={<SemenSimulatorPage />} />
+          <Route path="/kalkulator" element={<SemenSimulatorPage />} />
+          <Route path="/semen-calculator" element={<SemenSimulatorPage />} />
+
+          {/* 72-Day Spermatogenesis Cycle & Habit Tracker (ID & EN) */}
+          <Route path="/siklus-72-hari" element={<SpermatogenesisTrackerPage />} />
+          <Route path="/cycle-tracker" element={<SpermatogenesisTrackerPage />} />
+          <Route path="/sperm-cycle" element={<SpermatogenesisTrackerPage />} />
+
+          {/* Smart Doctor Checklist Generator (ID & EN) */}
+          <Route path="/checklist-dokter" element={<DoctorChecklistPage />} />
+          <Route path="/doctor-checklist" element={<DoctorChecklistPage />} />
+          <Route path="/questions-doctor" element={<DoctorChecklistPage />} />
 
           {/* Education Library & Ask Doctor (ID & EN) */}
           <Route path="/pustaka" element={<LibraryPage />} />

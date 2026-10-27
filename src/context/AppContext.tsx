@@ -125,6 +125,8 @@ interface AppContextValue {
   pairing: PairingState | null;
   shareToken: ShareTokenState | null;
   tickets: QuestionTicketItem[];
+  habitLog: Record<string, string[]>;
+  cycleStartDate: string;
   lastSyncTime: string | null;
   isSyncing: boolean;
 
@@ -158,6 +160,8 @@ interface AppContextValue {
   recordNakesAccess: (code: string, viewerName?: string) => Promise<ShareTokenState | null>;
   submitQuestionTicket: (category: string, text: string) => Promise<void>;
   replyToTicket: (ticketId: string, replyText: string, repliedBy?: string) => Promise<void>;
+  toggleDailyHabit: (dateStr: string, habitKey: string) => Promise<void>;
+  setCycleStartDate: (dateStr: string) => Promise<void>;
   loadRendraDemoScenario: () => Promise<void>;
   switchDemoPersona: (persona: DemoPersona) => Promise<void>;
   wipeAllData: () => Promise<void>;
@@ -245,6 +249,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [pairing, setPairing] = useState<PairingState | null>(null);
   const [shareToken, setShareToken] = useState<ShareTokenState | null>(null);
   const [tickets, setTickets] = useState<QuestionTicketItem[]>(INITIAL_TICKETS);
+  const [habitLog, setHabitLog] = useState<Record<string, string[]>>({});
+  const [cycleStartDate, setCycleStartDateState] = useState<string>(() =>
+    new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  );
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(() => localStorage.getItem('sbs_last_sync'));
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
@@ -260,6 +268,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const savedPairing = await loadEncryptedItem<PairingState>('pairing');
       const savedShare = await loadEncryptedItem<ShareTokenState>('share_token');
       const savedTickets = await loadEncryptedItem<QuestionTicketItem[]>('tickets');
+      const savedHabits = await loadEncryptedItem<Record<string, string[]>>('habit_log');
+      const savedCycleDate = await loadEncryptedItem<string>('cycle_start_date');
 
       if (!mounted) return;
       if (savedConsents) setConsents(savedConsents);
@@ -270,6 +280,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (savedPairing) setPairing(savedPairing);
       if (savedShare) setShareToken(savedShare);
       if (savedTickets && savedTickets.length > 0) setTickets(savedTickets);
+      if (savedHabits) setHabitLog(savedHabits);
+      if (savedCycleDate) setCycleStartDateState(savedCycleDate);
     }
     hydrate();
     return () => {
@@ -407,6 +419,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setConsents(demoConsents);
 
+    const demoHabits: Record<string, string[]> = {
+      [new Date().toISOString().slice(0, 10)]: ['cool_temp', 'hydration_antioxidant', 'sleep_rest'],
+      [new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)]: ['cool_temp', 'exercise', 'sleep_rest', 'no_smoke'],
+      [new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)]: ['cool_temp', 'hydration_antioxidant', 'exercise', 'sleep_rest'],
+    };
+    const demoCycleDate = new Date(Date.now() - 44 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    setHabitLog(demoHabits);
+    setCycleStartDateState(demoCycleDate);
+
     await saveEncryptedItem('consents', demoConsents);
     await saveEncryptedItem('assessment_answers', RENDRA_DEMO_ANSWERS);
     await saveEncryptedItem('assessment_result', evalResult);
@@ -414,6 +435,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await saveEncryptedItem('reminders', demoReminders);
     await saveEncryptedItem('pairing', demoPairing);
     await saveEncryptedItem('share_token', demoShare);
+    await saveEncryptedItem('habit_log', demoHabits);
+    await saveEncryptedItem('cycle_start_date', demoCycleDate);
   }, []);
 
   const switchDemoPersona = useCallback(
@@ -921,6 +944,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     [tickets]
   );
 
+  const toggleDailyHabit = useCallback(
+    async (dateStr: string, habitKey: string) => {
+      setHabitLog((prev) => {
+        const currentList = prev[dateStr] || [];
+        const exists = currentList.includes(habitKey);
+        const updatedList = exists
+          ? currentList.filter((k) => k !== habitKey)
+          : [...currentList, habitKey];
+        const next = { ...prev, [dateStr]: updatedList };
+        saveEncryptedItem('habit_log', next);
+        return next;
+      });
+    },
+    []
+  );
+
+  const setCycleStartDate = useCallback(async (dateStr: string) => {
+    setCycleStartDateState(dateStr);
+    await saveEncryptedItem('cycle_start_date', dateStr);
+  }, []);
+
   const wipeAllData = useCallback(async () => {
     try {
       await fetch(`/api/users/${userId}/data`, { method: 'DELETE' });
@@ -940,6 +984,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPairing(null);
     setShareToken(null);
     setTickets(INITIAL_TICKETS);
+    setHabitLog({});
+    setCycleStartDateState(new Date().toISOString().slice(0, 10));
     setDiscreetModeState(false);
     setHasPin(false);
     setIsLocked(false);
@@ -967,6 +1013,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         pairing,
         shareToken,
         tickets,
+        habitLog,
+        cycleStartDate,
         lastSyncTime,
         isSyncing,
         startAnonymousMode,
@@ -998,6 +1046,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         recordNakesAccess,
         submitQuestionTicket,
         replyToTicket,
+        toggleDailyHabit,
+        setCycleStartDate,
         loadRendraDemoScenario,
         switchDemoPersona,
         wipeAllData,

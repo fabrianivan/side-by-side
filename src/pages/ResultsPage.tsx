@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Activity,
   PlusCircle,
@@ -12,6 +12,9 @@ import {
   CheckCircle2,
   Sparkles,
   AlertCircle,
+  Sliders,
+  Clock,
+  FileText,
 } from 'lucide-react';
 import { semenReferenceConfig } from '../config/schemas';
 import { useApp } from '../context/AppContext';
@@ -110,6 +113,27 @@ export const ResultsPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap gap-2 shrink-0">
+          <Link
+            to="/simulator"
+            className="touch-target px-3 py-2.5 rounded-btn bg-brand-navy/10 text-brand-navy dark:text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-brand-navy/20 transition"
+          >
+            <Sliders className="w-3.5 h-3.5 text-brand-teal" />
+            <span>Simulator WHO</span>
+          </Link>
+          <Link
+            to="/siklus-72-hari"
+            className="touch-target px-3 py-2.5 rounded-btn bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral text-xs font-semibold flex items-center gap-1.5 hover:bg-brand-coral/25 transition"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>Siklus 72 Hari</span>
+          </Link>
+          <Link
+            to="/checklist-dokter"
+            className="touch-target px-3 py-2.5 rounded-btn bg-brand-teal-light text-brand-teal text-xs font-semibold flex items-center gap-1.5 hover:bg-brand-teal/20 transition"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Tanya Dokter</span>
+          </Link>
           {labResults.length === 0 && (
             <button
               type="button"

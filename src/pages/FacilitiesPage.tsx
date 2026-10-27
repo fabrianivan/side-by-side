@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   MapPin,
   Star,
@@ -38,6 +39,7 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
 
 export const FacilitiesPage: React.FC = () => {
   const { assessmentResult, addReminder, updatePlanStep } = useApp();
+  const navigate = useNavigate();
 
   // Filter & Sort State
   const [selectedCity, setSelectedCity] = useState<string>('Semua');
@@ -207,14 +209,16 @@ export const FacilitiesPage: React.FC = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowQuestionsModal(true)}
-          className="touch-target px-4 py-3 rounded-btn bg-brand-coral text-white font-bold text-xs shadow-soft hover:bg-brand-coral-dark transition flex items-center gap-2 shrink-0"
-        >
-          <FileText className="w-4 h-4" />
-          Buat daftar pertanyaan untuk dokter
-        </button>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => navigate('/checklist-dokter')}
+            className="touch-target px-4 py-3 rounded-btn bg-brand-coral text-white font-bold text-xs shadow-soft hover:bg-brand-coral-dark transition flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Checklist Pertanyaan Dokter (Lengkap)
+          </button>
+        </div>
       </section>
 
       {reminderSavedBanner && (

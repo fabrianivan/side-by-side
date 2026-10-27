@@ -18,6 +18,9 @@ import {
   ChevronUp,
   ChevronDown,
   User,
+  Sliders,
+  Calendar,
+  FileText,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
@@ -175,6 +178,27 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       label: t.nav.results,
       discreetLabel: isEn ? 'Records' : 'Catatan',
       icon: Activity,
+    },
+    {
+      to: isEn ? '/semen-calculator' : '/simulator',
+      aliases: ['/simulator', '/kalkulator', '/semen-calculator'],
+      label: isEn ? 'Simulator' : 'Simulator Lab',
+      discreetLabel: isEn ? 'Simulator' : 'Simulator',
+      icon: Sliders,
+    },
+    {
+      to: isEn ? '/cycle-tracker' : '/siklus-72-hari',
+      aliases: ['/siklus-72-hari', '/cycle-tracker', '/sperm-cycle'],
+      label: isEn ? '72-Day Cycle' : 'Siklus 72 Hari',
+      discreetLabel: isEn ? 'Tracker' : 'Pelacak',
+      icon: Calendar,
+    },
+    {
+      to: isEn ? '/doctor-checklist' : '/checklist-dokter',
+      aliases: ['/checklist-dokter', '/doctor-checklist', '/questions-doctor'],
+      label: isEn ? 'Dr. Checklist' : 'Tanya Dokter',
+      discreetLabel: isEn ? 'Questions' : 'Pertanyaan',
+      icon: FileText,
     },
     {
       to: isEn ? '/library' : '/pustaka',

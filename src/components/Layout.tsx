@@ -10,8 +10,6 @@ import {
   QrCode,
   Stethoscope,
   Settings,
-  EyeOff,
-  Eye,
   Lock,
   ShieldCheck,
   Sparkles,
@@ -32,8 +30,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     displayName,
     locale,
     setLocale,
-    discreetMode,
-    setDiscreetMode,
     hasPin,
     isLocked,
     lockApp,
@@ -87,6 +83,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     if (persona === 'maya') navigate('/nakes');
   };
 
+  const isEn = locale === 'en';
+
   // Layar Kunci PIN Penuh (ketika pengguna menekan Kunci PIN di tempat umum)
   if (isLocked) {
     return (
@@ -103,10 +101,10 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </div>
             <div>
               <h1 id="pin-lock-title" className="font-bold text-lg">
-                {discreetMode ? 'Catatan Harian Terkunci' : 'Layar Terkunci Privasi'}
+                {isEn ? 'Security Lock Screen' : 'Layar Terkunci Privasi'}
               </h1>
               <p className="text-xs text-brand-navy/70">
-                Masukkan PIN keamanan Anda untuk melanjutkan.
+                {isEn ? 'Enter your 4-6 digit security PIN to continue.' : 'Masukkan PIN keamanan Anda untuk melanjutkan.'}
               </p>
             </div>
           </div>
@@ -141,8 +139,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </div>
     );
   }
-
-  const isEn = locale === 'en';
 
   const navItems = [
     {
@@ -249,13 +245,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             className="flex items-center gap-3 text-left group"
           >
             <img
-              src={discreetMode ? '/favicon-discreet.svg' : '/logo-icon.png'}
-              alt={discreetMode ? 'Ikon Catatan Harian' : 'Logo Side by Side'}
+              src="/logo-icon.png"
+              alt="Logo Side by Side"
               className="w-11 h-11 rounded-btn object-contain bg-white p-0.5 shadow-sm border border-brand-navy/10 shrink-0"
             />
             <div>
               <div className="font-bold text-base sm:text-lg leading-tight text-brand-navy dark:text-white flex items-center gap-2">
-                {discreetMode ? t.brand.discreetName : t.brand.name}
+                {t.brand.name}
                 {authMode === 'anonymous' && (
                   <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-brand-teal-light text-brand-teal">
                     <ShieldCheck className="w-3 h-3" /> Anonim Terenkripsi
@@ -263,12 +259,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 )}
               </div>
               <p className="text-xs font-medium text-brand-teal">
-                {discreetMode ? t.brand.discreetSlogan : t.brand.slogan}
+                {t.brand.slogan}
               </p>
             </div>
           </button>
 
-          {/* Tombol Cepat Privasi: Mode Samaran & Kunci PIN & Bahasa */}
+          {/* Tombol Cepat: Bahasa & Kunci PIN */}
           <div className="flex items-center gap-2">
             {/* Language Switcher */}
             <div className="flex items-center rounded-btn border border-brand-navy/15 bg-surface-muted dark:bg-surface-dark p-0.5 text-xs font-bold shrink-0">
@@ -296,25 +292,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
             <button
               type="button"
-              onClick={() => setDiscreetMode(!discreetMode)}
-              aria-pressed={discreetMode}
-              title="Ubah judul tab & tampilan menjadi aplikasi Catatan Harian netral saat di tempat umum"
-              className={`touch-target px-3 py-2 rounded-btn text-xs font-semibold flex items-center gap-1.5 border transition ${
-                discreetMode
-                  ? 'bg-status-success text-white border-status-success'
-                  : 'bg-surface-muted dark:bg-surface-dark text-brand-navy dark:text-white border-brand-navy/15 hover:border-brand-teal'
-              }`}
-            >
-              {discreetMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              <span className="hidden sm:inline">
-                {discreetMode ? 'Mode Samaran Aktif' : t.nav.discreetMode}
-              </span>
-            </button>
-
-            <button
-              type="button"
               onClick={handleQuickPinClick}
-              title="Kunci layar dengan PIN"
+              title={isEn ? 'Lock screen with PIN' : 'Kunci layar dengan PIN'}
               className="touch-target px-3 py-2 rounded-btn text-xs font-semibold flex items-center gap-1.5 bg-surface-muted dark:bg-surface-dark text-brand-navy dark:text-white border border-brand-navy/15 hover:border-brand-teal transition"
             >
               <Lock className="w-4 h-4 text-brand-teal" />
@@ -380,7 +359,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   }
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{discreetMode ? item.discreetLabel : item.label}</span>
+                  <span>{item.label}</span>
                 </NavLink>
               );
             })}
@@ -592,7 +571,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             >
               <Icon className="w-5 h-5 mb-0.5" />
               <span className="truncate max-w-[60px]">
-                {discreetMode ? item.discreetLabel : item.label}
+                {item.label}
               </span>
             </NavLink>
           );

@@ -289,18 +289,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Sinkronkan Mode Samaran (Discreet Mode) dengan document.title dan favicon
+  // Set judul dokumen dan ikon standar Side by Side
   useEffect(() => {
+    document.title = 'Side by Side — Better together.';
     const faviconEl = document.getElementById('app-favicon') as HTMLLinkElement | null;
-    if (discreetMode) {
-      document.title = 'Catatan Harian — Kesejahteraan & Kebiasaan';
-      if (faviconEl) faviconEl.href = '/favicon-discreet.svg';
-    } else {
-      document.title = 'Side by Side — Better together.';
-      if (faviconEl) faviconEl.href = '/logo-icon.png';
-    }
-    localStorage.setItem('sbs_discreet_mode', String(discreetMode));
-  }, [discreetMode]);
+    if (faviconEl) faviconEl.href = '/logo-icon.png';
+  }, []);
 
   // Sinkronkan ukuran teks dan mode gelap pada elemen <html>
   useEffect(() => {

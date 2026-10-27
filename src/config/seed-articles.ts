@@ -350,6 +350,6 @@ export const seedFaqs: SeedFaq[] = [
     id: 'faq-5',
     category: 'Keamanan Aplikasi',
     question: 'Bagaimana jika saya membuka aplikasi ini di tempat umum atau kantor?',
-    answer: 'Anda dapat mengaktifkan fitur "Penyamaran Tampilan" (Mode Samaran) di bilah atas atau menu Pengaturan. Fitur ini seketika mengubah judul tab, ikon, dan tampilan header menjadi aplikasi "Catatan Harian" yang netral, serta menyediakan kunci PIN untuk melindungi layar Anda.'
+    answer: 'Aplikasi ini menyediakan fitur Kunci PIN instan di bilah atas. Anda dapat langsung mengunci layar dalam 1 ketukan kapan pun Anda perlu meninggalkan perangkat atau berada di tempat umum, tanpa perlu khawatir data terlihat orang lain.'
   }
 ];

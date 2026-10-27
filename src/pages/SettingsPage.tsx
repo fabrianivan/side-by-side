@@ -28,7 +28,6 @@ export const SettingsPage: React.FC = () => {
     locale,
     textScale,
     darkMode,
-    discreetMode,
     hasPin,
     consents,
     assessmentAnswers,
@@ -257,35 +256,15 @@ export const SettingsPage: React.FC = () => {
         </details>
       </section>
 
-      {/* Seksi 2: Penyamaran Tampilan (Discreet Mode) & Kunci PIN */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-          <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-            <EyeOff className="w-5 h-5 text-brand-teal" />
-            <span>Opsi Penyamaran Tampilan (Aman di Tempat Umum)</span>
-          </h2>
-          <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-            Mengubah ikon aplikasi, judul tab browser, dan bilah atas menjadi aplikasi netral <strong>“Catatan Harian — Kesejahteraan & Kebiasaan”</strong> agar Anda nyaman membuka aplikasi di kantor atau transportasi umum.
-          </p>
-          <label className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark flex items-center justify-between cursor-pointer">
-            <span className="text-xs font-bold">Aktifkan Penyamaran Tampilan (Mode Samaran)</span>
-            <input
-              type="checkbox"
-              checked={discreetMode}
-              onChange={(e) => setDiscreetMode(e.target.checked)}
-              className="w-5 h-5 accent-brand-teal rounded"
-            />
-          </label>
-        </section>
-
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-          <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-            <Lock className="w-5 h-5 text-brand-coral" />
-            <span>Kunci PIN & Enkripsi Perangkat</span>
-          </h2>
-          <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-            Atur PIN 4–6 digit untuk mengunci layar aplikasi dan membungkus kunci enkripsi Web Crypto (`PBKDF2` + `AES-GCM`).
-          </p>
+      {/* Seksi 2: Kunci PIN & Enkripsi Perangkat */}
+      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
+        <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
+          <Lock className="w-5 h-5 text-brand-coral" />
+          <span>Kunci PIN & Enkripsi Perangkat</span>
+        </h2>
+        <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
+          Atur PIN 4–6 digit untuk mengunci layar aplikasi dan membungkus kunci enkripsi Web Crypto (`PBKDF2` + `AES-GCM`).
+        </p>
 
           {pinSavedMessage && (
             <p className="text-xs font-bold text-status-success">{pinSavedMessage}</p>
@@ -331,7 +310,6 @@ export const SettingsPage: React.FC = () => {
             </div>
           )}
         </section>
-      </div>
 
       {/* Seksi 3: Bahasa, Ukuran Teks, Mode Gelap, & Ekspor Data */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

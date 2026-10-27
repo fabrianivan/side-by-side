@@ -24,7 +24,6 @@ export const HomePage: React.FC = () => {
     authMode,
     displayName,
     locale,
-    discreetMode,
     assessmentResult,
     labResults,
     reminders,
@@ -42,7 +41,7 @@ export const HomePage: React.FC = () => {
     if (!assessmentResult) {
       return {
         badge: 'Langkah 1 dari 4',
-        title: discreetMode ? 'Mulai Kuesioner Kebiasaan Harian' : 'Mulai Cek Awal Mandiri (< 3 Menit)',
+        title: isEn ? 'Start Self-Check (< 3 Min)' : 'Mulai Cek Awal Mandiri (< 3 Menit)',
         description:
           'Jawab 12 pertanyaan singkat secara privat tanpa akun untuk mengetahui apakah dan kapan Anda sebaiknya berkonsultasi ke dokter.',
         ctaText: t.cta.startAssessment,
@@ -101,11 +100,11 @@ export const HomePage: React.FC = () => {
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
-              {discreetMode ? 'Ringkasan Kesejahteraan Harian' : t.brand.welcomeGreeting}
+              {t.brand.welcomeGreeting}
             </h1>
             <p className="text-sm text-brand-navy/75 dark:text-white/75">
-              {discreetMode
-                ? 'Pantau jadwal, kebiasaan sehat, dan catatan harian Anda dengan tenang.'
+              {isEn
+                ? 'Every small step brings clarity for you and your partner. Choose the step that feels right today.'
                 : 'Setiap langkah kecil membawa kejelasan bagi Anda dan pasangan. Pilih langkah yang paling nyaman hari ini.'}
             </p>
           </div>

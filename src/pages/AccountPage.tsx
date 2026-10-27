@@ -116,6 +116,35 @@ export const AccountPage: React.FC = () => {
 
   const passwordStrength = calculatePasswordStrength(passwordInput);
 
+  // Dynamic client environment detection
+  const getDeviceInfo = () => {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    let os = isEn ? 'Apple Mac (macOS)' : 'Komputer Mac (macOS)';
+    let isMobile = false;
+
+    if (/Macintosh|Mac OS X/i.test(ua)) {
+      os = isEn ? 'Apple Mac (macOS)' : 'Apple Mac (macOS)';
+    } else if (/Windows/i.test(ua)) {
+      os = 'Windows PC';
+    } else if (/iPhone|iPad|iPod/i.test(ua)) {
+      os = 'Apple iOS (iPhone/iPad)';
+      isMobile = true;
+    } else if (/Android/i.test(ua)) {
+      os = 'Android Mobile';
+      isMobile = true;
+    }
+
+    let browser = isEn ? 'Modern Web Browser' : 'Peramban Web Modern';
+    if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = 'Google Chrome';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Apple Safari';
+    else if (/Firefox/i.test(ua)) browser = 'Mozilla Firefox';
+    else if (/Edg/i.test(ua)) browser = 'Microsoft Edge';
+
+    return { os, browser, isMobile };
+  };
+
+  const deviceInfo = getDeviceInfo();
+
   const handleAutoFillDemo = (target: 'rendra' | 'sari' | 'maya') => {
     setActiveTab('auth');
     setAuthSubTab('login');
@@ -630,37 +659,138 @@ export const AccountPage: React.FC = () => {
             </section>
           </div>
 
-          {/* Right Info Cards (4 Cols) */}
+          {/* Right Info Cards: Device & Network Protection Hub (4 Cols) */}
           <div className="md:col-span-4 space-y-4">
-            <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/5 space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-brand-teal" />
-                <span>{isEn ? 'Active Protection Mode' : 'Mode Privasi Aktif'}</span>
-              </h3>
-              <p className="text-xs text-brand-navy/80 dark:text-white/80 leading-relaxed">
-                {isAccountActive
-                  ? isEn
-                    ? 'Account Mode is active. Your data syncs with your partner and across devices via authenticated end-to-end sessions.'
-                    : 'Mode Akun aktif. Data Anda tersinkronisasi antar-perangkat dan terhubung dengan pasangan secara aman.'
-                  : isEn
-                  ? 'Anonymous Mode is active. No account or email required. Sensitive data stays exclusively inside your browser storage.'
-                  : 'Mode Anonim aktif. Bebas registrasi email. Seluruh catatan kesehatan tersimpan murni di perangkat Anda.'}
-              </p>
+            {/* Card 1: Perangkat Ini (Current Verified Session) */}
+            <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
+                  <Laptop className="w-4 h-4 text-brand-teal" />
+                  <span>{isEn ? 'Current Device' : 'Perangkat Ini'}</span>
+                </h3>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-status-success/15 text-status-success border border-status-success/20">
+                  <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
+                  {isEn ? 'Active Now' : 'Aktif Sekarang'}
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 space-y-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-brand-teal/10 text-brand-teal flex items-center justify-center shrink-0">
+                    {deviceInfo.isMobile ? <Smartphone className="w-5 h-5" /> : <Laptop className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-brand-navy dark:text-white">
+                      {deviceInfo.os}
+                    </h4>
+                    <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                      {deviceInfo.browser} • Standalone Web Client
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-brand-navy/10 text-[11px] space-y-1.5">
+                  <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
+                    <span>{isEn ? 'Security:' : 'Enkripsi:'}</span>
+                    <strong className="text-brand-teal font-mono">Web Crypto AES-GCM 256-bit</strong>
+                  </div>
+                  <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
+                    <span>{isEn ? 'Storage:' : 'Penyimpanan:'}</span>
+                    <span className="font-medium text-brand-navy dark:text-white">
+                      {isAccountActive
+                        ? isEn ? 'Cloud Encrypted Sync' : 'Sinkron Cloud Terenkripsi'
+                        : isEn ? 'Device-Only (IndexedDB)' : 'Lokal Terenkripsi (IndexedDB)'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
+                    <span>{isEn ? 'Last Sync:' : 'Terakhir Sinkron:'}</span>
+                    <span className="font-mono text-[10px]">
+                      {lastSyncTime ? lastSyncTime : (isEn ? 'Live Session' : 'Sesi Aktif')}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/5 space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
-                <Laptop className="w-4 h-4 text-brand-coral" />
-                <span>{isEn ? 'Device Session' : 'Sesi Perangkat'}</span>
-              </h3>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2 rounded-btn bg-surface-muted dark:bg-surface-dark">
-                  <span className="font-semibold text-brand-navy dark:text-white">Web / PWA</span>
-                  <span className="text-status-success font-bold">● Active Now</span>
+            {/* Card 2: Perangkat Pasangan (Couple Mode Sync Card) */}
+            <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
+                  <Heart className="w-4 h-4 text-pink-500" />
+                  <span>{isEn ? 'Partner Device' : 'Perangkat Pasangan'}</span>
+                </h3>
+                {pairing && pairing.status === 'active' ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal">
+                    {isEn ? 'Connected' : 'Tertaut'}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-navy/10 text-brand-navy/60 dark:text-white/60">
+                    {isEn ? 'Not Linked' : 'Belum Tertaut'}
+                  </span>
+                )}
+              </div>
+
+              {pairing && pairing.status === 'active' ? (
+                <div className="p-3.5 rounded-xl bg-pink-500/5 border border-pink-500/20 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-brand-navy dark:text-white flex items-center gap-1.5">
+                      <Smartphone className="w-4 h-4 text-pink-500" />
+                      <span>{pairing.partner_b_alias}</span>
+                    </span>
+                    <code className="text-[10px] font-bold px-2 py-0.5 rounded bg-white dark:bg-surface-dark border text-brand-teal">
+                      {pairing.invite_code}
+                    </code>
+                  </div>
+                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 leading-relaxed">
+                    {isEn
+                      ? 'Shared milestones synced without revealing private assessment answers.'
+                      : 'Rencana bersama aktif tanpa membuka isi rekam medis pribadi Anda.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate(isEn ? '/couple' : '/berdua')}
+                    className="w-full py-1.5 px-3 rounded-btn bg-white dark:bg-surface-dark border border-brand-navy/15 text-xs font-bold text-brand-navy dark:text-white hover:border-brand-teal transition text-center"
+                  >
+                    {isEn ? 'Open Couple Plan →' : 'Buka Rencana Kita →'}
+                  </button>
                 </div>
-                <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
-                  {lastSyncTime ? `${isEn ? 'Last sync' : 'Sinkron'}: ${lastSyncTime}` : (isEn ? 'Local session' : 'Sesi lokal')}
-                </p>
+              ) : (
+                <div className="p-3.5 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 space-y-2.5">
+                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 leading-relaxed">
+                    {isEn
+                      ? 'Invite your partner to plan together using a 24-hour disposable link.'
+                      : 'Ajak pasangan menyusun linimasa bersama dengan kode tautan aman 24 jam.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate(isEn ? '/couple' : '/berdua')}
+                    className="w-full py-2 px-3 rounded-btn bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral text-xs font-bold hover:bg-brand-coral/25 transition flex items-center justify-center gap-1.5"
+                  >
+                    <Heart className="w-3.5 h-3.5" />
+                    <span>{isEn ? 'Connect Partner Phone' : 'Tautkan Ponsel Pasangan'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Card 3: Jaminan Privasi UU PDP */}
+            <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 space-y-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-brand-teal" />
+                <span>{isEn ? 'Privacy Shield (UU PDP)' : 'Jaminan Privasi UU PDP'}</span>
+              </h3>
+              <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
+                {isAccountActive
+                  ? isEn
+                    ? 'Cross-device sync enabled with zero health-payload server logging.'
+                    : 'Sinkronisasi cloud aktif dengan zero health-payload server logging.'
+                  : isEn
+                    ? 'Pure client-side zero-knowledge encryption. No personal data leaves this device.'
+                    : 'Enkripsi zero-knowledge lokal. Tidak ada data pribadi dikirim ke server.'}
+              </p>
+              <div className="pt-1 flex items-center justify-between text-[11px] font-semibold text-brand-teal">
+                <span>{isEn ? 'No Trackers • No Ads' : 'Bebas Pelacak • Bebas Iklan'}</span>
+                <span className="text-status-success font-bold">✓ Terproteksi</span>
               </div>
             </div>
           </div>

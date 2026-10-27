@@ -1,4 +1,4 @@
-const CACHE_NAME = 'side-by-side-v9';
+const CACHE_NAME = 'side-by-side-v10';
 
 self.addEventListener('install', (event) => {
   // Immediately activate new service worker

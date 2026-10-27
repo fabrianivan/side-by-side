@@ -202,9 +202,11 @@ export const HomePage: React.FC = () => {
           <p className="text-xs text-brand-navy/75 dark:text-white/75">
             {pairing && pairing.status === 'active' ? (
               <>
-                Terhubung bersama <strong>{pairing.partner_b_alias}</strong> (Kode:{' '}
-                <code className="font-bold text-brand-teal">{pairing.invite_code}</code>).{' '}
-                {completedStepsCount} dari 6 tahapan selesai.
+                Terhubung bersama <strong>{pairing.partner_b_alias}</strong> (Kode Tautan:{' '}
+                <span className="font-mono font-bold text-brand-teal bg-brand-teal/15 px-2 py-0.5 rounded-md border border-brand-teal/25 tracking-wide">
+                  {pairing.invite_code}
+                </span>
+                ). {completedStepsCount} dari 6 tahapan selesai.
               </>
             ) : (
               'Belum menautkan pasangan. Anda bisa mengundang pasangan kapan pun Anda siap tanpa membuka data pribadi.'

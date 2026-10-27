@@ -825,9 +825,9 @@ export const AccountPage: React.FC = () => {
                       <Smartphone className="w-4 h-4 text-pink-500" />
                       <span>{pairing.partner_b_alias}</span>
                     </span>
-                    <code className="text-[10px] font-bold px-2 py-0.5 rounded bg-white dark:bg-surface-dark border text-brand-teal">
+                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-white dark:bg-surface-dark border border-pink-500/30 text-brand-teal tracking-wide shadow-xs">
                       {pairing.invite_code}
-                    </code>
+                    </span>
                   </div>
                   <p className="text-[11px] text-brand-navy/70 dark:text-white/70 leading-relaxed">
                     {isEn

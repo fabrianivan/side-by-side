@@ -155,7 +155,7 @@ interface AppContextValue {
   deleteReminder: (id: string) => Promise<void>;
   updatePlanStep: (stepKey: string, actor: 'a' | 'b', status: 'not_started' | 'in_progress' | 'done') => Promise<void>;
   updatePairingSharedItems: (updates: Partial<PairingState['shared_items']>) => Promise<void>;
-  createNewPairing: (aliasA?: string, aliasB?: string) => Promise<void>;
+  createNewPairing: (aliasA?: string, aliasB?: string, customCode?: string) => Promise<void>;
   revokePairing: () => Promise<void>;
   createShareToken: (scope: ('history' | 'risk_factors' | 'lab_results')[]) => Promise<ShareTokenState>;
   revokeShareToken: () => Promise<void>;
@@ -696,8 +696,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const createNewPairing = useCallback(
-    async (aliasA = 'Rendra (Suami)', aliasB = 'Sari (Istri)') => {
-      const code = Math.random().toString(36).substring(2, 6).toUpperCase() + '24';
+    async (aliasA = 'Rendra (Suami)', aliasB = 'Sari (Istri)', customCode?: string) => {
+      const cleanCustom = customCode?.trim().toUpperCase();
+      const code = cleanCustom && cleanCustom.length >= 4 ? cleanCustom : Math.random().toString(36).substring(2, 6).toUpperCase() + '24';
       const newPairing: PairingState = {
         invite_code: code,
         partner_a_alias: aliasA,

@@ -240,16 +240,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [textScale, setTextScaleState] = useState<TextScale>(() => (localStorage.getItem('sbs_text_scale') as TextScale) || 'normal');
   const [darkMode, setDarkModeState] = useState<boolean>(() => localStorage.getItem('sbs_dark_mode') === 'true');
   const [discreetMode, setDiscreetModeState] = useState<boolean>(() => localStorage.getItem('sbs_discreet_mode') === 'true');
-  const [hasPin, setHasPin] = useState<boolean>(() => hasSecurityPin());
-  const [autoLock, setAutoLockState] = useState<boolean>(() => {
-    return localStorage.getItem('sbs_auto_lock') === 'true';
-  });
-  const [isLocked, setIsLocked] = useState<boolean>(() => {
-    if (!hasSecurityPin()) return false;
-    const isExplicitlyLocked = localStorage.getItem('sbs_is_locked') === 'true';
-    const isAutoLock = localStorage.getItem('sbs_auto_lock') === 'true';
-    return isExplicitlyLocked || isAutoLock;
-  });
+  const [hasPin, setHasPin] = useState<boolean>(false);
+  const [autoLock, setAutoLockState] = useState<boolean>(false);
+  const [isLocked, setIsLocked] = useState<boolean>(false);
 
   const [consents, setConsents] = useState<ConsentState>(DEFAULT_CONSENTS);
   const [assessmentAnswers, setAssessmentAnswers] = useState<AssessmentAnswers>({});
@@ -585,23 +578,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDiscreetModeState(discreet);
   }, []);
 
-  const setAutoLock = useCallback((enabled: boolean) => {
-    setAutoLockState(enabled);
-    if (enabled) {
-      localStorage.setItem('sbs_auto_lock', 'true');
-    } else {
-      localStorage.setItem('sbs_auto_lock', 'false');
-    }
-  }, []);
+  const setAutoLock = useCallback((_enabled: boolean) => {}, []);
 
-  const setupPin = useCallback(async (pin: string) => {
-    await setSecurityPin(pin);
-    setHasPin(true);
-    localStorage.setItem('sbs_auto_lock', 'true');
-    localStorage.setItem('sbs_is_locked', 'true');
-    setAutoLockState(true);
-    setIsLocked(true);
-  }, []);
+  const setupPin = useCallback(async (_pin: string) => {}, []);
 
   const removePin = useCallback(() => {
     clearSecurityPin();
@@ -611,20 +590,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem('sbs_auto_lock');
   }, []);
 
-  const lockApp = useCallback(() => {
-    setIsLocked(true);
-    localStorage.setItem('sbs_is_locked', 'true');
-  }, []);
+  const lockApp = useCallback(() => {}, []);
 
-  const unlockApp = useCallback(async (pin: string) => {
-    const ok = await verifySecurityPin(pin);
-    if (ok) {
-      setIsLocked(false);
-      localStorage.removeItem('sbs_is_locked');
-      return true;
-    }
-    return false;
-  }, []);
+  const unlockApp = useCallback(async (_pin: string) => true, []);
 
   const updateConsent = useCallback(
     async (key: keyof ConsentState, granted: boolean) => {

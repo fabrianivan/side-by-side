@@ -28,9 +28,6 @@ export const SettingsPage: React.FC = () => {
     locale,
     textScale,
     darkMode,
-    hasPin,
-    autoLock,
-    setAutoLock,
     consents,
     assessmentAnswers,
     assessmentResult,
@@ -41,30 +38,15 @@ export const SettingsPage: React.FC = () => {
     setTextScale,
     setDarkMode,
     setDiscreetMode,
-    setupPin,
-    removePin,
-    lockApp,
     updateConsent,
     wipeAllData,
   } = useApp();
 
   const navigate = useNavigate();
 
-  const [pinField, setPinField] = useState<string>('');
-  const [pinSavedMessage, setPinSavedMessage] = useState<string>('');
-
   // State Konfirmasi 2 Langkah untuk "Hapus semua data saya"
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [confirmWord, setConfirmWord] = useState<string>('');
-
-  const handleSavePin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (pinField.length < 4) return;
-    await setupPin(pinField);
-    setPinField('');
-    setPinSavedMessage('PIN keamanan berhasil diaktifkan!');
-    setTimeout(() => setPinSavedMessage(''), 3500);
-  };
 
   const handleExportJson = () => {
     const exportPayload = {
@@ -258,76 +240,7 @@ export const SettingsPage: React.FC = () => {
         </details>
       </section>
 
-      {/* Seksi 2: Kunci PIN & Enkripsi Perangkat */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-        <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-          <Lock className="w-5 h-5 text-brand-coral" />
-          <span>Kunci PIN & Keamanan Perangkat</span>
-        </h2>
-        <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-          Atur PIN 4–6 digit untuk mengunci layar aplikasi dan melindungi data pada perangkat Anda.
-        </p>
-
-          {pinSavedMessage && (
-            <p className="text-xs font-bold text-status-success">{pinSavedMessage}</p>
-          )}
-
-          <form onSubmit={handleSavePin} className="flex gap-2">
-            <input
-              type="password"
-              inputMode="numeric"
-              minLength={4}
-              maxLength={6}
-              required
-              value={pinField}
-              onChange={(e) => setPinField(e.target.value)}
-              placeholder={hasPin ? 'Ubah PIN (4–6 digit)' : 'Buat PIN (4–6 digit)'}
-              aria-label="Masukkan PIN keamanan 4 sampai 6 digit"
-              className="flex-1 px-3.5 py-2 rounded-btn border border-brand-navy/20 text-xs font-bold text-brand-navy bg-white"
-            />
-            <button
-              type="submit"
-              className="touch-target px-4 py-2 rounded-btn bg-brand-teal text-white text-xs font-bold"
-            >
-              Simpan PIN
-            </button>
-          </form>
-
-          {hasPin && (
-            <div className="space-y-3 pt-2 border-t border-brand-navy/10">
-              <label className="flex items-center justify-between p-3 rounded-btn bg-surface-muted dark:bg-surface-dark cursor-pointer border border-brand-navy/10">
-                <span className="text-xs font-semibold text-brand-navy dark:text-white">
-                  Kunci otomatis saat membuka atau memuat ulang (refresh) halaman
-                </span>
-                <input
-                  type="checkbox"
-                  checked={autoLock}
-                  onChange={(e) => setAutoLock(e.target.checked)}
-                  className="w-4 h-4 accent-brand-teal rounded"
-                />
-              </label>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={lockApp}
-                  className="touch-target flex-1 py-2 px-3 rounded-btn bg-brand-navy text-white text-xs font-bold hover:bg-brand-navy-light transition"
-                >
-                  Kunci Layar Sekarang
-                </button>
-                <button
-                  type="button"
-                  onClick={removePin}
-                  className="touch-target py-2 px-3 rounded-btn border border-status-urgent text-status-urgent text-xs font-bold hover:bg-status-urgent-bg transition"
-                >
-                  Nonaktifkan PIN
-                </button>
-              </div>
-            </div>
-          )}
-        </section>
-
-      {/* Seksi 3: Bahasa, Ukuran Teks, Mode Gelap, & Ekspor Data */}
+      {/* Seksi 2: Bahasa, Ukuran Teks, Mode Gelap, & Ekspor Data */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
           <h2 className="text-base font-bold text-brand-navy dark:text-white">

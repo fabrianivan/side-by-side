@@ -30,12 +30,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     displayName,
     locale,
     setLocale,
-    hasPin,
-    isLocked,
-    lockApp,
-    unlockApp,
-    setupPin,
-    removePin,
     switchDemoPersona,
   } = useApp();
 
@@ -43,39 +37,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [pinInput, setPinInput] = useState('');
-  const [pinError, setPinError] = useState('');
-  const [showPinSetupModal, setShowPinSetupModal] = useState(false);
-  const [newPinInput, setNewPinInput] = useState('');
   const [demoPanelOpen, setDemoPanelOpen] = useState(true);
-
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const ok = await unlockApp(pinInput);
-    if (ok) {
-      setPinInput('');
-      setPinError('');
-    } else {
-      setPinError('PIN tidak sesuai. Silakan coba lagi (atau hapus PIN di Pengaturan).');
-    }
-  };
-
-  const handleQuickPinClick = () => {
-    if (hasPin) {
-      lockApp();
-    } else {
-      setShowPinSetupModal(true);
-    }
-  };
-
-  const handleSaveQuickPin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPinInput.length < 4) return;
-    await setupPin(newPinInput);
-    setNewPinInput('');
-    setShowPinSetupModal(false);
-    lockApp();
-  };
 
   const handlePersonaClick = async (persona: 'rendra' | 'sari' | 'maya') => {
     await switchDemoPersona(persona);
@@ -85,78 +47,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   };
 
   const isEn = locale === 'en';
-
-  // Layar Kunci PIN Penuh (ketika pengguna menekan Kunci PIN di tempat umum)
-  if (isLocked) {
-    return (
-      <div
-        className="min-h-screen bg-brand-navy text-white flex flex-col items-center justify-center p-6"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="pin-lock-title"
-      >
-        <div className="max-w-sm w-full bg-surface text-brand-navy rounded-card p-6 shadow-soft-lg space-y-5">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-btn bg-brand-teal/10 text-brand-teal flex items-center justify-center">
-              <Lock className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 id="pin-lock-title" className="font-bold text-lg">
-                {isEn ? 'Security Lock Screen' : 'Layar Terkunci Privasi'}
-              </h1>
-              <p className="text-xs text-brand-navy/70">
-                {isEn ? 'Enter your 4-6 digit security PIN to continue.' : 'Masukkan PIN keamanan Anda untuk melanjutkan.'}
-              </p>
-            </div>
-          </div>
-
-          <form onSubmit={handleUnlock} className="space-y-4">
-            <div>
-              <label htmlFor="unlock-pin-input" className="block text-xs font-semibold mb-1">
-                PIN Keamanan (4–6 digit)
-              </label>
-              <input
-                id="unlock-pin-input"
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                placeholder="••••"
-                className="w-full px-4 py-3 rounded-btn border border-brand-navy/20 text-center text-xl tracking-widest font-bold"
-                autoFocus
-              />
-              {pinError && <p className="text-xs text-status-urgent mt-1">{pinError}</p>}
-            </div>
-
-            <button
-              type="submit"
-              className="touch-target w-full py-3 px-4 rounded-btn bg-brand-teal text-white font-semibold hover:bg-brand-teal-dark transition shadow-xs"
-            >
-              {isEn ? 'Unlock Screen' : 'Buka Kunci'}
-            </button>
-          </form>
-
-          {/* Opsi Reset PIN bila lupa */}
-          <div className="pt-2 text-center border-t border-brand-navy/10">
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm(isEn ? 'Reset and clear PIN lock on this device?' : 'Reset dan hapus kunci PIN dari perangkat ini?')) {
-                  removePin();
-                  setPinInput('');
-                  setPinError('');
-                }
-              }}
-              className="text-xs text-brand-navy/60 dark:text-white/60 hover:text-status-urgent transition"
-            >
-              {isEn ? 'Forgot PIN? Reset PIN Lock' : 'Lupa PIN? Reset Kunci PIN'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const navItems = [
     {
@@ -282,7 +172,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             </div>
           </button>
 
-          {/* Tombol Cepat: Bahasa & Kunci PIN */}
+          {/* Tombol Cepat: Bahasa & Akun */}
           <div className="flex items-center gap-2">
             {/* Language Switcher */}
             <div className="flex items-center rounded-btn border border-brand-navy/15 bg-surface-muted dark:bg-surface-dark p-0.5 text-xs font-bold shrink-0">
@@ -307,16 +197,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 EN
               </button>
             </div>
-
-            <button
-              type="button"
-              onClick={handleQuickPinClick}
-              title={isEn ? 'Lock screen with PIN' : 'Kunci layar dengan PIN'}
-              className="touch-target px-3 py-2 rounded-btn text-xs font-semibold flex items-center gap-1.5 bg-surface-muted dark:bg-surface-dark text-brand-navy dark:text-white border border-brand-navy/15 hover:border-brand-teal transition"
-            >
-              <Lock className="w-4 h-4 text-brand-teal" />
-              <span className="hidden sm:inline">{t.nav.lockScreen}</span>
-            </button>
 
             {/* Tombol Akun Saya & Status Sinkronisasi */}
             <NavLink
@@ -384,59 +264,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
         </nav>
       </header>
-
-      {/* Modal Setup PIN Cepat */}
-      {showPinSetupModal && (
-        <div
-          className="fixed inset-0 z-50 bg-brand-navy/60 flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="setup-pin-modal-title"
-        >
-          <div className="bg-surface dark:bg-surface-dark-card rounded-card max-w-sm w-full p-6 shadow-soft-lg space-y-4">
-            <h2 id="setup-pin-modal-title" className="font-bold text-lg text-brand-navy dark:text-white">
-              Buat PIN Kunci Layar (4–6 Digit)
-            </h2>
-            <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              PIN ini digunakan untuk mengunci tampilan aplikasi saat Anda berada di tempat umum dan membungkus kunci enkripsi perangkat Anda.
-            </p>
-            <form onSubmit={handleSaveQuickPin} className="space-y-4">
-              <div>
-                <label htmlFor="quick-new-pin" className="block text-xs font-semibold mb-1">
-                  Masukkan PIN Baru
-                </label>
-                <input
-                  id="quick-new-pin"
-                  type="password"
-                  inputMode="numeric"
-                  minLength={4}
-                  maxLength={6}
-                  required
-                  value={newPinInput}
-                  onChange={(e) => setNewPinInput(e.target.value)}
-                  placeholder="Contoh: 1234"
-                  className="w-full px-4 py-2.5 rounded-btn border border-brand-navy/20 text-center text-lg tracking-widest font-bold text-brand-navy"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowPinSetupModal(false)}
-                  className="touch-target flex-1 py-2.5 px-4 rounded-btn border border-brand-navy/20 text-xs font-semibold"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="touch-target flex-1 py-2.5 px-4 rounded-btn bg-brand-teal text-white text-xs font-semibold"
-                >
-                  Simpan & Kunci Layar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Konten Utama */}
       <main id="main-content" className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8">

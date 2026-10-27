@@ -196,10 +196,10 @@ describe('Uji Alur Utama, Privasi & Aksesibilitas Dasar (Side by Side)', () => {
     // Tab "Masuk / Buat Akun" TIDAK boleh muncul ketika pengguna sudah login
     expect(screen.queryByRole('button', { name: /Masuk \/ Buat Akun/i })).not.toBeInTheDocument();
 
-    // Tab yang tersedia saat login adalah Profil, Kata Sandi & Keamanan, Hak Privasi
+    // Tab yang tersedia saat login adalah Profil, Kata Sandi & Keamanan, Kelola Data
     expect(screen.getByRole('button', { name: /Profil & Tampilan/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Kata Sandi & Keamanan/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Hak Privasi/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Kelola Data/i })).toBeInTheDocument();
 
     // Data profil pengguna terlihat langsung
     expect(screen.getByText('Rendra Pratama')).toBeInTheDocument();

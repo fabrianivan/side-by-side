@@ -560,7 +560,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <p className="leading-relaxed">{t.disclaimer.footer}</p>
           <div className="flex items-center gap-3 shrink-0 font-semibold text-brand-teal">
             <NavLink to="/pengaturan" className="hover:underline">
-              Data & Privasi
+              Kelola Data
             </NavLink>
             <span>•</span>
             <NavLink to="/welcome" className="hover:underline">

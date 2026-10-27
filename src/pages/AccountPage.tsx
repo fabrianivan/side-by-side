@@ -27,6 +27,7 @@ import {
   CheckCircle,
   X,
   UserCheck,
+  Database,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
@@ -714,8 +715,8 @@ export const AccountPage: React.FC = () => {
                   : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
               }`}
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span>{isEn ? 'Data Privacy' : 'Hak Privasi'}</span>
+              <Database className="w-4 h-4" />
+              <span>{isEn ? 'Data & Storage' : 'Kelola Data'}</span>
             </button>
           </>
         ) : (
@@ -742,8 +743,8 @@ export const AccountPage: React.FC = () => {
                   : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
               }`}
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span>{isEn ? 'Local Data & Rights' : 'Data Lokal & Hak Privasi'}</span>
+              <Database className="w-4 h-4" />
+              <span>{isEn ? 'Data & Storage' : 'Kelola Data'}</span>
             </button>
           </>
         )}
@@ -1478,19 +1479,19 @@ export const AccountPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB D: DATA PRIVACY & SUBJECT RIGHTS */}
+      {/* TAB D: DATA MANAGEMENT & STORAGE */}
       {activeTab === 'data' && (
         <div className="space-y-6">
           <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5 space-y-5">
             <div className="border-b border-brand-navy/10 pb-3">
               <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-brand-teal" />
-                <span>{isEn ? 'Data Privacy & Subject Rights' : 'Hak Privasi & Kendali Data'}</span>
+                <Database className="w-4 h-4 text-brand-teal" />
+                <span>{isEn ? 'Data & Storage Management' : 'Kelola Data & Penyimpanan'}</span>
               </h2>
               <p className="text-xs text-brand-navy/70 dark:text-white/70">
                 {isEn
-                  ? 'Exercise your legal right to export your complete records or permanently wipe all account data.'
-                  : 'Gunakan hak Anda untuk mengunduh seluruh data kesehatan atau menghapusnya secara permanen.'}
+                  ? 'Manage your health records, download backup files, or erase account data.'
+                  : 'Kelola data catatan kesehatan Anda, unduh cadangan file, atau hapus riwayat data.'}
               </p>
             </div>
 

@@ -30,7 +30,7 @@ export const designTokens = {
   },
   radius: {
     button: '12px',
-    card: '16px',
+    card: '20px',
   },
   accessibility: {
     minTouchTargetPx: 44,

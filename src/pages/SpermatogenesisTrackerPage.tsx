@@ -179,17 +179,17 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header Banner */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-2.5 py-1 rounded-full">
+      <section className="page-header">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="space-y-2.5">
+            <div className="badge badge-teal">
               <Clock className="w-3.5 h-3.5" />
               <span>{isEn ? 'Male Biological Lifecycle (~72–74 Days)' : 'Siklus Biologis Tubuh Pria (~72–74 Hari)'}</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
+            <h1 className="page-title">
               {isEn ? '72-Day Spermatogenesis Roadmap & Habit Tracker' : 'Pelacak Siklus Spermatogenesis & Kebiasaan Sehat'}
             </h1>
-            <p className="text-sm text-brand-navy/75 dark:text-white/75">
+            <p className="page-lead">
               {isEn
                 ? 'The male body requires approximately 72 to 74 days to regenerate and mature sperm cells. Positive habits cultivated today will reflect in your sperm 2 months from now.'
                 : 'Tubuh pria membutuhkan waktu sekitar 72 hingga 74 hari untuk memproduksi sperma matang seutuhnya. Kebiasaan sehat hari ini membentuk sperma 2 bulan ke depan.'}
@@ -201,9 +201,9 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
               type="button"
               onClick={handleScheduleTestReminder}
               disabled={reminderAdded}
-              className="touch-target px-4 py-2.5 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center gap-1.5 shadow-soft hover:bg-brand-navy-light transition disabled:opacity-75"
+              className="btn btn-navy"
             >
-              {reminderAdded ? <Check className="w-4 h-4 text-brand-teal" /> : <Bell className="w-4 h-4" />}
+              {reminderAdded ? <Check className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
               <span>
                 {reminderAdded
                   ? (isEn ? 'Reminder Scheduled!' : 'Pengingat Dijadwalkan!')
@@ -215,60 +215,72 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
       </section>
 
       {/* 72-Day Progress Card */}
-      <section className="bg-gradient-to-br from-brand-navy to-brand-navy-light text-white rounded-card shadow-soft-lg p-6 sm:p-7 space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-navy-deep via-brand-navy to-brand-navy-light text-white rounded-card shadow-soft-lg p-5 sm:p-8 space-y-6">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 rounded-full bg-brand-teal/30 blur-3xl"
+        />
+        <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-brand-teal text-white">
+            <span className="text-2xs font-bold uppercase tracking-[0.08em] text-[#7FDADB]">
               {isEn ? `Phase ${currentPhase.number} of 4 • ${currentPhase.range}` : `Fase ${currentPhase.number} dari 4 • ${currentPhase.range}`}
             </span>
-            <h2 className="text-xl sm:text-2xl font-bold mt-2 text-white">
+            <h2 className="text-2xl sm:text-3xl font-extrabold mt-1.5 text-white">
               {isEn ? `Day ${diffDays} of 74 Days (${progressPct}% Complete)` : `Hari ke-${diffDays} dari 74 Hari (${progressPct}% Selesai)`}
             </h2>
           </div>
 
           {/* Date Selector */}
-          <div className="bg-white/10 p-2.5 rounded-btn border border-white/15 text-xs flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-brand-teal-light" />
+          <div className="bg-white/[0.08] px-3 py-2.5 rounded-xl border border-white/10 text-xs flex items-center gap-2 self-start md:self-auto shrink-0">
+            <Calendar className="w-4 h-4 text-brand-teal-light shrink-0" />
             <span className="text-white/80">{isEn ? 'Cycle Started:' : 'Mulai Siklus:'}</span>
             <input
               type="date"
               value={cycleStartDate}
               onChange={(e) => setCycleStartDate(e.target.value)}
-              className="bg-brand-navy px-2 py-1 rounded border border-white/20 text-white text-xs font-bold"
+              aria-label={isEn ? 'Cycle start date' : 'Tanggal mulai siklus'}
+              className="bg-brand-navy-deep px-2.5 py-1.5 rounded-lg border border-white/20 text-white text-xs font-bold [color-scheme:dark]"
             />
           </div>
         </div>
 
         {/* Visual Progress Bar */}
-        <div className="space-y-2">
-          <div className="w-full bg-white/20 h-3 rounded-full overflow-hidden">
+        <div className="relative space-y-2.5">
+          <div
+            role="progressbar"
+            aria-valuenow={progressPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={isEn ? `Cycle progress ${progressPct}%` : `Progres siklus ${progressPct}%`}
+            className="w-full bg-white/15 h-3 rounded-full overflow-hidden"
+          >
             <div
-              className="bg-brand-teal h-full transition-all duration-500 rounded-full"
+              className="h-full transition-all duration-500 rounded-full bg-gradient-to-r from-brand-teal to-[#4FC6C8]"
               style={{ width: `${progressPct}%` }}
             />
           </div>
-          <div className="flex justify-between text-[11px] text-white/70">
+          <div className="grid grid-cols-3 gap-2 text-2xs leading-snug text-white/70">
             <span>{isEn ? 'Day 1 (Habit Start)' : 'Hari 1 (Mulai Kebiasaan)'}</span>
-            <span>{isEn ? 'Day 36 (Meiosis Peak)' : 'Hari 36 (Fase Meiosis)'}</span>
-            <span>{isEn ? 'Day 74 (Matured & Test Evaluation)' : 'Hari 74 (Sperma Matang & Evaluasi)'}</span>
+            <span className="text-center">{isEn ? 'Day 36 (Meiosis Peak)' : 'Hari 36 (Fase Meiosis)'}</span>
+            <span className="text-right">{isEn ? 'Day 74 (Matured & Test Evaluation)' : 'Hari 74 (Sperma Matang & Evaluasi)'}</span>
           </div>
         </div>
 
         {/* Active Phase Box */}
-        <div className="p-4 rounded-btn bg-white/10 border border-white/15 space-y-1.5 text-xs">
-          <div className="font-bold text-brand-coral flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
+        <div className="relative p-4 sm:p-5 rounded-2xl bg-white/[0.08] border border-white/10 space-y-1.5 text-xs">
+          <div className="font-bold text-sm text-[#FFA596] flex items-center gap-2">
+            <Sparkles className="w-4 h-4 shrink-0" />
             <span>{currentPhase.name}</span>
           </div>
           <p className="text-white/90 leading-relaxed">{currentPhase.detail}</p>
-          <p className="text-brand-teal-light font-semibold pt-1">{currentPhase.focus}</p>
+          <p className="text-[#7FDADB] font-semibold pt-1">{currentPhase.focus}</p>
         </div>
       </section>
 
       {/* 4 Biological Milestones */}
       <section className="space-y-3">
-        <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-brand-teal" />
+        <h2 className="section-title flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-brand-teal shrink-0" />
           <span>{isEn ? 'Your Biological Sperm Development Journey' : 'Perjalanan Biologis Sperma Anda'}</span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -312,24 +324,25 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
           ].map((item) => (
             <div
               key={item.phase}
-              className={`p-4 rounded-card border transition ${
+              aria-current={item.active ? 'step' : undefined}
+              className={`p-4 sm:p-5 rounded-card border transition ${
                 item.active
-                  ? 'border-brand-teal bg-brand-teal-light/20 dark:bg-brand-teal/20 shadow-soft'
-                  : 'border-brand-navy/10 bg-surface dark:bg-surface-dark-card opacity-75'
+                  ? 'border-brand-teal bg-brand-teal-light/40 dark:bg-brand-teal/20 shadow-soft ring-4 ring-brand-teal/10'
+                  : 'border-brand-navy/[0.07] dark:border-white/[0.08] bg-surface dark:bg-surface-dark-card'
               }`}
             >
-              <div className="flex items-center justify-between mb-1.5">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.active ? 'bg-brand-teal text-white' : 'bg-brand-navy/10 text-brand-navy dark:text-white'}`}>
+              <div className="flex items-center justify-between gap-2 mb-2.5">
+                <span className={`badge ${item.active ? 'bg-brand-teal-strong text-white' : 'badge-navy'}`}>
                   {isEn ? `Phase ${item.phase}` : `Fase ${item.phase}`}
                 </span>
-                <span className="text-[11px] font-semibold text-brand-navy/60 dark:text-white/60">
+                <span className="text-2xs font-semibold text-brand-navy/60 dark:text-white/60">
                   {item.range}
                 </span>
               </div>
-              <h3 className="font-bold text-xs text-brand-navy dark:text-white mb-1">
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white mb-1">
                 {item.title}
               </h3>
-              <p className="text-[11px] text-brand-navy/70 dark:text-white/70 leading-relaxed">
+              <p className="text-2xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
                 {item.desc}
               </p>
             </div>
@@ -338,11 +351,11 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
       </section>
 
       {/* Daily Micro-Habits Checklist */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-5">
+      <section className="card p-5 sm:p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-brand-teal" />
+          <div className="space-y-1">
+            <h2 className="section-title flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-brand-teal shrink-0" />
               <span>{isEn ? 'Daily Micro-Habits Checklist' : 'Checklist Kebiasaan Harian'}</span>
             </h2>
             <p className="text-xs text-brand-navy/70 dark:text-white/70">
@@ -352,25 +365,28 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-brand-navy/60 dark:text-white/60">{isEn ? 'Select Date:' : 'Pilih Tanggal:'}</span>
+          <div className="flex items-center gap-2 text-xs shrink-0">
+            <label htmlFor="habit-date" className="text-brand-navy/60 dark:text-white/60 whitespace-nowrap">
+              {isEn ? 'Select Date:' : 'Pilih Tanggal:'}
+            </label>
             <input
+              id="habit-date"
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-2.5 py-1.5 rounded-btn border border-brand-navy/20 text-xs font-semibold text-brand-navy bg-white"
+              className="field font-semibold"
             />
           </div>
         </div>
 
         {/* Adherence Score */}
-        <div className="p-3.5 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex items-center justify-between">
+        <div className="well px-4 py-3.5 flex flex-wrap items-center justify-between gap-2">
           <span className="text-xs font-semibold text-brand-navy dark:text-white">
             {isEn
               ? `Habits Completed (${selectedDate === todayStr ? 'Today' : selectedDate}):`
               : `Progress Kebiasaan (${selectedDate === todayStr ? 'Hari Ini' : selectedDate}):`}
           </span>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-brand-teal text-white">
+          <span className="tabular badge bg-brand-teal-strong text-white whitespace-nowrap">
             {isEn
               ? `${todayCheckedList.length} of ${HABIT_ITEMS.length} Complete`
               : `${todayCheckedList.length} dari ${HABIT_ITEMS.length} Selesai`}
@@ -384,18 +400,28 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
             return (
               <div
                 key={habit.key}
+                role="checkbox"
+                aria-checked={isChecked}
+                tabIndex={0}
                 onClick={() => handleToggle(habit.key)}
-                className={`p-4 rounded-btn border cursor-pointer transition flex items-start gap-3.5 ${
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    handleToggle(habit.key);
+                  }
+                }}
+                className={`p-4 rounded-2xl border cursor-pointer transition duration-150 flex items-start gap-3.5 ${
                   isChecked
-                    ? 'border-brand-teal bg-brand-teal-light/25 dark:bg-brand-teal/15 shadow-sm'
-                    : 'border-brand-navy/15 bg-white dark:bg-surface-dark-card hover:border-brand-teal/50'
+                    ? 'border-brand-teal bg-brand-teal-light/40 dark:bg-brand-teal/15 shadow-xs'
+                    : 'border-brand-navy/15 dark:border-white/15 bg-surface dark:bg-surface-dark hover:border-brand-teal/60 hover:bg-brand-teal-soft dark:hover:bg-white/5'
                 }`}
               >
                 <div
-                  className={`w-6 h-6 rounded flex items-center justify-center shrink-0 mt-0.5 transition ${
+                  aria-hidden="true"
+                  className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition ${
                     isChecked
                       ? 'bg-brand-teal text-white'
-                      : 'border-2 border-brand-navy/30 bg-white'
+                      : 'border-2 border-brand-navy/30 dark:border-white/35 bg-white dark:bg-surface-dark'
                   }`}
                 >
                   {isChecked && <Check className="w-4 h-4 stroke-[3]" />}
@@ -404,19 +430,19 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">
                     <h3
-                      className={`text-xs font-bold ${
+                      className={`text-sm font-bold ${
                         isChecked
-                          ? 'text-brand-teal line-through opacity-90'
+                          ? 'text-brand-teal-dark dark:text-[#7FDADB]'
                           : 'text-brand-navy dark:text-white'
                       }`}
                     >
                       {isEn ? habit.titleEn : habit.titleId}
                     </h3>
                   </div>
-                  <p className="text-[11px] text-brand-navy/75 dark:text-white/75 leading-relaxed">
+                  <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
                     {isEn ? habit.subtitleEn : habit.subtitleId}
                   </p>
-                  <p className="text-[10px] text-brand-teal font-semibold pt-0.5">
+                  <p className="text-2xs leading-relaxed text-brand-teal-dark dark:text-[#7FDADB] font-semibold pt-0.5">
                     💡 {isEn ? `Why this matters: ${habit.benefitEn}` : `Kenapa ini penting: ${habit.benefitId}`}
                   </p>
                 </div>

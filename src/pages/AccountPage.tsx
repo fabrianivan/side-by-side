@@ -387,33 +387,29 @@ export const AccountPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* 1. TOP HERO PROFILE CARD (Modern Clean Studio Aesthetic) */}
-      <section className="relative overflow-hidden rounded-card bg-surface dark:bg-surface-dark-card border border-brand-navy/10 shadow-soft">
+      <section className="card relative overflow-hidden">
         {/* Decorative Top Accent Bar */}
-        <div className="h-2.5 bg-gradient-to-r from-brand-teal via-brand-coral to-brand-navy" />
+        <div className="h-1.5 bg-gradient-to-r from-brand-teal via-[#17A7A0] to-brand-coral" />
 
-        <div className="p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="p-5 sm:p-8">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             {/* User Avatar & Info */}
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-4 sm:gap-5 min-w-0">
               <div
-                className={`w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center text-3xl font-black shadow-md ring-4 ${avatarGradients[avatarTheme]} shrink-0`}
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center text-2xl sm:text-3xl font-black shadow-soft ring-4 ${avatarGradients[avatarTheme]} shrink-0`}
               >
                 {displayName ? displayName.charAt(0).toUpperCase() : 'U'}
               </div>
 
-              <div className="space-y-1.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-extrabold text-brand-navy dark:text-white tracking-tight">
+              <div className="space-y-1.5 min-w-0">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+                  <h1 className="page-title">
                     {displayName}
                   </h1>
 
                   {/* Mode Badge */}
                   <span
-                    className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                      isAccountActive
-                        ? 'bg-status-success/15 text-status-success'
-                        : 'bg-brand-teal/15 text-brand-teal'
-                    }`}
+                    className={`badge ${isAccountActive ? 'badge-success' : 'badge-teal'}`}
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
                     {isAccountActive
@@ -424,7 +420,7 @@ export const AccountPage: React.FC = () => {
                   </span>
                 </div>
 
-                <p className="text-xs sm:text-sm text-brand-navy/70 dark:text-white/70 font-medium">
+                <p className="text-xs text-brand-navy/70 dark:text-white/70 font-medium break-all">
                   {userEmail ? (
                     <span className="flex items-center gap-1.5 font-mono">
                       <Mail className="w-3.5 h-3.5 text-brand-teal" />
@@ -439,20 +435,20 @@ export const AccountPage: React.FC = () => {
                   )}
                 </p>
 
-                <p className="text-[11px] font-mono text-brand-navy/50 dark:text-white/50">
+                <p className="text-2xs font-mono text-brand-navy/55 dark:text-white/55 break-all">
                   UID: <span className="font-semibold text-brand-navy/80 dark:text-white/80">{userId}</span>
                 </p>
               </div>
             </div>
 
             {/* Quick Actions (Switch Account / Sync / Sign Out) */}
-            <div className="flex flex-wrap sm:flex-col gap-2 shrink-0">
+            <div className="flex flex-wrap gap-2 lg:justify-end lg:max-w-xs shrink-0">
               <button
                 type="button"
                 onClick={() => setShowSwitchModal(true)}
-                className="touch-target px-4 py-2 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/15 text-brand-navy dark:text-white text-xs font-semibold flex items-center justify-center gap-2 hover:border-brand-teal hover:bg-brand-teal/5 transition shadow-xs"
+                className="btn btn-secondary"
               >
-                <Users className="w-3.5 h-3.5 text-brand-teal" />
+                <Users className="w-4 h-4 text-brand-teal" />
                 <span>{isEn ? 'Switch Account' : 'Ganti Akun'}</span>
               </button>
 
@@ -462,18 +458,18 @@ export const AccountPage: React.FC = () => {
                     type="button"
                     onClick={() => syncCloudData()}
                     disabled={isSyncing}
-                    className="touch-target px-4 py-2 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs hover:bg-brand-teal-dark transition disabled:opacity-50"
+                    className="btn btn-primary"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
                     <span>{isSyncing ? (isEn ? 'Syncing...' : 'Menyinkronkan...') : (isEn ? 'Sync Cloud' : 'Sinkronkan')}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={logoutToWelcome}
-                    className="touch-target px-4 py-2 rounded-btn border border-status-urgent/30 text-status-urgent text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-status-urgent-bg transition"
+                    className="btn border border-status-urgent/35 text-[#B33834] dark:text-[#FF8A85] hover:bg-status-urgent-bg dark:hover:bg-status-urgent/15"
                   >
-                    <LogOut className="w-3.5 h-3.5" />
+                    <LogOut className="w-4 h-4" />
                     <span>{isEn ? 'Sign Out' : 'Keluar Akun'}</span>
                   </button>
                 </>
@@ -481,7 +477,7 @@ export const AccountPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveTab('auth')}
-                  className="touch-target px-5 py-2.5 rounded-btn bg-brand-coral text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-brand-coral-dark transition"
+                  className="btn btn-coral"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>{isEn ? 'Upgrade to Cloud Account' : 'Tingkatkan ke Mode Akun'}</span>
@@ -491,8 +487,8 @@ export const AccountPage: React.FC = () => {
           </div>
 
           {/* Real-time Health Profile Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-brand-navy/10">
-            <div className="p-3.5 rounded-btn bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 space-y-1">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-brand-navy/10 dark:border-white/10">
+            <div className="well p-3.5 sm:p-4 space-y-1 min-w-0">
               <div className="flex items-center gap-1.5 text-xs text-brand-navy/60 dark:text-white/60 font-semibold">
                 <CheckCircle className="w-3.5 h-3.5 text-brand-teal" />
                 <span>{isEn ? 'Self Check' : 'Cek Awal'}</span>
@@ -502,7 +498,7 @@ export const AccountPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-btn bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 space-y-1">
+            <div className="well p-3.5 sm:p-4 space-y-1 min-w-0">
               <div className="flex items-center gap-1.5 text-xs text-brand-navy/60 dark:text-white/60 font-semibold">
                 <Activity className="w-3.5 h-3.5 text-brand-coral" />
                 <span>{isEn ? 'Lab Records' : 'Hasil Lab'}</span>
@@ -512,9 +508,9 @@ export const AccountPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-btn bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 space-y-1">
+            <div className="well p-3.5 sm:p-4 space-y-1 min-w-0">
               <div className="flex items-center gap-1.5 text-xs text-brand-navy/60 dark:text-white/60 font-semibold">
-                <Heart className="w-3.5 h-3.5 text-pink-500" />
+                <Heart className="w-3.5 h-3.5 text-brand-coral" />
                 <span>{isEn ? 'Partner Plan' : 'Mode Berdua'}</span>
               </div>
               <div className="text-sm font-bold text-brand-navy dark:text-white truncate">
@@ -524,9 +520,9 @@ export const AccountPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-3.5 rounded-btn bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 space-y-1">
+            <div className="well p-3.5 sm:p-4 space-y-1 min-w-0">
               <div className="flex items-center gap-1.5 text-xs text-brand-navy/60 dark:text-white/60 font-semibold">
-                <Calendar className="w-3.5 h-3.5 text-emerald-500" />
+                <Calendar className="w-3.5 h-3.5 text-status-success" />
                 <span>{isEn ? 'Habits Tracked' : 'Kebiasaan Sehat'}</span>
               </div>
               <div className="text-sm font-bold text-brand-navy dark:text-white">
@@ -539,14 +535,14 @@ export const AccountPage: React.FC = () => {
 
       {/* FEEDBACK ALERTS */}
       {authSuccess && (
-        <div className="p-4 rounded-card bg-status-success-bg text-status-success text-xs font-bold flex items-center gap-2.5 shadow-sm border border-status-success/30">
+        <div role="status" className="p-4 rounded-2xl bg-status-success-bg text-[#1F7A50] text-xs font-bold flex items-center gap-2.5 border border-status-success/30">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{authSuccess}</span>
         </div>
       )}
 
       {authError && (
-        <div className="p-4 rounded-card bg-status-urgent-bg text-status-urgent text-xs font-bold flex items-center gap-2.5 shadow-sm border border-status-urgent/30">
+        <div role="alert" className="p-4 rounded-2xl bg-status-urgent-bg text-[#B33834] text-xs font-bold flex items-center gap-2.5 border border-status-urgent/30">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{authError}</span>
         </div>
@@ -555,16 +551,17 @@ export const AccountPage: React.FC = () => {
 
 
       {/* 2. MODERN SEGMENTED NAVIGATION TABS */}
-      <div className="flex items-center gap-2 p-1.5 rounded-card bg-surface dark:bg-surface-dark-card border border-brand-navy/10 shadow-xs">
+      <div className="card flex items-center gap-1.5 p-1.5 shadow-xs overflow-x-auto thin-scroll">
         {isAccountActive ? (
           <>
             <button
               type="button"
               onClick={() => setActiveTab('profile')}
-              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+              aria-pressed={activeTab === 'profile'}
+              className={`flex-1 min-w-max py-2.5 px-4 rounded-[10px] text-xs font-bold whitespace-nowrap transition flex items-center justify-center gap-2 ${
                 activeTab === 'profile'
-                  ? 'bg-brand-navy text-white shadow-sm'
-                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+                  ? 'bg-brand-teal-strong text-white shadow-xs'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy dark:hover:text-white hover:bg-brand-navy/[0.05] dark:hover:bg-white/10'
               }`}
             >
               <User className="w-4 h-4" />
@@ -574,10 +571,11 @@ export const AccountPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab('security')}
-              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+              aria-pressed={activeTab === 'security'}
+              className={`flex-1 min-w-max py-2.5 px-4 rounded-[10px] text-xs font-bold whitespace-nowrap transition flex items-center justify-center gap-2 ${
                 activeTab === 'security'
-                  ? 'bg-brand-navy text-white shadow-sm'
-                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+                  ? 'bg-brand-teal-strong text-white shadow-xs'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy dark:hover:text-white hover:bg-brand-navy/[0.05] dark:hover:bg-white/10'
               }`}
             >
               <Lock className="w-4 h-4" />
@@ -587,10 +585,11 @@ export const AccountPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab('data')}
-              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+              aria-pressed={activeTab === 'data'}
+              className={`flex-1 min-w-max py-2.5 px-4 rounded-[10px] text-xs font-bold whitespace-nowrap transition flex items-center justify-center gap-2 ${
                 activeTab === 'data'
-                  ? 'bg-brand-navy text-white shadow-sm'
-                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+                  ? 'bg-brand-teal-strong text-white shadow-xs'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy dark:hover:text-white hover:bg-brand-navy/[0.05] dark:hover:bg-white/10'
               }`}
             >
               <Database className="w-4 h-4" />
@@ -602,10 +601,11 @@ export const AccountPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab('auth')}
-              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+              aria-pressed={activeTab === 'auth'}
+              className={`flex-1 min-w-max py-2.5 px-4 rounded-[10px] text-xs font-bold whitespace-nowrap transition flex items-center justify-center gap-2 ${
                 activeTab === 'auth'
-                  ? 'bg-brand-navy text-white shadow-sm'
-                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+                  ? 'bg-brand-teal-strong text-white shadow-xs'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy dark:hover:text-white hover:bg-brand-navy/[0.05] dark:hover:bg-white/10'
               }`}
             >
               <KeyRound className="w-4 h-4" />
@@ -615,10 +615,11 @@ export const AccountPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setActiveTab('data')}
-              className={`flex-1 py-2.5 px-3 rounded-btn text-xs font-bold transition flex items-center justify-center gap-2 ${
+              aria-pressed={activeTab === 'data'}
+              className={`flex-1 min-w-max py-2.5 px-4 rounded-[10px] text-xs font-bold whitespace-nowrap transition flex items-center justify-center gap-2 ${
                 activeTab === 'data'
-                  ? 'bg-brand-navy text-white shadow-sm'
-                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy hover:bg-surface-muted'
+                  ? 'bg-brand-teal-strong text-white shadow-xs'
+                  : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy dark:hover:text-white hover:bg-brand-navy/[0.05] dark:hover:bg-white/10'
               }`}
             >
               <Database className="w-4 h-4" />
@@ -635,9 +636,9 @@ export const AccountPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Left Form (8 Cols) */}
           <div className="md:col-span-8 space-y-6">
-            <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5 space-y-5">
+            <section className="card p-6 sm:p-7 space-y-5">
               <div className="border-b border-brand-navy/10 pb-3">
-                <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
+                <h2 className="section-title flex items-center gap-2">
                   <User className="w-4 h-4 text-brand-teal" />
                   <span>{isEn ? 'Personal Profile Settings' : 'Pengaturan Profil Akun'}</span>
                 </h2>
@@ -672,7 +673,7 @@ export const AccountPage: React.FC = () => {
                     required
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-btn border border-brand-navy/20 text-xs font-semibold text-brand-navy bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                    className="field w-full font-semibold"
                   />
                 </div>
 
@@ -711,7 +712,7 @@ export const AccountPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="touch-target px-6 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold shadow-soft hover:bg-brand-teal-dark transition disabled:opacity-50"
+                    className="btn btn-primary"
                   >
                     {isEn ? 'Save Profile Changes' : 'Simpan Perubahan'}
                   </button>
@@ -720,7 +721,7 @@ export const AccountPage: React.FC = () => {
             </section>
 
             {/* Quick Demo Personas / Switch Account Hub */}
-            <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <section className="card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-brand-teal/10 text-brand-teal flex items-center justify-center shrink-0">
                   <Users className="w-5 h-5" />
@@ -729,7 +730,7 @@ export const AccountPage: React.FC = () => {
                   <h3 className="text-xs font-bold text-brand-navy dark:text-white">
                     {isEn ? 'Switch Account or Demo Persona' : 'Ganti Akun & Persona Demo'}
                   </h3>
-                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70">
+                  <p className="text-2xs text-brand-navy/70 dark:text-white/70">
                     {isEn
                       ? 'Instantly switch between Husband, Wife, or Healthcare Provider profiles.'
                       : 'Beralih instan antara profil Suami, Istri, atau Dokter Puskesmas untuk kemudahan evaluasi.'}
@@ -750,13 +751,13 @@ export const AccountPage: React.FC = () => {
           {/* Right Info Cards: Device & Network Protection Hub (4 Cols) */}
           <div className="md:col-span-4 space-y-4">
             {/* Card 1: Perangkat Ini (Current Verified Session) */}
-            <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 space-y-3">
+            <div className="card p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
                   <Laptop className="w-4 h-4 text-brand-teal" />
                   <span>{isEn ? 'Current Device' : 'Perangkat Ini'}</span>
                 </h3>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-status-success/15 text-status-success border border-status-success/20">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-3xs font-bold bg-status-success/15 text-status-success border border-status-success/20">
                   <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
                   {isEn ? 'Active Now' : 'Aktif Sekarang'}
                 </span>
@@ -771,13 +772,13 @@ export const AccountPage: React.FC = () => {
                     <h4 className="font-bold text-xs text-brand-navy dark:text-white">
                       {deviceInfo.os}
                     </h4>
-                    <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                    <p className="text-2xs text-brand-navy/60 dark:text-white/60">
                       {deviceInfo.browser} • Standalone Web Client
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-brand-navy/10 text-[11px] space-y-1.5">
+                <div className="pt-2 border-t border-brand-navy/10 text-2xs space-y-1.5">
                   <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
                     <span>{isEn ? 'Protection:' : 'Keamanan:'}</span>
                     <strong className="text-brand-teal font-semibold">{isEn ? 'Protected & Secure' : 'Tersimpan Terlindungi'}</strong>
@@ -792,7 +793,7 @@ export const AccountPage: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
                     <span>{isEn ? 'Last Sync:' : 'Terakhir Sinkron:'}</span>
-                    <span className="font-mono text-[10px]">
+                    <span className="font-mono text-3xs">
                       {lastSyncTime ? lastSyncTime : (isEn ? 'Live Session' : 'Sesi Aktif')}
                     </span>
                   </div>
@@ -801,35 +802,35 @@ export const AccountPage: React.FC = () => {
             </div>
 
             {/* Card 2: Perangkat Pasangan (Couple Mode Sync Card) */}
-            <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 space-y-3">
+            <div className="card p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
-                  <Heart className="w-4 h-4 text-pink-500" />
+                  <Heart className="w-4 h-4 text-brand-coral" />
                   <span>{isEn ? 'Partner Device' : 'Perangkat Pasangan'}</span>
                 </h3>
                 {pairing && pairing.status === 'active' ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal">
+                  <span className="text-3xs font-bold px-2 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal">
                     {isEn ? 'Connected' : 'Tertaut'}
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-navy/10 text-brand-navy/60 dark:text-white/60">
+                  <span className="text-3xs font-bold px-2 py-0.5 rounded-full bg-brand-navy/10 text-brand-navy/60 dark:text-white/60">
                     {isEn ? 'Not Linked' : 'Belum Tertaut'}
                   </span>
                 )}
               </div>
 
               {pairing && pairing.status === 'active' ? (
-                <div className="p-3.5 rounded-xl bg-pink-500/5 border border-pink-500/20 space-y-2">
+                <div className="p-3.5 rounded-xl bg-brand-coral/[0.06] border border-brand-coral/25 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-xs text-brand-navy dark:text-white flex items-center gap-1.5">
-                      <Smartphone className="w-4 h-4 text-pink-500" />
+                      <Smartphone className="w-4 h-4 text-brand-coral" />
                       <span>{pairing.partner_b_alias}</span>
                     </span>
-                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-md bg-white dark:bg-surface-dark border border-pink-500/30 text-brand-teal tracking-wide shadow-xs">
+                    <span className="text-2xs font-mono font-bold px-2 py-0.5 rounded-md bg-white dark:bg-surface-dark border border-brand-coral/30 text-brand-teal tracking-wide shadow-xs">
                       {pairing.invite_code}
                     </span>
                   </div>
-                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 leading-relaxed">
+                  <p className="text-2xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
                     {isEn
                       ? 'Shared milestones synced without revealing private assessment answers.'
                       : 'Rencana bersama aktif tanpa membuka isi rekam medis pribadi Anda.'}
@@ -837,14 +838,14 @@ export const AccountPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate(isEn ? '/couple' : '/berdua')}
-                    className="w-full py-1.5 px-3 rounded-btn bg-white dark:bg-surface-dark border border-brand-navy/15 text-xs font-bold text-brand-navy dark:text-white hover:border-brand-teal transition text-center"
+                    className="btn btn-secondary btn-sm w-full text-center"
                   >
                     {isEn ? 'Open Couple Plan →' : 'Buka Rencana Kita →'}
                   </button>
                 </div>
               ) : (
                 <div className="p-3.5 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 space-y-2.5">
-                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 leading-relaxed">
+                  <p className="text-2xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
                     {isEn
                       ? 'Invite your partner to plan together using a 24-hour disposable link.'
                       : 'Ajak pasangan menyusun linimasa bersama dengan kode tautan aman 24 jam.'}
@@ -852,7 +853,7 @@ export const AccountPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => navigate(isEn ? '/couple' : '/berdua')}
-                    className="w-full py-2 px-3 rounded-btn bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral text-xs font-bold hover:bg-brand-coral/25 transition flex items-center justify-center gap-1.5"
+                    className="btn btn-coral-soft w-full"
                   >
                     <Heart className="w-3.5 h-3.5" />
                     <span>{isEn ? 'Connect Partner Phone' : 'Tautkan Ponsel Pasangan'}</span>
@@ -862,7 +863,7 @@ export const AccountPage: React.FC = () => {
             </div>
 
             {/* Card 3: Jaminan Privasi */}
-            <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/10 space-y-2.5">
+            <div className="card p-5 space-y-2.5">
               <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-brand-teal" />
                 <span>{isEn ? 'Privacy Shield' : 'Jaminan Privasi'}</span>
@@ -876,7 +877,7 @@ export const AccountPage: React.FC = () => {
                     ? 'Pure client-side zero-knowledge encryption. No personal data leaves this device.'
                     : 'Enkripsi zero-knowledge lokal. Tidak ada data pribadi dikirim ke server.'}
               </p>
-              <div className="pt-1 flex items-center justify-between text-[11px] font-semibold text-brand-teal">
+              <div className="pt-1 flex items-center justify-between text-2xs font-semibold text-brand-teal">
                 <span>{isEn ? 'No Trackers • No Ads' : 'Bebas Pelacak • Bebas Iklan'}</span>
                 <span className="text-status-success font-bold">✓ Terproteksi</span>
               </div>
@@ -888,9 +889,9 @@ export const AccountPage: React.FC = () => {
       {/* TAB B: PASSWORD & SECURITY (Visible when logged in) */}
       {activeTab === 'security' && isAccountActive && (
         <div className="space-y-6">
-          <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5 space-y-6">
+          <section className="card p-6 sm:p-7 space-y-6">
             <div className="border-b border-brand-navy/10 pb-4">
-              <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
+              <h2 className="section-title flex items-center gap-2">
                 <Lock className="w-4 h-4 text-brand-teal" />
                 <span>{isEn ? 'Security Credentials & Access Control' : 'Kredensial Keamanan & Akses Akun'}</span>
               </h2>
@@ -935,7 +936,7 @@ export const AccountPage: React.FC = () => {
                         value={securityPasswordInput}
                         onChange={(e) => setSecurityPasswordInput(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-3 pr-10 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                        className="field w-full pr-10"
                       />
                       <button
                         type="button"
@@ -949,7 +950,7 @@ export const AccountPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="touch-target w-full py-2.5 px-4 rounded-btn bg-brand-teal text-white text-xs font-bold shadow-soft hover:bg-brand-teal-dark transition disabled:opacity-50"
+                    className="btn btn-primary w-full"
                   >
                     {isEn ? 'Update Password' : 'Simpan Kata Sandi Baru'}
                   </button>
@@ -992,10 +993,10 @@ export const AccountPage: React.FC = () => {
       {/* TAB C: AUTHENTICATION (Visible only when in Anonymous mode) */}
       {activeTab === 'auth' && !isAccountActive && (
         <div className="space-y-6">
-          <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-8 border border-brand-navy/5 space-y-6">
+          <section className="card p-6 sm:p-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-navy/10 pb-5">
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-brand-navy dark:text-white">
+                <h2 className="section-title sm:text-xl">
                   {isEn ? 'Sign In or Create an Account' : 'Masuk atau Daftarkan Akun Anda'}
                 </h2>
                 <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-0.5">
@@ -1015,7 +1016,7 @@ export const AccountPage: React.FC = () => {
                   }}
                   className={`px-3.5 py-1.5 rounded-btn text-xs font-bold transition ${
                     authSubTab === 'login'
-                      ? 'bg-brand-navy text-white shadow-xs'
+                      ? 'bg-brand-teal-strong text-white shadow-xs'
                       : 'text-brand-navy/75 dark:text-white/75 hover:text-brand-navy'
                   }`}
                 >
@@ -1029,7 +1030,7 @@ export const AccountPage: React.FC = () => {
                   }}
                   className={`px-3.5 py-1.5 rounded-btn text-xs font-bold transition ${
                     authSubTab === 'register'
-                      ? 'bg-brand-navy text-white shadow-xs'
+                      ? 'bg-brand-teal-strong text-white shadow-xs'
                       : 'text-brand-navy/75 dark:text-white/75 hover:text-brand-navy'
                   }`}
                 >
@@ -1085,12 +1086,12 @@ export const AccountPage: React.FC = () => {
                     value={otpInput}
                     onChange={(e) => setOtpInput(e.target.value)}
                     placeholder="123456"
-                    className="flex-1 px-4 py-2.5 rounded-btn border border-brand-navy/20 text-center font-mono text-sm tracking-widest font-bold text-brand-navy bg-white"
+                    className="field flex-1 text-center font-mono tracking-widest font-bold"
                   />
                   <button
                     type="button"
                     onClick={handleVerifyOtp}
-                    className="px-5 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold shadow-soft hover:bg-brand-teal-dark transition"
+                    className="btn btn-primary"
                   >
                     {isEn ? 'Verify & Enter' : 'Verifikasi & Masuk'}
                   </button>
@@ -1112,7 +1113,7 @@ export const AccountPage: React.FC = () => {
                         value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
                         placeholder="rendra@demo.id"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                        className="field w-full pl-10 pr-4"
                       />
                     </div>
                   </div>
@@ -1124,7 +1125,7 @@ export const AccountPage: React.FC = () => {
                           {isEn ? 'Password' : 'Kata Sandi'}
                         </label>
                         {authSubTab === 'register' && (
-                          <span className="text-[10px] font-semibold text-brand-navy/60 dark:text-white/60">
+                          <span className="text-3xs font-semibold text-brand-navy/60 dark:text-white/60">
                             {passwordStrength.text}
                           </span>
                         )}
@@ -1139,7 +1140,7 @@ export const AccountPage: React.FC = () => {
                           value={passwordInput}
                           onChange={(e) => setPasswordInput(e.target.value)}
                           placeholder="••••••••"
-                          className="w-full pl-10 pr-10 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                          className="field w-full pl-10 pr-10"
                         />
                         <button
                           type="button"
@@ -1168,7 +1169,7 @@ export const AccountPage: React.FC = () => {
                             value={confirmPasswordInput}
                             onChange={(e) => setConfirmPasswordInput(e.target.value)}
                             placeholder="••••••••"
-                            className="w-full pl-10 pr-10 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                            className="field w-full pl-10 pr-10"
                           />
                           <button
                             type="button"
@@ -1190,7 +1191,7 @@ export const AccountPage: React.FC = () => {
                           value={nameInput}
                           onChange={(e) => setNameInput(e.target.value)}
                           placeholder="Rendra"
-                          className="w-full px-4 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                          className="field w-full"
                         />
                       </div>
                     </>
@@ -1198,13 +1199,13 @@ export const AccountPage: React.FC = () => {
                 </div>
 
                 <div className="pt-3 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                  <span className="text-2xs text-brand-navy/60 dark:text-white/60">
                     {isEn ? 'Client encryption & privacy preserved.' : 'Enkripsi data & hak privasi terjamin.'}
                   </span>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="touch-target px-6 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold shadow-soft hover:bg-brand-teal-dark transition flex items-center gap-2"
+                    className="btn btn-primary"
                   >
                     <span>
                       {authSubTab === 'register'
@@ -1225,7 +1226,7 @@ export const AccountPage: React.FC = () => {
                 <span className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70">
                   {isEn ? 'Or Test Drive with Demo Accounts:' : 'Atau Coba Akun Demo Cepat (Juri / Penguji):'}
                 </span>
-                <span className="text-[11px] font-semibold text-brand-teal">1-Click Sign-in</span>
+                <span className="text-2xs font-semibold text-brand-teal">1-Click Sign-in</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1237,21 +1238,21 @@ export const AccountPage: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-brand-navy dark:text-white">Rendra (Suami)</h4>
-                      <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">rendra@demo.id</p>
+                      <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono">rendra@demo.id</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5 pt-1">
                     <button
                       type="button"
                       onClick={() => handleAutoFillDemo('rendra')}
-                      className="flex-1 py-1 px-2 rounded-btn bg-white dark:bg-white/10 text-[11px] font-semibold border border-brand-navy/15 hover:border-brand-teal transition"
+                      className="btn btn-secondary btn-sm flex-1"
                     >
                       {isEn ? 'Auto-Fill' : 'Isi Form'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleInstantDemoSignIn('rendra')}
-                      className="flex-1 py-1 px-2 rounded-btn bg-brand-teal text-white text-[11px] font-bold shadow-xs hover:bg-brand-teal-dark transition"
+                      className="btn btn-primary btn-sm flex-1"
                     >
                       {isEn ? 'Instant' : 'Masuk'}
                     </button>
@@ -1266,21 +1267,21 @@ export const AccountPage: React.FC = () => {
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-brand-navy dark:text-white">Sari (Istri)</h4>
-                      <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">sari@demo.id</p>
+                      <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono">sari@demo.id</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5 pt-1">
                     <button
                       type="button"
                       onClick={() => handleAutoFillDemo('sari')}
-                      className="flex-1 py-1 px-2 rounded-btn bg-white dark:bg-white/10 text-[11px] font-semibold border border-brand-navy/15 hover:border-brand-coral transition"
+                      className="btn btn-secondary btn-sm flex-1 hover:border-brand-coral"
                     >
                       {isEn ? 'Auto-Fill' : 'Isi Form'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleInstantDemoSignIn('sari')}
-                      className="flex-1 py-1 px-2 rounded-btn bg-brand-coral text-white text-[11px] font-bold shadow-xs hover:bg-brand-coral-dark transition"
+                      className="btn btn-coral btn-sm flex-1"
                     >
                       {isEn ? 'Instant' : 'Masuk'}
                     </button>
@@ -1288,28 +1289,28 @@ export const AccountPage: React.FC = () => {
                 </div>
 
                 {/* dr. Maya */}
-                <div className="p-4 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-2.5 hover:border-emerald-500 transition">
+                <div className="p-4 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-2.5 hover:border-status-success transition">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-700 text-white font-bold flex items-center justify-center shadow-xs">
                       M
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-brand-navy dark:text-white">dr. Maya (Dokter)</h4>
-                      <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono">maya@puskesmas.id</p>
+                      <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono">maya@puskesmas.id</p>
                     </div>
                   </div>
                   <div className="flex gap-1.5 pt-1">
                     <button
                       type="button"
                       onClick={() => handleAutoFillDemo('maya')}
-                      className="flex-1 py-1 px-2 rounded-btn bg-white dark:bg-white/10 text-[11px] font-semibold border border-brand-navy/15 hover:border-emerald-500 transition"
+                      className="btn btn-secondary btn-sm flex-1 hover:border-status-success"
                     >
                       {isEn ? 'Auto-Fill' : 'Isi Form'}
                     </button>
                     <button
                       type="button"
                       onClick={() => handleInstantDemoSignIn('maya')}
-                      className="flex-1 py-1 px-2 rounded-btn bg-emerald-600 text-white text-[11px] font-bold shadow-xs hover:bg-emerald-700 transition"
+                      className="btn btn-sm flex-1 bg-[#1F7A50] text-white shadow-xs hover:bg-[#186341]"
                     >
                       {isEn ? 'Instant' : 'Masuk'}
                     </button>
@@ -1324,9 +1325,9 @@ export const AccountPage: React.FC = () => {
       {/* TAB D: DATA MANAGEMENT & STORAGE */}
       {activeTab === 'data' && (
         <div className="space-y-6">
-          <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5 space-y-5">
+          <section className="card p-6 sm:p-7 space-y-5">
             <div className="border-b border-brand-navy/10 pb-3">
-              <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
+              <h2 className="section-title flex items-center gap-2">
                 <Database className="w-4 h-4 text-brand-teal" />
                 <span>{isEn ? 'Data & Storage Management' : 'Kelola Data & Penyimpanan'}</span>
               </h2>
@@ -1354,7 +1355,7 @@ export const AccountPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleExportDataJson}
-                  className="w-full py-2.5 px-4 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-brand-navy-light transition shadow-xs"
+                  className="btn btn-navy w-full"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>{isEn ? 'Download JSON Backup' : 'Unduh Cadangan JSON'}</span>
@@ -1413,7 +1414,7 @@ export const AccountPage: React.FC = () => {
                       placeholder={isEn ? 'Type DELETE to confirm' : 'Ketik HAPUS untuk konfirmasi'}
                       value={deleteConfirmText}
                       onChange={(e) => setDeleteConfirmText(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-btn border text-xs font-bold text-brand-navy bg-white focus:outline-none"
+                      className="field w-full font-bold"
                     />
                     <div className="flex gap-2">
                       <button
@@ -1445,11 +1446,11 @@ export const AccountPage: React.FC = () => {
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-xs animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-navy/60 backdrop-blur-sm animate-fade-in"
           onClick={() => setShowSwitchModal(false)}
         >
           <div
-            className="bg-surface dark:bg-surface-dark-card w-full max-w-md rounded-2xl shadow-2xl border border-brand-navy/15 dark:border-white/10 overflow-hidden animate-in zoom-in-95 duration-200"
+            className="bg-surface dark:bg-surface-dark-card w-full max-w-md rounded-2xl shadow-2xl border border-brand-navy/15 dark:border-white/10 overflow-hidden animate-rise-in"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -1462,7 +1463,7 @@ export const AccountPage: React.FC = () => {
                   <h3 className="text-sm font-bold text-brand-navy dark:text-white">
                     {isEn ? 'Switch Account' : 'Ganti Akun'}
                   </h3>
-                  <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                  <p className="text-2xs text-brand-navy/60 dark:text-white/60">
                     {isEn ? 'Select persona or switch account' : 'Pilih persona demo atau masuk ke akun lain'}
                   </p>
                 </div>
@@ -1481,7 +1482,7 @@ export const AccountPage: React.FC = () => {
             <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
               {/* Active Account Card */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-brand-navy/50 dark:text-white/50 mb-1.5">
+                <div className="text-3xs font-bold uppercase tracking-wider text-brand-navy/50 dark:text-white/50 mb-1.5">
                   {isEn ? 'Currently Active' : 'Akun Sedang Digunakan'}
                 </div>
                 <div className="p-3.5 rounded-xl border-2 border-brand-teal/70 bg-brand-teal/5 flex items-center justify-between gap-3">
@@ -1493,12 +1494,12 @@ export const AccountPage: React.FC = () => {
                       <div className="text-xs font-bold text-brand-navy dark:text-white truncate">
                         {displayName}
                       </div>
-                      <div className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono truncate">
+                      <div className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono truncate">
                         {userEmail || (isEn ? 'Anonymous Mode (Local)' : 'Mode Anonim (Perangkat)')}
                       </div>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-teal text-white shrink-0 shadow-xs">
+                  <span className="inline-flex items-center gap-1 text-3xs font-bold px-2 py-0.5 rounded-full bg-brand-teal text-white shrink-0 shadow-xs">
                     <Check className="w-3 h-3" />
                     <span>{isEn ? 'Active' : 'Aktif'}</span>
                   </span>
@@ -1507,9 +1508,9 @@ export const AccountPage: React.FC = () => {
 
               {/* Demo Personas for Evaluators */}
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-brand-navy/50 dark:text-white/50 mb-1.5 flex items-center justify-between">
+                <div className="text-3xs font-bold uppercase tracking-wider text-brand-navy/50 dark:text-white/50 mb-1.5 flex items-center justify-between">
                   <span>{isEn ? 'Demo Personas (1-Click Switch)' : 'Persona Demo (Beralih 1-Klik)'}</span>
-                  <span className="text-[10px] font-semibold text-brand-teal">
+                  <span className="text-3xs font-semibold text-brand-teal">
                     {isEn ? 'Instant' : 'Instan'}
                   </span>
                 </div>
@@ -1532,17 +1533,17 @@ export const AccountPage: React.FC = () => {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-bold text-brand-navy dark:text-white truncate">Rendra</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-teal/15 text-brand-teal font-semibold shrink-0">
+                          <span className="text-3xs px-1.5 py-0.5 rounded bg-brand-teal/15 text-brand-teal font-semibold shrink-0">
                             Suami
                           </span>
                         </div>
-                        <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono truncate">
+                        <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono truncate">
                           rendra@demo.id
                         </p>
                       </div>
                     </div>
                     {userEmail === 'rendra@demo.id' ? (
-                      <span className="text-[11px] font-bold text-brand-teal shrink-0">
+                      <span className="text-2xs font-bold text-brand-teal shrink-0">
                         {isEn ? 'Active' : 'Aktif'}
                       </span>
                     ) : (
@@ -1571,17 +1572,17 @@ export const AccountPage: React.FC = () => {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-bold text-brand-navy dark:text-white truncate">Sari</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-brand-coral/15 text-brand-coral font-semibold shrink-0">
+                          <span className="text-3xs px-1.5 py-0.5 rounded bg-brand-coral/15 text-brand-coral font-semibold shrink-0">
                             Istri
                           </span>
                         </div>
-                        <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono truncate">
+                        <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono truncate">
                           sari@demo.id
                         </p>
                       </div>
                     </div>
                     {userEmail === 'sari@demo.id' ? (
-                      <span className="text-[11px] font-bold text-brand-coral shrink-0">
+                      <span className="text-2xs font-bold text-brand-coral shrink-0">
                         {isEn ? 'Active' : 'Aktif'}
                       </span>
                     ) : (
@@ -1599,8 +1600,8 @@ export const AccountPage: React.FC = () => {
                     disabled={userEmail === 'maya@puskesmas.id'}
                     className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition group ${
                       userEmail === 'maya@puskesmas.id'
-                        ? 'border-emerald-500/30 bg-emerald-500/5 opacity-60 cursor-default'
-                        : 'border-brand-navy/10 hover:border-emerald-500 hover:bg-emerald-500/5 bg-surface-muted/40 dark:bg-surface-dark hover:shadow-xs'
+                        ? 'border-status-success/30 bg-status-success/5 opacity-60 cursor-default'
+                        : 'border-brand-navy/10 hover:border-status-success hover:bg-status-success/5 bg-surface-muted/40 dark:bg-surface-dark hover:shadow-xs'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -1610,21 +1611,21 @@ export const AccountPage: React.FC = () => {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-bold text-brand-navy dark:text-white truncate">dr. Maya</span>
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 font-semibold shrink-0">
+                          <span className="text-3xs px-1.5 py-0.5 rounded bg-status-success/15 text-[#1F7A50] dark:text-[#7BD9AC] font-semibold shrink-0">
                             Nakes
                           </span>
                         </div>
-                        <p className="text-[11px] text-brand-navy/60 dark:text-white/60 font-mono truncate">
+                        <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono truncate">
                           maya@puskesmas.id
                         </p>
                       </div>
                     </div>
                     {userEmail === 'maya@puskesmas.id' ? (
-                      <span className="text-[11px] font-bold text-emerald-600 shrink-0">
+                      <span className="text-2xs font-bold text-[#1F7A50] dark:text-[#7BD9AC] shrink-0">
                         {isEn ? 'Active' : 'Aktif'}
                       </span>
                     ) : (
-                      <span className="text-xs font-semibold text-emerald-600 group-hover:translate-x-0.5 transition flex items-center gap-0.5 shrink-0">
+                      <span className="text-xs font-semibold text-[#1F7A50] dark:text-[#7BD9AC] group-hover:translate-x-0.5 transition flex items-center gap-0.5 shrink-0">
                         <span>{isEn ? 'Switch' : 'Beralih'}</span>
                         <ChevronRight className="w-3.5 h-3.5" />
                       </span>
@@ -1654,10 +1655,10 @@ export const AccountPage: React.FC = () => {
                 {showCustomLoginForm && (
                   <form
                     onSubmit={handleAuthSubmit}
-                    className="pt-2 space-y-3 animate-in fade-in duration-150"
+                    className="pt-2 space-y-3 animate-fade-in"
                   >
                     <div>
-                      <label className="block text-[11px] font-medium text-brand-navy/70 dark:text-white/70 mb-1">
+                      <label className="block text-2xs font-medium text-brand-navy/70 dark:text-white/70 mb-1">
                         Email
                       </label>
                       <input
@@ -1666,11 +1667,11 @@ export const AccountPage: React.FC = () => {
                         placeholder="nama@domain.com"
                         value={emailInput}
                         onChange={(e) => setEmailInput(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-brand-navy/15 text-xs text-brand-navy bg-white dark:bg-surface-dark dark:text-white focus:outline-none focus:border-brand-teal"
+                        className="field w-full"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-medium text-brand-navy/70 dark:text-white/70 mb-1">
+                      <label className="block text-2xs font-medium text-brand-navy/70 dark:text-white/70 mb-1">
                         {isEn ? 'Password' : 'Kata Sandi'}
                       </label>
                       <div className="relative">
@@ -1680,7 +1681,7 @@ export const AccountPage: React.FC = () => {
                           placeholder="••••••••"
                           value={passwordInput}
                           onChange={(e) => setPasswordInput(e.target.value)}
-                          className="w-full px-3 pr-9 py-2 rounded-xl border border-brand-navy/15 text-xs text-brand-navy bg-white dark:bg-surface-dark dark:text-white focus:outline-none focus:border-brand-teal"
+                          className="field w-full pr-9"
                         />
                         <button
                           type="button"

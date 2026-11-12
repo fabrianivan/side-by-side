@@ -199,12 +199,12 @@ export const FacilitiesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header & Tombol Buat Daftar Pertanyaan Dokter */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
+      <section className="page-header flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div className="space-y-2.5">
+          <h1 className="page-title">
             Navigasi Pemeriksaan & Direktori Layanan Ramah Pria
           </h1>
-          <p className="text-xs sm:text-sm text-brand-navy/75 dark:text-white/75">
+          <p className="page-lead">
             Pahami alur pemeriksaan langkah demi langkah, jelajahi peta ringkas, dan pilih fasilitas yang nyaman.
           </p>
         </div>
@@ -213,7 +213,7 @@ export const FacilitiesPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/checklist-dokter')}
-            className="touch-target px-4 py-3 rounded-btn bg-brand-coral text-white font-bold text-xs shadow-soft hover:bg-brand-coral-dark transition flex items-center gap-2"
+            className="btn btn-coral"
           >
             <FileText className="w-4 h-4" />
             Checklist Pertanyaan Dokter (Lengkap)
@@ -232,71 +232,73 @@ export const FacilitiesPage: React.FC = () => {
       )}
 
       {/* Panduan Langkah Demi Langkah (5 Tahap Analisis Semen) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-        <h2 className="text-base sm:text-lg font-bold text-brand-navy dark:text-white">
+      <section className="card p-5 sm:p-6 space-y-5">
+        <h2 className="section-title">
           Panduan Langkah demi Langkah: Pemeriksaan Analisis Semen
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {templatesConfig.examinationGuide.steps.map((step) => (
             <div
               key={step.stepNumber}
-              className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/5 flex flex-col justify-between space-y-2"
+              className="well p-4 sm:p-5 space-y-2.5"
             >
-              <div className="space-y-1.5">
-                <span className="inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-brand-teal text-white">
+              <div className="flex items-center gap-2.5">
+                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-brand-teal-strong text-white text-xs font-extrabold shrink-0">
+                  {step.stepNumber}
+                </span>
+                <span className="eyebrow">
                   Langkah {step.stepNumber}
                 </span>
-                <h3 className="font-bold text-sm text-brand-navy dark:text-white leading-snug">
-                  {step.title}
-                </h3>
-                <p className="text-xs font-semibold text-brand-teal leading-relaxed">
-                  {step.summary}
-                </p>
-                <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-                  {step.details}
-                </p>
               </div>
+              <h3 className="font-bold text-base text-brand-navy dark:text-white leading-snug">
+                {step.title}
+              </h3>
+              <p className="text-xs font-semibold text-brand-teal-dark dark:text-[#7FDADB] leading-relaxed">
+                {step.summary}
+              </p>
+              <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
+                {step.details}
+              </p>
             </div>
           ))}
-        </div>
 
-        {/* Informasi Estimasi Biaya & Cakupan JKN */}
-        <div className="p-4 rounded-card bg-brand-teal-light/50 dark:bg-brand-teal/15 border border-brand-teal/30 space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-bold text-sm text-brand-navy dark:text-white flex items-center gap-2">
-              <Info className="w-4 h-4 text-brand-teal" />
+          {/* Informasi Estimasi Biaya & Cakupan JKN */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-brand-teal-light/60 dark:bg-brand-teal/15 border border-brand-teal/25 space-y-2.5">
+            <h3 className="font-bold text-base text-brand-navy dark:text-white flex items-center gap-2 leading-snug">
+              <Info className="w-4 h-4 text-brand-teal shrink-0" />
               Estimasi Biaya & Cakupan JKN / Asuransi
             </h3>
-            <span className="text-xs font-bold text-brand-teal">
+            <p className="text-xs font-bold text-brand-teal-dark dark:text-[#7FDADB] leading-relaxed">
               {templatesConfig.examinationGuide.costAndInsuranceInfo.rangeSummary}
-            </span>
+            </p>
+            <p className="text-xs text-brand-navy/85 dark:text-white/85 leading-relaxed">
+              {templatesConfig.examinationGuide.costAndInsuranceInfo.jknSummary}
+            </p>
+            <p className="text-2xs italic text-brand-navy/70 dark:text-white/70 leading-relaxed">
+              Catatan: {templatesConfig.examinationGuide.costAndInsuranceInfo.disclaimer}
+            </p>
           </div>
-          <p className="text-xs text-brand-navy/85 dark:text-white/85 leading-relaxed">
-            {templatesConfig.examinationGuide.costAndInsuranceInfo.jknSummary}
-          </p>
-          <p className="text-[11px] italic text-brand-navy/70 dark:text-white/70">
-            Catatan: {templatesConfig.examinationGuide.costAndInsuranceInfo.disclaimer}
-          </p>
         </div>
       </section>
 
       {/* Filter, Peta Ringkas Interaktif & Direktori Layanan */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold text-brand-navy dark:text-white">
+      <section className="card p-5 sm:p-6 space-y-5">
+        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="section-title">
               Direktori Layanan Terkurasi ({filteredFacilities.length} Fasilitas)
             </h2>
-            <p className="text-xs text-brand-navy/70 dark:text-white/70">
+            <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed max-w-2xl">
               Skor “Ramah Pria” diisi melalui kurasi privasi ruang sampel, keramahan konseling, dan kejelasan alur (bukan ulasan bebas).
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setShowCompactMap(!showCompactMap)}
-              className="touch-target px-3.5 py-2 rounded-btn bg-brand-teal/15 text-brand-teal text-xs font-bold flex items-center gap-1.5 hover:bg-brand-teal/25 transition"
+              aria-pressed={showCompactMap}
+              className="btn btn-soft"
             >
               <MapIcon className="w-4 h-4" />
               <span>{showCompactMap ? 'Sembunyikan Peta Ringkas' : 'Tampilkan Peta Ringkas'}</span>
@@ -305,7 +307,7 @@ export const FacilitiesPage: React.FC = () => {
             <button
               type="button"
               onClick={handleRequestGeolocation}
-              className="touch-target px-3.5 py-2 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/15 text-xs font-semibold flex items-center gap-1.5 hover:border-brand-teal transition"
+              className="btn btn-secondary"
             >
               <Compass className="w-4 h-4 text-brand-teal" />
               Urutkan Jarak Terdekat
@@ -314,22 +316,22 @@ export const FacilitiesPage: React.FC = () => {
         </div>
 
         {geoStatus && (
-          <p className="text-xs text-brand-teal font-medium bg-brand-teal-light/40 px-3 py-2 rounded-btn">
+          <p role="status" className="text-xs text-brand-teal-dark dark:text-[#7FDADB] font-semibold bg-brand-teal-light/60 dark:bg-brand-teal/15 px-3.5 py-2.5 rounded-btn">
             {geoStatus}
           </p>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-1">
+        <div className="well p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3.5">
           {/* Filter Kota */}
           <div>
-            <label htmlFor="filter-city" className="block text-xs font-semibold mb-1">
+            <label htmlFor="filter-city" className="field-label">
               Pilih Kota
             </label>
             <select
               id="filter-city"
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-btn border border-brand-navy/20 text-xs font-semibold text-brand-navy bg-white"
+              className="field w-full font-semibold"
             >
               <option value="Semua">Semua Kota (Jakarta, Bandung, Surabaya)</option>
               <option value="Jakarta">Jakarta (6 Lokasi)</option>
@@ -340,14 +342,14 @@ export const FacilitiesPage: React.FC = () => {
 
           {/* Filter Layanan */}
           <div>
-            <label htmlFor="filter-service" className="block text-xs font-semibold mb-1">
+            <label htmlFor="filter-service" className="field-label">
               Jenis Layanan
             </label>
             <select
               id="filter-service"
               value={selectedService}
               onChange={(e) => setSelectedService(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-btn border border-brand-navy/20 text-xs font-semibold text-brand-navy bg-white"
+              className="field w-full font-semibold"
             >
               <option value="Semua">Semua Layanan</option>
               <option value="Andrologi">Spesialis Andrologi (Sp.And)</option>
@@ -356,10 +358,30 @@ export const FacilitiesPage: React.FC = () => {
             </select>
           </div>
 
-          {/* Filter Biaya Maksimal */}
+          {/* Sortir */}
           <div>
-            <label htmlFor="filter-budget" className="block text-xs font-semibold mb-1">
-              Rentang Biaya Awal Maks: Rp {maxBudget.toLocaleString('id-ID')}
+            <label htmlFor="sort-by" className="field-label">
+              Urutkan Berdasarkan
+            </label>
+            <select
+              id="sort-by"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as 'friendliness' | 'price' | 'distance')}
+              className="field w-full font-semibold"
+            >
+              <option value="friendliness">Skor Ramah Pria Tertinggi</option>
+              <option value="price">Estimasi Biaya Terendah</option>
+              <option value="distance">Jarak Terdekat</option>
+            </select>
+          </div>
+
+          {/* Filter Biaya Maksimal */}
+          <div className="lg:col-span-2">
+            <label htmlFor="filter-budget" className="field-label flex flex-wrap items-baseline justify-between gap-x-3">
+              <span>Rentang Biaya Awal Maks</span>
+              <span className="tabular font-bold text-brand-teal-dark dark:text-[#7FDADB]">
+                Rp {maxBudget.toLocaleString('id-ID')}
+              </span>
             </label>
             <input
               id="filter-budget"
@@ -369,35 +391,18 @@ export const FacilitiesPage: React.FC = () => {
               step={50000}
               value={maxBudget}
               onChange={(e) => setMaxBudget(Number(e.target.value))}
-              className="w-full accent-brand-teal mt-2"
+              className="w-full accent-brand-teal mt-2.5 cursor-pointer"
             />
-          </div>
-
-          {/* Sortir */}
-          <div>
-            <label htmlFor="sort-by" className="block text-xs font-semibold mb-1">
-              Urutkan Berdasarkan
-            </label>
-            <select
-              id="sort-by"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'friendliness' | 'price' | 'distance')}
-              className="w-full px-3 py-2.5 rounded-btn border border-brand-navy/20 text-xs font-semibold text-brand-navy bg-white"
-            >
-              <option value="friendliness">Skor Ramah Pria Tertinggi</option>
-              <option value="price">Estimasi Biaya Terendah</option>
-              <option value="distance">Jarak Terdekat</option>
-            </select>
           </div>
 
           {/* Toggle Menerima JKN */}
           <div className="flex items-end">
-            <label className="touch-target w-full px-3 py-2 rounded-btn border border-brand-navy/20 bg-surface-muted dark:bg-surface-dark flex items-center gap-2 cursor-pointer text-xs font-bold">
+            <label className="field w-full flex items-center gap-2.5 cursor-pointer font-bold">
               <input
                 type="checkbox"
                 checked={onlyJkn}
                 onChange={(e) => setOnlyJkn(e.target.checked)}
-                className="w-4 h-4 accent-brand-teal rounded"
+                className="check"
               />
               <span>Hanya yang Menerima JKN</span>
             </label>
@@ -406,7 +411,7 @@ export const FacilitiesPage: React.FC = () => {
 
         {/* Peta Ringkas Visual Interaktif (Sesuai Arsitektur Layar #5) */}
         {showCompactMap && (
-          <div className="p-4 rounded-card bg-brand-navy text-white space-y-3">
+          <div className="p-4 sm:p-5 rounded-2xl bg-brand-navy-deep text-white space-y-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-xs font-bold">
                 <MapPin className="w-4 h-4 text-brand-coral" />
@@ -414,7 +419,7 @@ export const FacilitiesPage: React.FC = () => {
                   Peta Ringkas Sebaran Layanan ({selectedCity === 'Semua' ? 'Jakarta • Bandung • Surabaya' : selectedCity})
                 </span>
               </div>
-              <span className="text-[11px] text-white/75">
+              <span className="text-2xs text-white/75">
                 Klik titik fasilitas untuk melihat Detail Layanan & Skor Ramah Pria
               </span>
             </div>
@@ -427,11 +432,11 @@ export const FacilitiesPage: React.FC = () => {
                   return (
                     <div
                       key={cityGroup}
-                      className="p-3 rounded-btn bg-white/10 border border-white/15 space-y-2"
+                      className="p-3 rounded-xl bg-white/[0.07] border border-white/10 space-y-2"
                     >
                       <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-brand-coral">{cityGroup}</span>
-                        <span className="text-[11px] text-white/80">{cityFacs.length} lokasi</span>
+                        <span className="text-[#FFA596]">{cityGroup}</span>
+                        <span className="text-2xs text-white/80">{cityFacs.length} lokasi</span>
                       </div>
                       <div className="space-y-1.5">
                         {cityFacs.map((cf) => (
@@ -439,10 +444,10 @@ export const FacilitiesPage: React.FC = () => {
                             key={cf.id}
                             type="button"
                             onClick={() => setDetailTarget(cf)}
-                            className="w-full text-left px-2.5 py-1.5 rounded bg-white/10 hover:bg-brand-teal transition flex items-center justify-between gap-2 text-[11px]"
+                            className="w-full text-left px-2.5 py-2 rounded-lg bg-white/[0.08] hover:bg-brand-teal transition flex items-center justify-between gap-2 text-2xs"
                           >
                             <span className="truncate font-medium">📍 {cf.name}</span>
-                            <span className="shrink-0 font-bold text-brand-coral bg-brand-navy/60 px-1.5 py-0.5 rounded">
+                            <span className="tabular shrink-0 font-bold text-[#FFA596] bg-black/25 px-1.5 py-0.5 rounded-md">
                               ★ {cf.friendliness_score.toFixed(1)}
                             </span>
                           </button>
@@ -456,33 +461,33 @@ export const FacilitiesPage: React.FC = () => {
         )}
 
         {/* Daftar Kartu Fasilitas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pt-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredFacilities.map((fac) => (
             <article
               key={fac.id}
-              className="p-5 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex flex-col justify-between space-y-4"
+              className="well p-5 flex flex-col justify-between space-y-4 transition duration-200 hover:border-brand-teal/40 hover:shadow-soft"
             >
               <div className="space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-brand-navy text-white">
+                      <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-navy text-white dark:bg-white/15">
                         {fac.type}
                       </span>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-brand-teal/15 text-brand-teal">
+                      <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-teal/15 text-brand-teal-dark dark:text-[#7FDADB]">
                         {fac.city}
                       </span>
                       {fac.accepts_jkn ? (
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-status-success-bg text-status-success">
+                        <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-status-success-bg text-[#1F7A50] dark:bg-status-success/20 dark:text-[#7BD9AC]">
                           Menerima JKN
                         </span>
                       ) : (
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-brand-navy/10 text-brand-navy/70 dark:text-white/70">
+                        <span className="text-2xs font-medium px-2 py-1 rounded-md leading-none bg-brand-navy/10 text-brand-navy/70 dark:text-white/70">
                           Layanan Mandiri/Umum
                         </span>
                       )}
                       {fac.distanceKm !== null && (
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-brand-coral/20 text-brand-coral-dark">
+                        <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-coral/20 text-[#B93E2B] dark:text-[#FFA596]">
                           ~{fac.distanceKm} km
                         </span>
                       )}
@@ -495,13 +500,13 @@ export const FacilitiesPage: React.FC = () => {
                   {/* Skor Kurasi Ramah Pria */}
                   <div
                     title="Skor kurasi keramahan & privasi layanan bagi pria"
-                    className="px-2.5 py-1.5 rounded-btn bg-surface dark:bg-surface-dark-card border border-brand-teal/30 text-center shrink-0"
+                    className="px-3 py-2 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-teal/30 text-center shrink-0"
                   >
                     <div className="flex items-center gap-1 text-brand-teal font-bold text-sm">
                       <Star className="w-4 h-4 fill-brand-teal" />
                       <span>{fac.friendliness_score.toFixed(1)}</span>
                     </div>
-                    <div className="text-[10px] font-semibold text-brand-navy/70 dark:text-white/70">
+                    <div className="text-3xs font-semibold text-brand-navy/70 dark:text-white/70">
                       Ramah Pria
                     </div>
                   </div>
@@ -521,7 +526,7 @@ export const FacilitiesPage: React.FC = () => {
                   {fac.services.map((srv) => (
                     <span
                       key={srv}
-                      className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface dark:bg-surface-dark-card border border-brand-navy/10"
+                      className="text-2xs font-semibold px-2.5 py-0.5 rounded-full bg-surface dark:bg-surface-dark-card border border-brand-navy/10"
                     >
                       {srv}
                     </span>
@@ -532,16 +537,16 @@ export const FacilitiesPage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="p-3 rounded-btn bg-surface dark:bg-surface-dark-card text-xs text-brand-navy/85 dark:text-white/85 border-l-4 border-brand-teal">
+                <div className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card text-xs leading-relaxed text-brand-navy/85 dark:text-white/85 border-l-4 border-brand-teal">
                   <strong>Catatan Kurasi Ramah Pria:</strong> {fac.friendliness_notes}
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-brand-navy/10">
+              <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-brand-navy/10 dark:border-white/10">
                 <button
                   type="button"
                   onClick={() => setDetailTarget(fac)}
-                  className="touch-target py-2.5 px-3 rounded-btn bg-surface dark:bg-surface-dark-card border border-brand-navy/20 text-xs font-bold flex items-center gap-1.5 hover:border-brand-teal transition"
+                  className="btn btn-secondary"
                 >
                   <Eye className="w-4 h-4 text-brand-teal" />
                   <span>Detail</span>
@@ -550,7 +555,7 @@ export const FacilitiesPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setReminderTarget(fac)}
-                  className="touch-target flex-1 py-2.5 px-3 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-brand-teal-dark transition"
+                  className="btn btn-primary flex-1"
                 >
                   <BellPlus className="w-4 h-4" />
                   Ingatkan saya
@@ -560,7 +565,7 @@ export const FacilitiesPage: React.FC = () => {
                   href={fac.map_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="touch-target py-2.5 px-3 rounded-btn bg-surface dark:bg-surface-dark-card border border-brand-navy/20 text-xs font-semibold flex items-center gap-1 hover:border-brand-teal transition"
+                  className="btn btn-secondary flex"
                 >
                   <Building2 className="w-4 h-4 text-brand-teal" />
                   <span>Peta</span>
@@ -575,12 +580,12 @@ export const FacilitiesPage: React.FC = () => {
       {/* Modal Detail Layanan Lengkap (Arsitektur Layar #5: Detail Layanan) */}
       {detailTarget && (
         <div
-          className="fixed inset-0 z-50 bg-brand-navy/60 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-brand-navy-deep/60 backdrop-blur-sm animate-fade-in flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-labelledby="facility-detail-title"
         >
-          <div className="bg-surface dark:bg-surface-dark-card rounded-card max-w-xl w-full p-6 shadow-soft-lg space-y-4 my-8">
+          <div className="card max-w-xl w-full p-6 shadow-soft-lg space-y-4 my-8">
             <div className="flex items-start justify-between gap-3 border-b border-brand-navy/10 pb-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -593,14 +598,14 @@ export const FacilitiesPage: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <h2 id="facility-detail-title" className="font-bold text-lg text-brand-navy dark:text-white">
+                <h2 id="facility-detail-title" className="section-title">
                   {detailTarget.name}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setDetailTarget(null)}
-                className="text-xs font-bold px-3 py-1.5 rounded-btn bg-surface-muted"
+                className="btn btn-secondary btn-sm shrink-0"
               >
                 Tutup
               </button>
@@ -620,7 +625,7 @@ export const FacilitiesPage: React.FC = () => {
               <p className="text-xs text-brand-navy/85 dark:text-white/85 leading-relaxed">
                 {detailTarget.friendliness_notes}
               </p>
-              <div className="grid grid-cols-3 gap-2 pt-1 text-[11px]">
+              <div className="grid grid-cols-3 gap-2 pt-1 text-2xs">
                 <div className="p-2 rounded bg-surface dark:bg-surface-dark text-center">
                   <div className="font-bold text-brand-teal">Privasi Ruang Sampel</div>
                   <div>Tertutup & Terkunci</div>
@@ -673,7 +678,7 @@ export const FacilitiesPage: React.FC = () => {
                   setDetailTarget(null);
                   setReminderTarget(target);
                 }}
-                className="touch-target flex-1 py-2.5 px-4 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center justify-center gap-1.5"
+                className="btn btn-primary flex-1"
               >
                 <BellPlus className="w-4 h-4" />
                 Jadwalkan Pengingat di Sini
@@ -682,7 +687,7 @@ export const FacilitiesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleDownloadIcs(detailTarget, remindDate)}
-                className="touch-target py-2.5 px-4 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center gap-1.5"
+                className="btn btn-navy"
               >
                 <CalendarPlus className="w-4 h-4" />
                 Simpan ke Kalender (.ics)
@@ -695,15 +700,15 @@ export const FacilitiesPage: React.FC = () => {
       {/* Modal Pembuat Daftar Pertanyaan untuk Dokter */}
       {showQuestionsModal && (
         <div
-          className="fixed inset-0 z-50 bg-brand-navy/60 flex items-center justify-center p-4 overflow-y-auto"
+          className="fixed inset-0 z-50 bg-brand-navy-deep/60 backdrop-blur-sm animate-fade-in flex items-center justify-center p-4 overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-labelledby="doctor-questions-title"
         >
-          <div className="bg-surface dark:bg-surface-dark-card rounded-card max-w-2xl w-full p-6 shadow-soft-lg space-y-4 my-8">
+          <div className="card max-w-2xl w-full p-6 shadow-soft-lg space-y-4 my-8">
             <div className="flex items-center justify-between border-b border-brand-navy/10 pb-3">
               <div>
-                <h2 id="doctor-questions-title" className="font-bold text-lg text-brand-navy dark:text-white">
+                <h2 id="doctor-questions-title" className="section-title">
                   Daftar Pertanyaan Siap Bawa untuk Dokter
                 </h2>
                 <p className="text-xs text-brand-navy/70 dark:text-white/70">
@@ -713,7 +718,7 @@ export const FacilitiesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowQuestionsModal(false)}
-                className="text-xs font-bold px-3 py-1.5 rounded-btn bg-surface-muted"
+                className="btn btn-secondary btn-sm shrink-0"
               >
                 Tutup
               </button>
@@ -748,7 +753,7 @@ export const FacilitiesPage: React.FC = () => {
                         type="checkbox"
                         checked={selectedQuestions.includes(q)}
                         onChange={() => toggleDoctorQuestion(q)}
-                        className="w-4 h-4 accent-brand-teal mt-0.5 shrink-0"
+                        className="check mt-0.5 shrink-0"
                       />
                       <span className="leading-relaxed">{q}</span>
                     </label>
@@ -761,7 +766,7 @@ export const FacilitiesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCopyDoctorQuestions}
-                className="touch-target px-4 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center gap-1.5"
+                className="btn btn-primary"
               >
                 {copiedQuestions ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 <span>{copiedQuestions ? 'Berhasil Disalin!' : 'Salin Daftar Pertanyaan'}</span>
@@ -770,7 +775,7 @@ export const FacilitiesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleDownloadQuestionsPdf}
-                className="touch-target px-4 py-2.5 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center gap-1.5"
+                className="btn btn-navy"
               >
                 <Printer className="w-4 h-4" />
                 <span>Unduh / Cetak PDF</span>
@@ -783,13 +788,13 @@ export const FacilitiesPage: React.FC = () => {
       {/* Modal Jadwalkan Pengingat Pemeriksaan */}
       {reminderTarget && (
         <div
-          className="fixed inset-0 z-50 bg-brand-navy/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-brand-navy-deep/60 backdrop-blur-sm animate-fade-in flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="reminder-modal-title"
         >
-          <div className="bg-surface dark:bg-surface-dark-card rounded-card max-w-md w-full p-6 shadow-soft-lg space-y-4">
-            <h2 id="reminder-modal-title" className="font-bold text-lg text-brand-navy dark:text-white">
+          <div className="card max-w-md w-full p-6 shadow-soft-lg space-y-4">
+            <h2 id="reminder-modal-title" className="section-title">
               Jadwalkan Pengingat Pemeriksaan
             </h2>
             <p className="text-xs text-brand-navy/75 dark:text-white/75">
@@ -797,7 +802,7 @@ export const FacilitiesPage: React.FC = () => {
             </p>
             <form onSubmit={handleSaveReminder} className="space-y-4">
               <div>
-                <label htmlFor="remind-datetime" className="block text-xs font-semibold mb-1">
+                <label htmlFor="remind-datetime" className="field-label">
                   Pilih Tanggal & Waktu Rencana Kunjungan
                 </label>
                 <input
@@ -806,7 +811,7 @@ export const FacilitiesPage: React.FC = () => {
                   required
                   value={remindDate}
                   onChange={(e) => setRemindDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
+                  className="field w-full"
                 />
               </div>
               <div className="p-3 rounded-btn bg-brand-teal-light/50 text-xs text-brand-navy">
@@ -816,20 +821,20 @@ export const FacilitiesPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setReminderTarget(null)}
-                  className="touch-target py-2.5 px-4 rounded-btn border border-brand-navy/20 text-xs font-semibold"
+                  className="btn btn-secondary"
                 >
                   Batal
                 </button>
                 <button
                   type="button"
                   onClick={() => handleDownloadIcs(reminderTarget, remindDate)}
-                  className="touch-target py-2.5 px-3 rounded-btn bg-brand-navy text-white text-xs font-semibold flex items-center gap-1"
+                  className="btn btn-navy"
                 >
                   <CalendarPlus className="w-3.5 h-3.5" /> .ics
                 </button>
                 <button
                   type="submit"
-                  className="touch-target flex-1 py-2.5 px-4 rounded-btn bg-brand-teal text-white text-xs font-bold"
+                  className="btn btn-primary flex-1"
                 >
                   Simpan Pengingat
                 </button>

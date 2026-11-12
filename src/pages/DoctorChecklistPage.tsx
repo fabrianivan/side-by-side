@@ -194,28 +194,28 @@ export const DoctorChecklistPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       {/* Header Banner */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-2.5 py-1 rounded-full">
+      <section className="page-header">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="space-y-2.5">
+            <div className="badge badge-teal">
               <FileText className="w-3.5 h-3.5" />
               <span>{isEn ? 'Personalized Consultation Guide' : 'Panduan Konsultasi Siap Bawa'}</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
+            <h1 className="page-title">
               {isEn ? 'Doctor Consultation Question Builder' : 'Daftar Pertanyaan untuk Dokter'}
             </h1>
-            <p className="text-sm text-brand-navy/75 dark:text-white/75">
+            <p className="page-lead">
               {isEn
                 ? 'Clinical appointments can feel brief and overwhelming. Check the questions that matter to your situation and bring this printed or on your phone.'
                 : 'Konsultasi singkat di klinik atau puskesmas sering membuat kita lupa bertanya hal penting. Centang pertanyaan di bawah ini dan bawa saat bertemu dokter.'}
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2 shrink-0">
+          <div className="no-print flex flex-wrap gap-2 shrink-0">
             <button
               type="button"
               onClick={handlePrint}
-              className="touch-target px-4 py-2.5 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center gap-1.5 shadow-soft hover:bg-brand-navy-light transition"
+              className="btn btn-navy"
             >
               <Printer className="w-4 h-4" />
               <span>{isEn ? 'Print / PDF' : 'Cetak / PDF'}</span>
@@ -223,7 +223,7 @@ export const DoctorChecklistPage: React.FC = () => {
             <button
               type="button"
               onClick={handleCopy}
-              className="touch-target px-4 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center gap-1.5 shadow-soft hover:bg-brand-teal-dark transition"
+              className="btn btn-primary"
             >
               {copiedText ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               <span>{copiedText ? (isEn ? 'Copied!' : 'Tersalin!') : (isEn ? 'Copy to Phone' : 'Salin ke HP')}</span>
@@ -233,58 +233,58 @@ export const DoctorChecklistPage: React.FC = () => {
       </section>
 
       {/* Context Toggles */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/5 space-y-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-brand-navy/60 dark:text-white/60 flex items-center gap-1.5">
+      <section className="no-print card p-5 space-y-3.5">
+        <h2 className="eyebrow !text-brand-navy/60 dark:!text-white/60 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-brand-coral" />
           <span>{isEn ? 'Tailor Questions to Your Situation:' : 'Sesuaikan dengan Situasi Anda:'}</span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-          <label className="flex items-center gap-2 p-2.5 rounded-btn border border-brand-navy/10 text-xs font-medium cursor-pointer hover:bg-brand-teal-light/20 transition">
+          <label className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border border-brand-navy/10 dark:border-white/10 text-xs font-semibold text-brand-navy dark:text-white cursor-pointer hover:border-brand-teal/50 hover:bg-brand-teal-soft dark:hover:bg-white/5 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal-light/40 dark:has-[:checked]:bg-brand-teal/15 transition">
             <input
               type="checkbox"
               checked={hasProlongedDuration}
               onChange={(e) => setHasProlongedDuration(e.target.checked)}
-              className="accent-brand-teal w-4 h-4"
+              className="check"
             />
             <span>{isEn ? 'Trying to Conceive > 8–12 Mos' : 'Program Hamil > 8–12 Bulan'}</span>
           </label>
 
-          <label className="flex items-center gap-2 p-2.5 rounded-btn border border-brand-navy/10 text-xs font-medium cursor-pointer hover:bg-brand-teal-light/20 transition">
+          <label className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border border-brand-navy/10 dark:border-white/10 text-xs font-semibold text-brand-navy dark:text-white cursor-pointer hover:border-brand-teal/50 hover:bg-brand-teal-soft dark:hover:bg-white/5 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal-light/40 dark:has-[:checked]:bg-brand-teal/15 transition">
             <input
               type="checkbox"
               checked={hasHeatExposure}
               onChange={(e) => setHasHeatExposure(e.target.checked)}
-              className="accent-brand-teal w-4 h-4"
+              className="check"
             />
             <span>{isEn ? 'Heat Exposure / Prolonged Sitting' : 'Paparan Panas / Duduk Lama'}</span>
           </label>
 
-          <label className="flex items-center gap-2 p-2.5 rounded-btn border border-brand-navy/10 text-xs font-medium cursor-pointer hover:bg-brand-teal-light/20 transition">
+          <label className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border border-brand-navy/10 dark:border-white/10 text-xs font-semibold text-brand-navy dark:text-white cursor-pointer hover:border-brand-teal/50 hover:bg-brand-teal-soft dark:hover:bg-white/5 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal-light/40 dark:has-[:checked]:bg-brand-teal/15 transition">
             <input
               type="checkbox"
               checked={hasLabResult}
               onChange={(e) => setHasLabResult(e.target.checked)}
-              className="accent-brand-teal w-4 h-4"
+              className="check"
             />
             <span>{isEn ? 'Already Have Lab Results' : 'Sudah Ada Hasil Tes Lab'}</span>
           </label>
 
-          <label className="flex items-center gap-2 p-2.5 rounded-btn border border-brand-navy/10 text-xs font-medium cursor-pointer hover:bg-brand-teal-light/20 transition">
+          <label className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border border-brand-navy/10 dark:border-white/10 text-xs font-semibold text-brand-navy dark:text-white cursor-pointer hover:border-brand-teal/50 hover:bg-brand-teal-soft dark:hover:bg-white/5 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal-light/40 dark:has-[:checked]:bg-brand-teal/15 transition">
             <input
               type="checkbox"
               checked={hasVaricoceleSuspicion}
               onChange={(e) => setHasVaricoceleSuspicion(e.target.checked)}
-              className="accent-brand-teal w-4 h-4"
+              className="check"
             />
             <span>{isEn ? 'Suspected Varicocele / Discomfort' : 'Dugaan Keluhan Varikokel'}</span>
           </label>
 
-          <label className="flex items-center gap-2 p-2.5 rounded-btn border border-brand-navy/10 text-xs font-medium cursor-pointer hover:bg-brand-teal-light/20 transition">
+          <label className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border border-brand-navy/10 dark:border-white/10 text-xs font-semibold text-brand-navy dark:text-white cursor-pointer hover:border-brand-teal/50 hover:bg-brand-teal-soft dark:hover:bg-white/5 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal-light/40 dark:has-[:checked]:bg-brand-teal/15 transition">
             <input
               type="checkbox"
               checked={hasPartnerChecked}
               onChange={(e) => setHasPartnerChecked(e.target.checked)}
-              className="accent-brand-teal w-4 h-4"
+              className="check"
             />
             <span>{isEn ? 'Partner Already Evaluated by OBGYN' : 'Pasangan Sudah Periksa Lebih Dulu'}</span>
           </label>
@@ -292,17 +292,17 @@ export const DoctorChecklistPage: React.FC = () => {
       </section>
 
       {/* Interactive Question List */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-            <Stethoscope className="w-4 h-4 text-brand-teal" />
+      <section className="card p-5 sm:p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+          <h2 className="section-title flex items-center gap-2">
+            <Stethoscope className="w-5 h-5 text-brand-teal shrink-0" />
             <span>
               {isEn
                 ? `Questions Ready for Doctor (${questions.filter((q) => isChecked(q.id)).length} Selected)`
                 : `Pertanyaan yang Siap Ditanyakan: (${questions.filter((q) => isChecked(q.id)).length} Terpilih)`}
             </span>
           </h2>
-          <span className="text-xs text-brand-navy/60 dark:text-white/60">
+          <span className="no-print text-xs text-brand-navy/60 dark:text-white/60 shrink-0">
             {isEn ? 'Click any card to select/deselect' : 'Klik kartu untuk memilih / batalkan'}
           </span>
         </div>
@@ -313,30 +313,39 @@ export const DoctorChecklistPage: React.FC = () => {
             return (
               <div
                 key={q.id}
+                role="checkbox"
+                aria-checked={checked}
+                tabIndex={0}
                 onClick={() => toggleSelect(q.id)}
-                className={`p-4 rounded-btn border cursor-pointer transition flex items-start gap-3.5 ${
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    toggleSelect(q.id);
+                  }
+                }}
+                className={`p-4 sm:p-5 rounded-2xl border cursor-pointer transition duration-150 flex items-start gap-3.5 ${
                   checked
-                    ? 'border-brand-teal bg-brand-teal-light/20 dark:bg-brand-teal/15 shadow-sm'
-                    : 'border-brand-navy/10 bg-surface-muted/40 dark:bg-surface-dark opacity-60'
+                    ? 'border-brand-teal bg-brand-teal-light/30 dark:bg-brand-teal/15 shadow-xs'
+                    : 'border-brand-navy/10 dark:border-white/10 bg-surface-muted/60 dark:bg-surface-dark opacity-70 hover:opacity-100 hover:border-brand-teal/50'
                 }`}
               >
-                <div className="pt-0.5 shrink-0 text-brand-teal">
-                  {checked ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-brand-navy/30" />}
+                <div aria-hidden="true" className="pt-0.5 shrink-0 text-brand-teal">
+                  {checked ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-brand-navy/30 dark:text-white/35" />}
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-1.5 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-navy/10 dark:bg-white/10 text-brand-navy dark:text-white">
+                    <span className="text-3xs font-bold uppercase tracking-wider px-2 py-1 rounded-md leading-tight bg-brand-navy/[0.08] dark:bg-white/10 text-brand-navy dark:text-white">
                       {isEn ? q.categoryEn : q.categoryId}
                     </span>
                     <span className="text-xs text-brand-navy/50 dark:text-white/50">#{idx + 1}</span>
                   </div>
 
-                  <p className="text-xs sm:text-sm font-bold text-brand-navy dark:text-white leading-snug">
+                  <p className="text-sm font-bold text-brand-navy dark:text-white leading-snug">
                     "{isEn ? q.questionEn : q.questionId}"
                   </p>
 
-                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 leading-relaxed pt-0.5">
+                  <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
                     💡 <em>{isEn ? 'Why this is clinically relevant:' : 'Mengapa relevan:'}</em>{' '}
                     {isEn ? q.contextNoteEn : q.contextNoteId}
                   </p>
@@ -346,8 +355,8 @@ export const DoctorChecklistPage: React.FC = () => {
           })}
         </div>
 
-        <div className="pt-4 border-t border-brand-navy/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-brand-navy/70 dark:text-white/70">
+        <div className="no-print pt-4 border-t border-brand-navy/10 dark:border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70">
             {isEn
               ? 'Pair this with your temporary 1-hour QR Patient Summary for seamless clinical consultation.'
               : 'Bawa bersama Kode QR Ringkasan Pasien (1 Jam) untuk memudahkan dokter melihat data Anda.'}
@@ -355,9 +364,9 @@ export const DoctorChecklistPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(isEn ? '/facilities' : '/layanan')}
-            className="touch-target px-4 py-2 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center gap-1.5 hover:bg-brand-navy-light transition"
+            className="btn btn-navy shrink-0"
           >
-            <MapPin className="w-3.5 h-3.5 text-brand-teal" />
+            <MapPin className="w-4 h-4 shrink-0" />
             <span>{isEn ? 'View Clinic & Doctor Directory' : 'Lihat Direktori Faskes & Dokter'}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>

@@ -101,9 +101,9 @@ export const AssessmentPage: React.FC = () => {
   // TAMPILAN HASIL CEK AWAL
   if (viewMode === 'result' && assessmentResult) {
     const badgeColorStyles = {
-      success: 'bg-status-success-bg text-status-success border-status-success/30',
+      success: 'bg-status-success-bg text-[#1F7A50] border-status-success/30',
       warning: 'bg-status-warning-bg text-brand-navy border-status-warning/40',
-      urgent: 'bg-status-urgent-bg text-status-urgent border-status-urgent/30',
+      urgent: 'bg-status-urgent-bg text-[#B33834] border-status-urgent/30',
     };
 
     return (
@@ -139,9 +139,9 @@ export const AssessmentPage: React.FC = () => {
         )}
 
         {/* Kartu Ringkasan Tingkat Saran */}
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-8 border border-brand-navy/5 space-y-5">
+        <section className="card p-6 sm:p-8 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-3 py-1 rounded-full">
+            <span className="badge badge-teal">
               <ShieldCheck className="w-4 h-4" />
               Hasil Cek Awal Mandiri (Tersimpan Terenkripsi di Perangkat)
             </span>
@@ -155,24 +155,24 @@ export const AssessmentPage: React.FC = () => {
           </div>
 
           <div
-            className={`p-5 rounded-card border-2 ${badgeColorStyles[assessmentResult.badgeColor]} space-y-2`}
+            className={`p-5 sm:p-6 rounded-card border-2 ${badgeColorStyles[assessmentResult.badgeColor]} space-y-2.5`}
           >
             <div className="text-xs font-bold uppercase tracking-wider opacity-80">
               Tingkat Saran Pemeriksaan
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold">{assessmentResult.levelLabel}</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold">{assessmentResult.levelLabel}</h1>
             <p className="text-sm leading-relaxed">{assessmentResult.summary}</p>
           </div>
 
           {/* Disclaimer Singkat Wajib */}
-          <div className="p-3.5 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex items-center gap-2.5 text-xs font-semibold text-brand-navy/85 dark:text-white/85">
+          <div className="well px-4 py-3.5 flex items-center gap-2.5 text-xs font-semibold text-brand-navy/85 dark:text-white/85">
             <Info className="w-4 h-4 text-brand-teal shrink-0" />
             <span>{assessmentResult.disclaimer}</span>
           </div>
 
           {/* Faktor yang Memengaruhi & Penjelasan "Mengapa Ini Relevan" */}
           <div className="space-y-3 pt-2">
-            <h2 className="text-base font-bold text-brand-navy dark:text-white">
+            <h2 className="section-title">
               Faktor yang Memengaruhi & Mengapa Ini Relevan
             </h2>
 
@@ -185,14 +185,14 @@ export const AssessmentPage: React.FC = () => {
                 {assessmentResult.factors.map((f, idx) => (
                   <div
                     key={`${f.questionId}-${idx}`}
-                    className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/5 space-y-1.5"
+                    className="well p-4 sm:p-5 space-y-2"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-sm text-brand-navy dark:text-white">
-                        {f.factorTitle}
-                      </span>
-                      <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal shrink-0">
+                    <div className="flex flex-col items-start gap-1.5">
+                      <span className="badge badge-teal">
                         {f.topic}
+                      </span>
+                      <span className="font-bold text-sm leading-snug text-brand-navy dark:text-white">
+                        {f.factorTitle}
                       </span>
                     </div>
                     <p className="text-xs text-brand-navy/80 dark:text-white/80 leading-relaxed">
@@ -206,14 +206,14 @@ export const AssessmentPage: React.FC = () => {
 
           {/* Langkah Kecil Berikutnya */}
           <div className="space-y-3 pt-2">
-            <h2 className="text-base font-bold text-brand-navy dark:text-white">
+            <h2 className="section-title">
               Langkah Kecil Berikutnya
             </h2>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {assessmentResult.nextSteps.map((step, i) => (
                 <li
                   key={i}
-                  className="p-3.5 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/5 flex items-start gap-2.5 text-sm text-brand-navy/85 dark:text-white/85"
+                  className="well p-4 flex items-start gap-2.5 text-sm leading-relaxed text-brand-navy/85 dark:text-white/85"
                 >
                   <CheckCircle2 className="w-5 h-5 text-brand-teal shrink-0 mt-0.5" />
                   <span>{step}</span>
@@ -227,7 +227,7 @@ export const AssessmentPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/layanan')}
-              className="touch-target flex-1 py-3.5 px-5 rounded-btn bg-brand-teal text-white font-bold text-sm shadow-soft hover:bg-brand-teal-dark transition flex items-center justify-center gap-2"
+              className="btn btn-primary btn-lg flex-1"
             >
               <MapPin className="w-4 h-4" />
               Cari layanan pemeriksaan
@@ -236,7 +236,7 @@ export const AssessmentPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/berdua')}
-              className="touch-target flex-1 py-3.5 px-5 rounded-btn bg-brand-coral text-white font-bold text-sm shadow-soft hover:bg-brand-coral-dark transition flex items-center justify-center gap-2"
+              className="btn btn-coral btn-lg flex-1"
             >
               <Users className="w-4 h-4" />
               Ajak pasangan
@@ -252,13 +252,13 @@ export const AssessmentPage: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <div className="lg:col-span-8 space-y-5">
         {/* Header Progress & Pintasan Demo */}
-        <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 sm:p-6 border border-brand-navy/5 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-brand-teal">
+        <div className="card p-5 sm:p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-1">
+              <span className="eyebrow">
                 Cek Awal Mandiri • Pertanyaan {currentIndex + 1} dari {totalQuestions}
               </span>
-              <h1 className="text-sm font-semibold text-brand-navy/75 dark:text-white/75">
+              <h1 className="text-base font-bold text-brand-navy dark:text-white">
                 Topik: {currentQuestion.topic}
               </h1>
             </div>
@@ -266,7 +266,7 @@ export const AssessmentPage: React.FC = () => {
             <button
               type="button"
               onClick={handleFillRendraDemo}
-              className="px-3.5 py-2 rounded-btn bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral text-xs font-bold flex items-center gap-1.5 hover:bg-brand-coral/25 transition"
+              className="btn btn-coral-soft"
             >
               <Sparkles className="w-3.5 h-3.5" />
               Isi Contoh Rendra (Selesai Instan)
@@ -274,28 +274,30 @@ export const AssessmentPage: React.FC = () => {
           </div>
 
           {/* Progress Bar Halus */}
-          <div
-            role="progressbar"
-            aria-valuenow={progressPct}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`Progres kuesioner ${progressPct}%`}
-            className="w-full bg-surface-muted dark:bg-surface-dark h-2.5 rounded-full overflow-hidden"
-          >
+          <div className="flex items-center gap-3">
             <div
-              className="bg-brand-teal h-full transition-all duration-300 ease-out"
-              style={{ width: `${progressPct}%` }}
-            />
+              role="progressbar"
+              aria-valuenow={progressPct}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Progres kuesioner ${progressPct}%`}
+              className="progress-track"
+            >
+              <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+            <span className="tabular text-xs font-bold text-brand-navy/70 dark:text-white/70 shrink-0 w-9 text-right">
+              {progressPct}%
+            </span>
           </div>
         </div>
 
         {/* Kartu Pertanyaan Aktif */}
         <section
           key={currentQuestion.id}
-          className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-8 border border-brand-navy/5 space-y-6 transition-opacity duration-200"
+          className="card p-6 sm:p-8 space-y-6 transition-opacity duration-200"
         >
           <div className="space-y-2">
-            <h2 className="text-lg sm:text-xl font-bold text-brand-navy dark:text-white leading-snug">
+            <h2 className="text-xl sm:text-2xl font-extrabold leading-snug text-brand-navy dark:text-white">
               {currentQuestion.question}
             </h2>
             <p className="text-xs sm:text-sm text-brand-navy/70 dark:text-white/70 leading-relaxed">
@@ -311,7 +313,7 @@ export const AssessmentPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 items-end">
                 <div>
-                  <label htmlFor="bmi-weight" className="block text-[11px] font-semibold mb-1">
+                  <label htmlFor="bmi-weight" className="block text-2xs font-semibold mb-1">
                     Berat Badan (kg)
                   </label>
                   <input
@@ -320,11 +322,11 @@ export const AssessmentPage: React.FC = () => {
                     placeholder="Mis: 72"
                     value={weightKg}
                     onChange={(e) => setWeightKg(e.target.value)}
-                    className="w-full px-3 py-2 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
+                    className="field w-full"
                   />
                 </div>
                 <div>
-                  <label htmlFor="bmi-height" className="block text-[11px] font-semibold mb-1">
+                  <label htmlFor="bmi-height" className="block text-2xs font-semibold mb-1">
                     Tinggi Badan (cm)
                   </label>
                   <input
@@ -333,13 +335,13 @@ export const AssessmentPage: React.FC = () => {
                     placeholder="Mis: 170"
                     value={heightCm}
                     onChange={(e) => setHeightCm(e.target.value)}
-                    className="w-full px-3 py-2 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
+                    className="field w-full"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleCalculateBmi}
-                  className="touch-target px-3 py-2 rounded-btn bg-brand-navy text-white text-xs font-semibold"
+                  className="btn btn-navy"
                 >
                   Gunakan IMT
                 </button>
@@ -362,10 +364,10 @@ export const AssessmentPage: React.FC = () => {
                   role="radio"
                   aria-checked={isSelected}
                   onClick={() => handleSelectOption(opt.value)}
-                  className={`touch-target w-full text-left p-4 rounded-btn border-2 transition flex items-center justify-between gap-3 ${
+                  className={`touch-target w-full text-left px-4 py-3.5 rounded-2xl border-2 transition duration-150 flex items-center justify-between gap-3 ${
                     isSelected
-                      ? 'border-brand-teal bg-brand-teal-light/60 dark:bg-brand-teal/20 font-bold text-brand-navy dark:text-white'
-                      : 'border-brand-navy/10 dark:border-white/10 hover:border-brand-teal/60 bg-surface dark:bg-surface-dark text-brand-navy dark:text-white font-medium'
+                      ? 'border-brand-teal bg-brand-teal-light/60 dark:bg-brand-teal/20 font-bold text-brand-navy dark:text-white shadow-xs'
+                      : 'border-brand-navy/10 dark:border-white/10 hover:border-brand-teal/60 hover:bg-brand-teal-soft dark:hover:bg-white/5 bg-surface dark:bg-surface-dark text-brand-navy dark:text-white font-medium'
                   }`}
                 >
                   <span className="text-sm leading-snug">{opt.label}</span>
@@ -393,7 +395,7 @@ export const AssessmentPage: React.FC = () => {
                 value={freeTextNote}
                 onChange={(e) => setFreeTextNote(e.target.value)}
                 placeholder="Tuliskan bila ada hal yang mengganjal pikiran Anda..."
-                className="w-full p-3 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
+                className="field w-full"
               />
             </div>
           )}
@@ -404,7 +406,7 @@ export const AssessmentPage: React.FC = () => {
               type="button"
               onClick={handleBack}
               disabled={currentIndex === 0}
-              className="touch-target px-4 py-2.5 rounded-btn border border-brand-navy/15 text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 hover:border-brand-teal transition"
+              className="btn btn-secondary"
             >
               <ArrowLeft className="w-4 h-4" />
               Kembali
@@ -424,7 +426,7 @@ export const AssessmentPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleSelectOption(draftAnswers[currentQuestion.id])}
-                  className="touch-target px-5 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center gap-1.5"
+                  className="btn btn-primary"
                 >
                   <span>{currentIndex === totalQuestions - 1 ? 'Lihat Hasil' : 'Lanjut'}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -442,8 +444,8 @@ export const AssessmentPage: React.FC = () => {
 
       {/* Panel Samping: Peta 12 Topik Pertanyaan & Jaminan Privasi */}
       <aside className="lg:col-span-4 space-y-4">
-        <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/5 space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal">
+        <div className="card p-5 space-y-3">
+          <h3 className="eyebrow">
             Peta 12 Topik Cek Awal
           </h3>
           <div className="grid grid-cols-2 gap-2">
@@ -455,11 +457,11 @@ export const AssessmentPage: React.FC = () => {
                   key={q.id}
                   type="button"
                   onClick={() => setCurrentIndex(idx)}
-                  className={`px-2.5 py-2 rounded-btn text-left text-[11px] font-semibold transition flex items-center gap-1.5 truncate ${
+                  className={`px-2.5 py-2 rounded-btn text-left text-2xs font-semibold transition flex items-center gap-1.5 truncate ${
                     isCurrent
-                      ? 'bg-brand-teal text-white shadow-sm'
+                      ? 'bg-brand-teal-strong text-white shadow-xs'
                       : isAnswered
-                      ? 'bg-brand-teal-light/60 dark:bg-brand-teal/20 text-brand-teal'
+                      ? 'bg-brand-teal-light/70 dark:bg-brand-teal/20 text-brand-teal-dark dark:text-[#7FDADB]'
                       : 'bg-surface-muted dark:bg-surface-dark text-brand-navy/70 dark:text-white/70 hover:bg-brand-navy/10'
                   }`}
                 >
@@ -471,7 +473,7 @@ export const AssessmentPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/5 space-y-2.5 text-xs">
+        <div className="card p-5 space-y-2.5 text-xs">
           <div className="flex items-center gap-2 font-bold text-brand-navy dark:text-white">
             <ShieldCheck className="w-4 h-4 text-brand-teal shrink-0" />
             <span>Privasi Penuh di Perangkat Anda</span>

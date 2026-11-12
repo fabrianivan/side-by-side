@@ -76,24 +76,29 @@ export const WelcomePage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Kartu Utama Sambutan (F1) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-8 border border-brand-navy/5 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-navy/10 pb-5">
-          <div className="flex items-center gap-4">
+      <section className="card relative overflow-hidden p-6 sm:p-10 space-y-8">
+        {/* Aksen dekoratif lembut */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-32 -right-24 w-96 h-96 rounded-full bg-brand-teal/10 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-40 -left-24 w-96 h-96 rounded-full bg-brand-coral/10 blur-3xl"
+        />
+
+        <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
             <img
               src="/logo-icon.png"
               alt="Logo Side by Side"
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-card object-contain bg-white p-1 shadow-sm border border-brand-navy/10 shrink-0"
+              className="w-14 h-14 rounded-2xl object-contain bg-white p-1 shadow-xs border border-brand-navy/10 shrink-0"
             />
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-brand-navy dark:text-white tracking-tight">
-                  Side by Side
-                </h1>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-teal-light text-brand-teal">
-                  Better together.
-                </span>
-              </div>
-              <p className="text-sm text-brand-navy/75 dark:text-white/75 mt-0.5">
+              <p className="text-lg font-extrabold tracking-tight text-brand-navy dark:text-white">
+                Side by Side
+              </p>
+              <p className="text-xs text-brand-navy/70 dark:text-white/70">
                 Kesehatan Reproduksi Pria • Privat & Tanpa Penghakiman
               </p>
             </div>
@@ -102,61 +107,29 @@ export const WelcomePage: React.FC = () => {
           <button
             type="button"
             onClick={handleStartDemoRendra}
-            className="touch-target px-4 py-2.5 rounded-btn bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral font-semibold text-xs flex items-center gap-2 hover:bg-brand-coral/25 transition self-start sm:self-auto"
+            className="btn btn-coral-soft self-start sm:self-auto"
           >
             <Sparkles className="w-4 h-4" />
             Muat Skenario Demo Rendra (Siap Pakai)
           </button>
         </div>
 
-        <div className="space-y-3">
-          <h2 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
-            “{t.brand.welcomeGreeting}”
-          </h2>
-          <p className="text-base text-brand-navy/85 dark:text-white/85 leading-relaxed">
+        <div className="relative space-y-4 max-w-3xl">
+          <span className="badge badge-teal">Better together.</span>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-brand-navy dark:text-white">
+            {t.brand.welcomeGreeting}
+          </h1>
+          <p className="text-base sm:text-lg text-brand-navy/75 dark:text-white/75 leading-relaxed">
             {t.brand.valueProposition}
           </p>
         </div>
 
-        {/* 3 Pilar Keamanan & Privasi */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-1.5">
-            <div className="w-9 h-9 rounded-btn bg-brand-teal/15 text-brand-teal flex items-center justify-center">
-              <Lock className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm">1. Privasi Dulu</h3>
-            <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              Bisa dipakai tanpa akun. Jawaban Anda disimpan aman langsung di perangkat dan tidak dikirim ke server.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-1.5">
-            <div className="w-9 h-9 rounded-btn bg-brand-coral/15 text-brand-coral flex items-center justify-center">
-              <HeartHandshake className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm">2. Berdua, Tanpa Penghakiman</h3>
-            <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              Dampingi pasangan lewat daftar langkah bersama tanpa harus membuka isi kuesioner atau hasil lab pribadi Anda.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-1.5">
-            <div className="w-9 h-9 rounded-btn bg-status-success/15 text-status-success flex items-center justify-center">
-              <UserCheck className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm">3. Batas Medis Jelas</h3>
-            <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              Panduan edukasi berbasis pedoman WHO dan navigasi layanan ramah pria—bukan klaim diagnosis atau saran obat.
-            </p>
-          </div>
-        </div>
-
         {/* Dua Tombol Utama Sesuai Spesifikasi F1 */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="relative flex flex-col sm:flex-row gap-3 max-w-2xl">
           <button
             type="button"
             onClick={handleStartAnonymous}
-            className="touch-target flex-1 py-3.5 px-6 rounded-btn bg-brand-teal text-white font-bold text-sm shadow-soft hover:bg-brand-teal-dark transition flex items-center justify-center gap-2"
+            className="btn btn-primary btn-lg flex-1"
           >
             <ShieldCheck className="w-5 h-5" />
             Mulai tanpa akun
@@ -166,16 +139,50 @@ export const WelcomePage: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowAuthForm(!showAuthForm)}
-            className="touch-target flex-1 py-3.5 px-6 rounded-btn bg-surface dark:bg-surface-dark border-2 border-brand-navy/20 dark:border-white/20 text-brand-navy dark:text-white font-bold text-sm hover:border-brand-teal transition flex items-center justify-center gap-2"
+            aria-expanded={showAuthForm}
+            className="btn btn-secondary btn-lg flex-1"
           >
             Buat akun
           </button>
         </div>
 
+        {/* 3 Pilar Keamanan & Privasi */}
+        <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <div className="well p-4 sm:p-5 space-y-2">
+            <div className="icon-tile w-10 h-10 rounded-xl bg-brand-teal/15 text-brand-teal">
+              <Lock className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-sm text-brand-navy dark:text-white">1. Privasi Dulu</h3>
+            <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
+              Bisa dipakai tanpa akun. Jawaban Anda disimpan aman langsung di perangkat dan tidak dikirim ke server.
+            </p>
+          </div>
+
+          <div className="well p-4 sm:p-5 space-y-2">
+            <div className="icon-tile w-10 h-10 rounded-xl bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral">
+              <HeartHandshake className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-sm text-brand-navy dark:text-white">2. Berdua, Tanpa Penghakiman</h3>
+            <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
+              Dampingi pasangan lewat daftar langkah bersama tanpa harus membuka isi kuesioner atau hasil lab pribadi Anda.
+            </p>
+          </div>
+
+          <div className="well p-4 sm:p-5 space-y-2">
+            <div className="icon-tile w-10 h-10 rounded-xl bg-status-success/15 text-status-success">
+              <UserCheck className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-sm text-brand-navy dark:text-white">3. Batas Medis Jelas</h3>
+            <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
+              Panduan edukasi berbasis pedoman WHO dan navigasi layanan ramah pria—bukan klaim diagnosis atau saran obat.
+            </p>
+          </div>
+        </div>
+
         {/* Formulir Buat Akun / Masuk (Mode Akun, Magic Link & Login Nakes) */}
         {showAuthForm && (
-          <div className="p-5 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-navy/10 pb-3">
+          <div className="relative well p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-navy/10 dark:border-white/10 pb-3">
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -183,10 +190,10 @@ export const WelcomePage: React.FC = () => {
                     setAuthTab('register');
                     setMagicLinkSent(false);
                   }}
-                  className={`px-3 py-1.5 rounded-btn text-xs font-bold ${
+                  className={`px-3.5 py-2 rounded-full text-xs font-bold transition ${
                     authTab === 'register'
-                      ? 'bg-brand-navy text-white'
-                      : 'text-brand-navy/70 dark:text-white/70'
+                      ? 'bg-brand-teal-strong text-white shadow-xs'
+                      : 'text-brand-navy/70 dark:text-white/70 hover:bg-brand-navy/[0.06] dark:hover:bg-white/10'
                   }`}
                 >
                   Buat Akun Baru
@@ -197,10 +204,10 @@ export const WelcomePage: React.FC = () => {
                     setAuthTab('login');
                     setMagicLinkSent(false);
                   }}
-                  className={`px-3 py-1.5 rounded-btn text-xs font-bold ${
+                  className={`px-3.5 py-2 rounded-full text-xs font-bold transition ${
                     authTab === 'login'
-                      ? 'bg-brand-navy text-white'
-                      : 'text-brand-navy/70 dark:text-white/70'
+                      ? 'bg-brand-teal-strong text-white shadow-xs'
+                      : 'text-brand-navy/70 dark:text-white/70 hover:bg-brand-navy/[0.06] dark:hover:bg-white/10'
                   }`}
                 >
                   Masuk (Email & Sandi)
@@ -211,10 +218,10 @@ export const WelcomePage: React.FC = () => {
                     setAuthTab('magic');
                     setMagicLinkSent(false);
                   }}
-                  className={`px-3 py-1.5 rounded-btn text-xs font-bold ${
+                  className={`px-3.5 py-2 rounded-full text-xs font-bold transition ${
                     authTab === 'magic'
-                      ? 'bg-brand-teal text-white'
-                      : 'text-brand-navy/70 dark:text-white/70'
+                      ? 'bg-brand-teal-strong text-white shadow-xs'
+                      : 'text-brand-navy/70 dark:text-white/70 hover:bg-brand-navy/[0.06] dark:hover:bg-white/10'
                   }`}
                 >
                   Magic Link (Tanpa Sandi)
@@ -237,7 +244,7 @@ export const WelcomePage: React.FC = () => {
                     await loginAccount(email, role);
                     navigate(role === 'nakes' ? '/nakes' : '/');
                   }}
-                  className="touch-target px-4 py-2 rounded-btn bg-status-success text-white font-bold"
+                  className="btn btn-primary"
                 >
                   Verifikasi Magic Link & Masuk Sekarang →
                 </button>
@@ -246,7 +253,7 @@ export const WelcomePage: React.FC = () => {
               <form onSubmit={handleAccountSubmit} className="space-y-3">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="auth-email" className="block text-xs font-semibold mb-1">
+                    <label htmlFor="auth-email" className="field-label">
                       Alamat Email
                     </label>
                     <input
@@ -256,12 +263,12 @@ export const WelcomePage: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="nama@email.com (atau rendra@demo.id)"
-                      className="w-full px-3.5 py-2.5 rounded-btn border border-brand-navy/20 text-sm text-brand-navy bg-white"
+                      className="field w-full"
                     />
                   </div>
                   {authTab !== 'magic' && (
                     <div>
-                      <label htmlFor="auth-password" className="block text-xs font-semibold mb-1">
+                      <label htmlFor="auth-password" className="field-label">
                         Kata Sandi
                       </label>
                       <input
@@ -272,21 +279,21 @@ export const WelcomePage: React.FC = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Minimal 6 karakter"
-                        className="w-full px-3.5 py-2.5 rounded-btn border border-brand-navy/20 text-sm text-brand-navy bg-white"
+                        className="field w-full"
                       />
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label htmlFor="auth-role" className="block text-xs font-semibold mb-1">
+                  <label htmlFor="auth-role" className="field-label">
                     Peran Pengguna
                   </label>
                   <select
                     id="auth-role"
                     value={role}
                     onChange={(e) => setRole(e.target.value as 'user' | 'nakes')}
-                    className="w-full px-3.5 py-2.5 rounded-btn border border-brand-navy/20 text-sm text-brand-navy bg-white"
+                    className="field w-full"
                   >
                     <option value="user">Pengguna / Pasangan (Pria / Istri)</option>
                     <option value="nakes">Tenaga Kesehatan (Dokter / Konselor — Mode Nakes)</option>
@@ -301,7 +308,7 @@ export const WelcomePage: React.FC = () => {
                   </div>
                   <button
                     type="submit"
-                    className="touch-target px-5 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold hover:bg-brand-teal-dark transition"
+                    className="btn btn-primary"
                   >
                     {authTab === 'magic'
                       ? 'Kirim Magic Link'
@@ -317,44 +324,44 @@ export const WelcomePage: React.FC = () => {
       </section>
 
       {/* Onboarding Privasi & Persetujuan Granular ("Data Anda", Default OFF) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 space-y-4 border border-brand-navy/5">
+      <section className="card p-6 sm:p-8 space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-brand-navy dark:text-white">
+            <h2 className="section-title">
               Data Anda & Persetujuan Granular
             </h2>
-            <p className="text-xs text-brand-navy/75 dark:text-white/75 mt-0.5">
+            <p className="text-xs text-brand-navy/75 dark:text-white/75 mt-1 leading-relaxed">
               Semua opsi di bawah ini bernilai <strong>NONAKTIF (OFF) secara default</strong>. Anda memegang kendali penuh kapan saja.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div className="p-3.5 rounded-btn bg-surface-muted dark:bg-surface-dark">
-            <div className="font-bold text-brand-teal mb-1">Data Apa yang Disimpan?</div>
+          <div className="well p-4">
+            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">Data Apa yang Disimpan?</div>
             <p className="text-brand-navy/80 dark:text-white/80 leading-relaxed">
               Hanya pilihan jawaban Cek Awal, catatan hasil lab yang Anda ketik sendiri, dan jadwal pengingat. Tidak ada pelacak iklan atau lokasi paksa.
             </p>
           </div>
-          <div className="p-3.5 rounded-btn bg-surface-muted dark:bg-surface-dark">
-            <div className="font-bold text-brand-teal mb-1">Untuk Apa Digunakan?</div>
+          <div className="well p-4">
+            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">Untuk Apa Digunakan?</div>
             <p className="text-brand-navy/80 dark:text-white/80 leading-relaxed">
               Memberikan panduan langkah pemeriksaan berikutnya, menampilkan grafik tren pribadi, dan membantu Anda menyusun rencana bersama pasangan.
             </p>
           </div>
-          <div className="p-3.5 rounded-btn bg-surface-muted dark:bg-surface-dark">
-            <div className="font-bold text-brand-teal mb-1">Siapa yang Bisa Melihat?</div>
+          <div className="well p-4">
+            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">Siapa yang Bisa Melihat?</div>
             <p className="text-brand-navy/80 dark:text-white/80 leading-relaxed">
               Hanya Anda sendiri di perangkat ini. Pasangan atau dokter tidak dapat melihat isi hasil Anda kecuali Anda menyalakan izinnya sendiri.
             </p>
           </div>
         </div>
 
-        <div className="divide-y divide-brand-navy/10 border-t border-brand-navy/10 pt-2">
-          <label className="py-3 flex items-center justify-between gap-4 cursor-pointer">
+        <div className="divide-y divide-brand-navy/10 dark:divide-white/10 border-t border-brand-navy/10 dark:border-white/10">
+          <label className="py-4 flex items-center justify-between gap-4 cursor-pointer">
             <div>
-              <div className="text-sm font-semibold">1. Penyimpanan Riwayat Hasil & Tren</div>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70">
+              <div className="text-sm font-bold text-brand-navy dark:text-white">1. Penyimpanan Riwayat Hasil & Tren</div>
+              <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed mt-0.5">
                 Izinkan aplikasi menyimpan riwayat hasil Cek Awal dan analisis semen terenkripsi agar Anda dapat melihat grafik tren dari waktu ke waktu.
               </p>
             </div>
@@ -362,15 +369,15 @@ export const WelcomePage: React.FC = () => {
               type="checkbox"
               checked={consents.store_results}
               onChange={(e) => updateConsent('store_results', e.target.checked)}
-              className="w-5 h-5 accent-brand-teal rounded cursor-pointer shrink-0"
+              className="switch"
               aria-label="Persetujuan penyimpanan hasil"
             />
           </label>
 
-          <label className="py-3 flex items-center justify-between gap-4 cursor-pointer">
+          <label className="py-4 flex items-center justify-between gap-4 cursor-pointer">
             <div>
-              <div className="text-sm font-semibold">2. Berbagi Progres Rencana dengan Pasangan</div>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70">
+              <div className="text-sm font-bold text-brand-navy dark:text-white">2. Berbagi Progres Rencana dengan Pasangan</div>
+              <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed mt-0.5">
                 Izinkan sinkronisasi status tahapan di Mode Berdua (tanpa membuka jawaban kuesioner maupun angka laboratorium).
               </p>
             </div>
@@ -378,15 +385,15 @@ export const WelcomePage: React.FC = () => {
               type="checkbox"
               checked={consents.share_partner}
               onChange={(e) => updateConsent('share_partner', e.target.checked)}
-              className="w-5 h-5 accent-brand-teal rounded cursor-pointer shrink-0"
+              className="switch"
               aria-label="Persetujuan berbagi dengan pasangan"
             />
           </label>
 
-          <label className="py-3 flex items-center justify-between gap-4 cursor-pointer">
+          <label className="py-4 flex items-center justify-between gap-4 cursor-pointer">
             <div>
-              <div className="text-sm font-semibold">3. Berbagi Ringkasan ke Tenaga Kesehatan (QR 1 Jam)</div>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70">
+              <div className="text-sm font-bold text-brand-navy dark:text-white">3. Berbagi Ringkasan ke Tenaga Kesehatan (QR 1 Jam)</div>
+              <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed mt-0.5">
                 Izinkan pembuatan kode QR sementara (berlaku 1 jam) saat Anda berkonsultasi dengan dokter.
               </p>
             </div>
@@ -394,7 +401,7 @@ export const WelcomePage: React.FC = () => {
               type="checkbox"
               checked={consents.share_nakes}
               onChange={(e) => updateConsent('share_nakes', e.target.checked)}
-              className="w-5 h-5 accent-brand-teal rounded cursor-pointer shrink-0"
+              className="switch"
               aria-label="Persetujuan berbagi dengan tenaga kesehatan"
             />
           </label>

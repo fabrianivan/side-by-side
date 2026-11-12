@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
+import { PageHeader } from '../components/ui';
 
 export const HomePage: React.FC = () => {
   const {
@@ -40,6 +41,7 @@ export const HomePage: React.FC = () => {
   const getNextStepCard = () => {
     if (!assessmentResult) {
       return {
+        step: 1,
         badge: 'Langkah 1 dari 4',
         title: isEn ? 'Start Self-Check (< 3 Min)' : 'Mulai Cek Awal Mandiri (< 3 Menit)',
         description:
@@ -50,6 +52,7 @@ export const HomePage: React.FC = () => {
     }
     if (!pairing || pairing.status !== 'active') {
       return {
+        step: 2,
         badge: 'Langkah 2 dari 4',
         title: 'Susun Rencana Bersama Pasangan',
         description:
@@ -60,6 +63,7 @@ export const HomePage: React.FC = () => {
     }
     if (labResults.length === 0) {
       return {
+        step: 3,
         badge: 'Langkah 3 dari 4',
         title: 'Pilih Layanan Pemeriksaan Ramah Pria',
         description:
@@ -69,6 +73,7 @@ export const HomePage: React.FC = () => {
       };
     }
     return {
+      step: 4,
       badge: 'Langkah 4 dari 4',
       title: 'Siapkan Ringkasan untuk Konsultasi Dokter',
       description:
@@ -88,33 +93,26 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Banner Sambutan Hangat */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-2.5 py-1 rounded-full">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>
-                {authMode === 'welcome'
-                  ? (isEn ? 'Ready Without Account' : 'Siap Digunakan Tanpa Akun')
-                  : displayName}
-              </span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
-              {t.brand.welcomeGreeting}
-            </h1>
-            <p className="text-sm text-brand-navy/75 dark:text-white/75">
-              {isEn
-                ? 'Every small step brings clarity for you and your partner. Choose the step that feels right today.'
-                : 'Setiap langkah kecil membawa kejelasan bagi Anda dan pasangan. Pilih langkah yang paling nyaman hari ini.'}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2 shrink-0">
+      <PageHeader
+        eyebrow={
+          authMode === 'welcome'
+            ? (isEn ? 'Ready Without Account' : 'Siap Digunakan Tanpa Akun')
+            : displayName
+        }
+        icon={ShieldCheck}
+        title={t.brand.welcomeGreeting}
+        description={
+          isEn
+            ? 'Every small step brings clarity for you and your partner. Choose the step that feels right today.'
+            : 'Setiap langkah kecil membawa kejelasan bagi Anda dan pasangan. Pilih langkah yang paling nyaman hari ini.'
+        }
+        actions={
+          <>
             {authMode === 'welcome' && (
               <button
                 type="button"
                 onClick={() => startAnonymousMode()}
-                className="touch-target px-4 py-2.5 rounded-btn bg-brand-navy text-white text-xs font-semibold hover:bg-brand-navy-light transition"
+                className="btn btn-navy"
               >
                 Aktifkan Mode Anonim
               </button>
@@ -122,84 +120,115 @@ export const HomePage: React.FC = () => {
             <button
               type="button"
               onClick={() => switchDemoPersona('rendra')}
-              className="touch-target px-4 py-2.5 rounded-btn bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral text-xs font-bold flex items-center gap-1.5 hover:bg-brand-coral/25 transition"
+              className="btn btn-coral-soft"
             >
               <Sparkles className="w-4 h-4" />
               Isi Skenario Rendra
             </button>
-          </div>
-        </div>
-      </section>
+          </>
+        }
+      />
 
       {/* Kartu Utama: "Langkah Berikutnya" (Prinsip #5: Satu langkah kecil berikutnya) */}
       <section
         aria-labelledby="next-step-heading"
-        className="bg-gradient-to-br from-brand-navy to-brand-navy-light text-white rounded-card shadow-soft-lg p-6 sm:p-7 space-y-4"
+        className="relative overflow-hidden bg-gradient-to-br from-brand-navy-deep via-brand-navy to-brand-navy-light text-white rounded-card shadow-soft-lg p-6 sm:p-8"
       >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-brand-teal text-white">
-            Langkah Berikutnya • {nextStep.badge}
-          </span>
-          {assessmentResult && (
-            <span className="text-xs text-white/80 font-medium">
-              Saran Cek Awal: <strong className="text-brand-coral">{assessmentResult.levelLabel}</strong>
-            </span>
-          )}
-        </div>
+        {/* Aksen dekoratif lembut */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 rounded-full bg-brand-teal/30 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-28 right-24 w-56 h-56 rounded-full bg-brand-coral/20 blur-3xl"
+        />
 
-        <div className="space-y-2">
-          <h2 id="next-step-heading" className="text-xl sm:text-2xl font-bold">
-            {nextStep.title}
-          </h2>
-          <p className="text-sm text-white/85 leading-relaxed max-w-4xl">
-            {nextStep.description}
-          </p>
-        </div>
+        <div className="relative space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+              <span className="text-2xs font-bold uppercase tracking-[0.08em] text-[#7FDADB]">
+                Langkah Berikutnya • {nextStep.badge}
+              </span>
+              <span className="flex items-center gap-1" aria-hidden="true">
+                {[1, 2, 3, 4].map((n) => (
+                  <span
+                    key={n}
+                    className={`h-1.5 rounded-full ${
+                      n <= nextStep.step ? 'w-5 bg-[#4FC6C8]' : 'w-2.5 bg-white/20'
+                    }`}
+                  />
+                ))}
+              </span>
+            </div>
+            {assessmentResult && (
+              <span className="self-start sm:self-auto rounded-xl bg-white/10 px-3 py-1.5 text-2xs leading-snug text-white/85 font-medium">
+                Saran Cek Awal: <strong className="text-[#FFA596]">{assessmentResult.levelLabel}</strong>
+              </span>
+            )}
+          </div>
 
-        <div className="pt-1 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(nextStep.to)}
-            className="touch-target px-6 py-3 rounded-btn bg-brand-coral text-white font-bold text-sm shadow-soft hover:bg-brand-coral-dark transition flex items-center gap-2"
-          >
-            <span>{nextStep.ctaText}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="space-y-2.5">
+            <h2 id="next-step-heading" className="text-2xl sm:text-3xl font-extrabold">
+              {nextStep.title}
+            </h2>
+            <p className="text-sm text-white/80 leading-relaxed max-w-2xl">
+              {nextStep.description}
+            </p>
+          </div>
 
-          {!assessmentResult && (
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate('/welcome')}
-              className="touch-target px-4 py-3 rounded-btn bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition"
+              onClick={() => navigate(nextStep.to)}
+              className="btn btn-coral btn-lg"
             >
-              Lihat Pengaturan Privasi
+              <span>{nextStep.ctaText}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
-          )}
+
+            {!assessmentResult && (
+              <button
+                type="button"
+                onClick={() => navigate('/welcome')}
+                className="btn btn-lg bg-white/10 hover:bg-white/20 text-white"
+              >
+                Lihat Pengaturan Privasi
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
       {/* Progres Rencana Kita & Pengingat Mendatang */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Kartu Progres Rencana */}
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 space-y-3 border border-brand-navy/5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-base flex items-center gap-2">
-              <Users className="w-5 h-5 text-brand-teal" />
+        <section className="card p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="section-title flex items-center gap-2.5">
+              <span className="icon-tile w-9 h-9 rounded-xl bg-brand-teal-light text-brand-teal dark:bg-brand-teal/20">
+                <Users className="w-[18px] h-[18px]" />
+              </span>
               <span>Progres Rencana Kita</span>
             </h2>
-            <Link to="/berdua" className="text-xs font-bold text-brand-teal hover:underline">
+            <Link to="/berdua" className="text-xs font-bold text-brand-teal hover:underline underline-offset-4 shrink-0">
               Lihat Detail →
             </Link>
           </div>
 
-          <div className="w-full bg-surface-muted dark:bg-surface-dark h-2.5 rounded-full overflow-hidden">
-            <div
-              className="bg-brand-teal h-full transition-all duration-300"
-              style={{ width: `${Math.min(100, Math.round((completedStepsCount / 6) * 100))}%` }}
-            />
+          <div className="flex items-center gap-3">
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{ width: `${Math.min(100, Math.round((completedStepsCount / 6) * 100))}%` }}
+              />
+            </div>
+            <span className="tabular text-xs font-bold text-brand-navy dark:text-white shrink-0">
+              {completedStepsCount}/6
+            </span>
           </div>
 
-          <p className="text-xs text-brand-navy/75 dark:text-white/75">
+          <p className="text-xs leading-relaxed text-brand-navy/75 dark:text-white/75">
             {pairing && pairing.status === 'active' ? (
               <>
                 Terhubung bersama <strong>{pairing.partner_b_alias}</strong> (Kode Tautan:{' '}
@@ -214,21 +243,23 @@ export const HomePage: React.FC = () => {
           </p>
 
           {pairing?.shared_items.noteFromB && (
-            <div className="p-3 rounded-btn bg-brand-teal-light/60 dark:bg-brand-teal/20 text-xs text-brand-navy dark:text-white">
-              <span className="font-bold text-brand-teal">Pesan Semangat Pasangan: </span>“
+            <div className="p-3.5 rounded-2xl bg-brand-teal-light/60 dark:bg-brand-teal/20 text-xs leading-relaxed text-brand-navy dark:text-white">
+              <span className="font-bold text-brand-teal-dark dark:text-[#7FDADB]">Pesan Semangat Pasangan: </span>“
               {pairing.shared_items.noteFromB}”
             </div>
           )}
         </section>
 
         {/* Kartu Pengingat Pemeriksaan */}
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 space-y-3 border border-brand-navy/5">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-base flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-brand-coral" />
+        <section className="card p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="section-title flex items-center gap-2.5">
+              <span className="icon-tile w-9 h-9 rounded-xl bg-brand-coral-light text-brand-coral-dark dark:bg-brand-coral/20 dark:text-brand-coral">
+                <Calendar className="w-[18px] h-[18px]" />
+              </span>
               <span>Jadwal & Pengingat</span>
             </h2>
-            <Link to="/hasil" className="text-xs font-bold text-brand-teal hover:underline">
+            <Link to="/hasil" className="text-xs font-bold text-brand-teal hover:underline underline-offset-4 shrink-0">
               Kelola →
             </Link>
           </div>
@@ -242,14 +273,14 @@ export const HomePage: React.FC = () => {
               {reminders.slice(0, 2).map((rem) => (
                 <li
                   key={rem.id}
-                  className="p-2.5 rounded-btn bg-surface-muted dark:bg-surface-dark text-xs flex items-start justify-between gap-2"
+                  className="well px-3.5 py-3 text-xs flex items-start justify-between gap-2"
                 >
                   <div>
                     <div className="font-semibold text-brand-navy dark:text-white">{rem.title}</div>
                     {rem.facilityName && (
                       <div className="text-brand-teal font-medium">{rem.facilityName}</div>
                     )}
-                    <div className="text-brand-navy/60 dark:text-white/60 mt-0.5">
+                    <div className="tabular text-brand-navy/60 dark:text-white/60 mt-0.5">
                       Jadwal: {rem.remindAt.replace('T', ' ')}
                     </div>
                   </div>
@@ -263,20 +294,20 @@ export const HomePage: React.FC = () => {
 
       {/* Pintasan Fitur Utama */}
       <section aria-label="Pintasan Fitur">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy/60 dark:text-white/60 mb-3">
+        <h2 className="eyebrow !text-brand-navy/55 dark:!text-white/55 mb-3">
           Pintasan Layanan & Panduan
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           <Link
             to="/cek-awal"
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/5 hover:border-brand-teal transition flex items-start gap-3.5"
+            className="card card-interactive p-5 flex items-start gap-4"
           >
-            <div className="w-11 h-11 rounded-btn bg-brand-teal-light text-brand-teal flex items-center justify-center shrink-0">
-              <ClipboardCheck className="w-6 h-6" />
+            <div className="icon-tile bg-brand-teal-light text-brand-teal dark:bg-brand-teal/20">
+              <ClipboardCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Cek Awal Mandiri</h3>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-1">
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Cek Awal Mandiri</h3>
+              <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
                 12 pertanyaan privat berbasis aturan medis untuk memetakan langkah pertama.
               </p>
             </div>
@@ -284,14 +315,14 @@ export const HomePage: React.FC = () => {
 
           <Link
             to="/layanan"
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/5 hover:border-brand-teal transition flex items-start gap-3.5"
+            className="card card-interactive p-5 flex items-start gap-4"
           >
-            <div className="w-11 h-11 rounded-btn bg-brand-coral-light text-brand-coral-dark flex items-center justify-center shrink-0">
-              <MapPin className="w-6 h-6" />
+            <div className="icon-tile bg-brand-coral-light text-brand-coral-dark dark:bg-brand-coral/20 dark:text-brand-coral">
+              <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Cari Layanan & Panduan Tes</h3>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-1">
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Cari Layanan & Panduan Tes</h3>
+              <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
                 16 direktori klinik/RS ramah pria, filter JKN, & pembuat daftar pertanyaan dokter.
               </p>
             </div>
@@ -299,14 +330,14 @@ export const HomePage: React.FC = () => {
 
           <Link
             to="/berdua"
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/5 hover:border-brand-teal transition flex items-start gap-3.5"
+            className="card card-interactive p-5 flex items-start gap-4"
           >
-            <div className="w-11 h-11 rounded-btn bg-brand-teal-light text-brand-teal flex items-center justify-center shrink-0">
-              <Users className="w-6 h-6" />
+            <div className="icon-tile bg-brand-teal-light text-brand-teal dark:bg-brand-teal/20">
+              <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Mode Berdua (Rencana Kita)</h3>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-1">
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Mode Berdua (Rencana Kita)</h3>
+              <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
                 Templat pesan "Ajak dengan lembut" & checklist bersama tanpa buka data pribadi.
               </p>
             </div>
@@ -314,14 +345,14 @@ export const HomePage: React.FC = () => {
 
           <Link
             to="/hasil"
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/5 hover:border-brand-teal transition flex items-start gap-3.5"
+            className="card card-interactive p-5 flex items-start gap-4"
           >
-            <div className="w-11 h-11 rounded-btn bg-status-success-bg text-status-success flex items-center justify-center shrink-0">
-              <Activity className="w-6 h-6" />
+            <div className="icon-tile bg-status-success-bg text-status-success dark:bg-status-success/20">
+              <Activity className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Hasil Saya & Grafik Tren</h3>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-1">
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Hasil Saya & Grafik Tren</h3>
+              <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
                 Catat hasil analisis semen, pahami istilah rujukan WHO 2021, dan pantau tren.
               </p>
             </div>
@@ -329,14 +360,14 @@ export const HomePage: React.FC = () => {
 
           <Link
             to="/pustaka"
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/5 hover:border-brand-teal transition flex items-start gap-3.5"
+            className="card card-interactive p-5 flex items-start gap-4"
           >
-            <div className="w-11 h-11 rounded-btn bg-status-warning-bg text-status-warning flex items-center justify-center shrink-0">
-              <BookOpen className="w-6 h-6" />
+            <div className="icon-tile bg-status-warning-bg text-[#B07E00] dark:bg-status-warning/20 dark:text-status-warning">
+              <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Pustaka Edukasi & Tanya Nakes</h3>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-1">
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Pustaka Edukasi & Tanya Nakes</h3>
+              <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
                 12 artikel pendek terkurasi, mitos vs fakta, FAQ, dan tiket tanya nakes anonim.
               </p>
             </div>
@@ -344,14 +375,14 @@ export const HomePage: React.FC = () => {
 
           <Link
             to="/bagikan-nakes"
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/5 hover:border-brand-teal transition flex items-start gap-3.5"
+            className="card card-interactive p-5 flex items-start gap-4"
           >
-            <div className="w-11 h-11 rounded-btn bg-brand-teal-light text-brand-teal flex items-center justify-center shrink-0">
-              <QrCode className="w-6 h-6" />
+            <div className="icon-tile bg-brand-teal-light text-brand-teal dark:bg-brand-teal/20">
+              <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm">Berbagi ke Nakes (QR 1 Jam)</h3>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-1">
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Berbagi ke Nakes (QR 1 Jam)</h3>
+              <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
                 Bagikan ringkasan yang Anda setujui ke dokter & lihat catatan akses transparan.
               </p>
             </div>
@@ -360,13 +391,13 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* Bagian Khusus: Alat Interaktif & Edukasi Klinis Lengkap */}
-      <section aria-label="Alat Interaktif Khusus" className="bg-gradient-to-br from-brand-navy/5 via-brand-teal/5 to-brand-coral/5 p-6 rounded-card border border-brand-teal/20 space-y-4">
+      <section aria-label="Alat Interaktif Khusus" className="bg-gradient-to-br from-brand-teal/[0.07] via-surface/40 to-brand-coral/[0.07] dark:via-transparent p-5 sm:p-6 rounded-card border border-brand-teal/15 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-brand-teal text-white">
+            <span className="eyebrow">
               {isEn ? 'Integrated Clinical Education' : 'Edukasi Klinis Terpadu'}
             </span>
-            <h2 className="text-base sm:text-lg font-bold text-brand-navy dark:text-white mt-1">
+            <h2 className="section-title mt-1">
               {isEn ? 'Interactive Tools & Biological Trackers' : 'Alat Interaktif & Pelacak Mandiri'}
             </h2>
           </div>
@@ -380,9 +411,9 @@ export const HomePage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             to={isEn ? '/semen-calculator' : '/simulator'}
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/10 hover:border-brand-teal hover:shadow-soft-lg transition space-y-2 group"
+            className="card card-interactive p-5 space-y-2 group"
           >
-            <div className="w-10 h-10 rounded-btn bg-brand-teal-light text-brand-teal flex items-center justify-center group-hover:scale-105 transition">
+            <div className="w-10 h-10 rounded-xl bg-brand-teal-light dark:bg-brand-teal/20 text-brand-teal flex items-center justify-center group-hover:scale-105 transition">
               <Sliders className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-sm text-brand-navy dark:text-white group-hover:text-brand-teal transition">
@@ -401,9 +432,9 @@ export const HomePage: React.FC = () => {
 
           <Link
             to={isEn ? '/cycle-tracker' : '/siklus-72-hari'}
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/10 hover:border-brand-teal hover:shadow-soft-lg transition space-y-2 group"
+            className="card card-interactive p-5 space-y-2 group"
           >
-            <div className="w-10 h-10 rounded-btn bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral flex items-center justify-center group-hover:scale-105 transition">
+            <div className="w-10 h-10 rounded-xl bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral flex items-center justify-center group-hover:scale-105 transition">
               <Clock className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-sm text-brand-navy dark:text-white group-hover:text-brand-coral transition">
@@ -422,9 +453,9 @@ export const HomePage: React.FC = () => {
 
           <Link
             to={isEn ? '/doctor-checklist' : '/checklist-dokter'}
-            className="bg-surface dark:bg-surface-dark-card p-5 rounded-card shadow-soft border border-brand-navy/10 hover:border-brand-teal hover:shadow-soft-lg transition space-y-2 group"
+            className="card card-interactive p-5 space-y-2 group"
           >
-            <div className="w-10 h-10 rounded-btn bg-brand-navy/10 dark:bg-white/10 text-brand-navy dark:text-white flex items-center justify-center group-hover:scale-105 transition">
+            <div className="w-10 h-10 rounded-xl bg-brand-navy/10 dark:bg-white/10 text-brand-navy dark:text-white flex items-center justify-center group-hover:scale-105 transition">
               <FileText className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-sm text-brand-navy dark:text-white group-hover:text-brand-teal transition">

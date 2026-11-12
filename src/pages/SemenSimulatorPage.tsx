@@ -180,17 +180,17 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Header Banner */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-2.5 py-1 rounded-full">
+      <section className="page-header">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+          <div className="space-y-2.5">
+            <div className="badge badge-teal">
               <Sliders className="w-3.5 h-3.5" />
               <span>{isEn ? 'WHO 6th Edition (2021) Guidelines' : 'Standar WHO Edisi ke-6 (2021)'}</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
+            <h1 className="page-title">
               {isEn ? 'WHO Semen Analysis Simulator & Calculator' : 'Simulator & Kalkulator Parameter Sperma'}
             </h1>
-            <p className="text-sm text-brand-navy/75 dark:text-white/75">
+            <p className="page-lead">
               {isEn
                 ? 'Adjust parameter sliders to understand how volume, concentration, motility, and morphology influence conception potential in an objective, stigma-free manner.'
                 : 'Geser nilai untuk memahami bagaimana volume, konsentrasi, motilitas, dan morfologi memengaruhi potensi konsepsi secara awam dan objektif.'}
@@ -202,7 +202,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
               type="button"
               onClick={handleSaveToMyResults}
               disabled={savedSuccess}
-              className="touch-target px-4 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center gap-1.5 shadow-soft hover:bg-brand-teal-dark transition disabled:opacity-75"
+              className="btn btn-primary"
             >
               {savedSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
               <span>
@@ -214,7 +214,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
             <button
               type="button"
               onClick={handleCopySummary}
-              className="touch-target px-3.5 py-2.5 rounded-btn border border-brand-navy/20 text-brand-navy dark:text-white text-xs font-semibold flex items-center gap-1.5 hover:bg-brand-navy/5 transition"
+              className="btn btn-secondary"
             >
               {copiedSummary ? <Check className="w-4 h-4 text-brand-teal" /> : <Copy className="w-4 h-4" />}
               <span>{copiedSummary ? (isEn ? 'Copied' : 'Tersalin') : (isEn ? 'Copy Summary' : 'Salin Teks')}</span>
@@ -224,8 +224,8 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
       </section>
 
       {/* Quick Presets */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/5 space-y-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-brand-navy/60 dark:text-white/60 flex items-center gap-1.5">
+      <section className="card p-5 space-y-3.5">
+        <h2 className="eyebrow !text-brand-navy/60 dark:!text-white/60 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-brand-coral" />
           <span>{isEn ? 'Choose an Example Scenario:' : 'Pilih Skenario Contoh:'}</span>
         </h2>
@@ -235,13 +235,13 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
               key={p.name}
               type="button"
               onClick={() => applyPreset(p)}
-              className="p-3.5 rounded-btn text-left border border-brand-navy/10 hover:border-brand-teal hover:bg-brand-teal-light/20 transition space-y-1 bg-surface-muted/40 dark:bg-surface-dark"
+              className="well p-4 text-left hover:border-brand-teal hover:bg-brand-teal-soft dark:hover:bg-white/5 transition space-y-1.5"
             >
-              <div className="font-bold text-xs text-brand-navy dark:text-white flex items-center justify-between">
+              <div className="font-bold text-xs text-brand-navy dark:text-white flex items-start justify-between gap-2">
                 <span>{p.name}</span>
-                <span className="text-[10px] text-brand-teal font-semibold">{isEn ? 'Apply' : 'Terapkan'}</span>
+                <span className="text-2xs text-brand-teal-dark dark:text-[#7FDADB] font-bold shrink-0">{isEn ? 'Apply' : 'Terapkan'}</span>
               </div>
-              <p className="text-[11px] text-brand-navy/70 dark:text-white/70 line-clamp-2">
+              <p className="text-2xs leading-relaxed text-brand-navy/70 dark:text-white/70 line-clamp-2">
                 {p.description}
               </p>
             </button>
@@ -253,23 +253,23 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Sliders Controls (7 Cols) */}
         <div className="lg:col-span-7 space-y-5">
-          <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-6">
-            <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-brand-teal" />
+          <div className="card p-5 sm:p-6 space-y-7">
+            <h2 className="section-title flex items-center gap-2">
+              <Sliders className="w-5 h-5 text-brand-teal" />
               <span>{isEn ? 'Adjust Parameters' : 'Atur Nilai Parameter'}</span>
             </h2>
 
             {/* Slider 1: Volume */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="sim-volume" className="text-xs font-bold text-brand-navy dark:text-white">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                <label htmlFor="sim-volume" className="text-sm font-bold text-brand-navy dark:text-white">
                   {isEn ? 'Ejaculate Volume (mL)' : 'Volume Ejakulat (mL)'}
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${isVolumeOk ? 'bg-brand-teal-light text-brand-teal' : 'bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral'}`}>
+                  <span className={`tabular badge whitespace-nowrap ${isVolumeOk ? 'badge-teal' : 'badge-coral'}`}>
                     {volume} mL {isVolumeOk ? '• Normal' : (isEn ? '• Below Benchmark' : '• Di Bawah Rujukan')}
                   </span>
-                  <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                  <span className="tabular text-2xs text-brand-navy/60 dark:text-white/60 whitespace-nowrap">
                     ({isEn ? 'Benchmark' : 'Rujukan'} ≥ {WHO_LIMITS.volume} mL)
                   </span>
                 </div>
@@ -284,7 +284,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
                 onChange={(e) => setVolume(parseFloat(e.target.value))}
                 className="w-full accent-brand-teal cursor-pointer"
               />
-              <p className="text-[11px] text-brand-navy/65 dark:text-white/65">
+              <p className="text-2xs leading-relaxed text-brand-navy/65 dark:text-white/65">
                 {isEn
                   ? 'Seminal fluid produced by seminal vesicles and prostate. Values < 1.4 mL may result from short abstinence (< 2 days) or dehydration.'
                   : 'Cairan semen diproduksi oleh vesikula seminalis & prostat. Kurang dari 1,4 mL bisa karena masa pantang terlalu singkat (< 2 hari) atau dehidrasi.'}
@@ -293,15 +293,15 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
 
             {/* Slider 2: Concentration */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="sim-conc" className="text-xs font-bold text-brand-navy dark:text-white">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                <label htmlFor="sim-conc" className="text-sm font-bold text-brand-navy dark:text-white">
                   {isEn ? 'Sperm Concentration (million cells/mL)' : 'Konsentrasi Sperma (juta sel/mL)'}
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${isConcOk ? 'bg-brand-teal-light text-brand-teal' : 'bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral'}`}>
+                  <span className={`tabular badge whitespace-nowrap ${isConcOk ? 'badge-teal' : 'badge-coral'}`}>
                     {concentration} M/mL {isConcOk ? '• Normal' : (isEn ? '• Low' : '• Rendah')}
                   </span>
-                  <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                  <span className="tabular text-2xs text-brand-navy/60 dark:text-white/60 whitespace-nowrap">
                     ({isEn ? 'Benchmark' : 'Rujukan'} ≥ {WHO_LIMITS.concentration} M/mL)
                   </span>
                 </div>
@@ -316,7 +316,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
                 onChange={(e) => setConcentration(parseFloat(e.target.value))}
                 className="w-full accent-brand-teal cursor-pointer"
               />
-              <p className="text-[11px] text-brand-navy/65 dark:text-white/65">
+              <p className="text-2xs leading-relaxed text-brand-navy/65 dark:text-white/65">
                 {isEn
                   ? 'Density of sperm cells per milliliter. Influenced by testicular tissue, scrotal heat, and systemic testosterone.'
                   : 'Kepadatan sel sperma per mililiter. Dipengaruhi oleh fungsi testis, suhu skrotum, dan kadar hormon testosteron.'}
@@ -325,15 +325,15 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
 
             {/* Slider 3: Progressive Motility */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="sim-prog" className="text-xs font-bold text-brand-navy dark:text-white">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                <label htmlFor="sim-prog" className="text-sm font-bold text-brand-navy dark:text-white">
                   {isEn ? 'Progressive Motility (%)' : 'Motilitas Progresif (%)'}
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${isProgMotOk ? 'bg-brand-teal-light text-brand-teal' : 'bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral'}`}>
+                  <span className={`tabular badge whitespace-nowrap ${isProgMotOk ? 'badge-teal' : 'badge-coral'}`}>
                     {progMotility}% {isProgMotOk ? '• Normal' : (isEn ? '• Low' : '• Rendah')}
                   </span>
-                  <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                  <span className="tabular text-2xs text-brand-navy/60 dark:text-white/60 whitespace-nowrap">
                     ({isEn ? 'Benchmark' : 'Rujukan'} ≥ {WHO_LIMITS.progMotility}%)
                   </span>
                 </div>
@@ -352,7 +352,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
                 }}
                 className="w-full accent-brand-teal cursor-pointer"
               />
-              <p className="text-[11px] text-brand-navy/65 dark:text-white/65">
+              <p className="text-2xs leading-relaxed text-brand-navy/65 dark:text-white/65">
                 {isEn
                   ? 'The percentage of sperm swimming forward in a straight line or large circles—the most vital factor for natural fertilization.'
                   : 'Kemampuan sperma berenang lurus ke depan menuju sel telur. Ini adalah penentu terpenting pembuahan alami.'}
@@ -361,15 +361,15 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
 
             {/* Slider 4: Total Motility */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="sim-total-mot" className="text-xs font-bold text-brand-navy dark:text-white">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                <label htmlFor="sim-total-mot" className="text-sm font-bold text-brand-navy dark:text-white">
                   {isEn ? 'Total Motility (%)' : 'Motilitas Total (%)'}
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${isTotalMotOk ? 'bg-brand-teal-light text-brand-teal' : 'bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral'}`}>
+                  <span className={`tabular badge whitespace-nowrap ${isTotalMotOk ? 'badge-teal' : 'badge-coral'}`}>
                     {totalMotility}% {isTotalMotOk ? '• Normal' : (isEn ? '• Low' : '• Rendah')}
                   </span>
-                  <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                  <span className="tabular text-2xs text-brand-navy/60 dark:text-white/60 whitespace-nowrap">
                     ({isEn ? 'Benchmark' : 'Rujukan'} ≥ {WHO_LIMITS.totalMotility}%)
                   </span>
                 </div>
@@ -388,7 +388,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
                 }}
                 className="w-full accent-brand-teal cursor-pointer"
               />
-              <p className="text-[11px] text-brand-navy/65 dark:text-white/65">
+              <p className="text-2xs leading-relaxed text-brand-navy/65 dark:text-white/65">
                 {isEn
                   ? 'Total percentage of sperm displaying movement (both progressive and non-progressive).'
                   : 'Total persentase sperma yang bergerak (baik berenang maju maupun bergerak di tempat).'}
@@ -397,15 +397,15 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
 
             {/* Slider 5: Normal Morphology */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="sim-morph" className="text-xs font-bold text-brand-navy dark:text-white">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                <label htmlFor="sim-morph" className="text-sm font-bold text-brand-navy dark:text-white">
                   {isEn ? 'Normal Morphology / Strict Criteria (%)' : 'Morfologi Normal / Bentuk Utuh (%)'}
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded ${isMorphOk ? 'bg-brand-teal-light text-brand-teal' : 'bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral'}`}>
+                  <span className={`tabular badge whitespace-nowrap ${isMorphOk ? 'badge-teal' : 'badge-coral'}`}>
                     {morphology}% {isMorphOk ? '• Normal' : (isEn ? '• Low' : '• Rendah')}
                   </span>
-                  <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
+                  <span className="tabular text-2xs text-brand-navy/60 dark:text-white/60 whitespace-nowrap">
                     ({isEn ? 'Benchmark' : 'Rujukan'} ≥ {WHO_LIMITS.morphology}%)
                   </span>
                 </div>
@@ -420,7 +420,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
                 onChange={(e) => setMorphology(parseFloat(e.target.value))}
                 className="w-full accent-brand-teal cursor-pointer"
               />
-              <p className="text-[11px] text-brand-navy/65 dark:text-white/65">
+              <p className="text-2xs leading-relaxed text-brand-navy/65 dark:text-white/65">
                 {isEn
                   ? 'Kruger strict criteria: symmetric oval head and uncoiled tail. Only ≥ 4% normally formed sperm is required for standard fertility potential.'
                   : 'Kriteria ketat Kruger WHO: sperma dengan bentuk kepala oval simetris dan ekor lurus. Hanya butuh ≥ 4% normal untuk peluang pembuahan optimal.'}
@@ -431,20 +431,24 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
 
         {/* Real-time Insight Card (5 Cols) */}
         <div className="lg:col-span-5 space-y-5">
-          <div className="bg-gradient-to-br from-brand-navy to-brand-navy-light text-white rounded-card shadow-soft p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase font-bold tracking-wider px-2.5 py-1 rounded-full bg-white/15 text-brand-teal-light">
+          <div className="relative overflow-hidden bg-gradient-to-br from-brand-navy-deep via-brand-navy to-brand-navy-light text-white rounded-card shadow-soft-lg p-5 sm:p-6 space-y-4">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -top-20 -right-16 w-56 h-56 rounded-full bg-brand-teal/30 blur-3xl"
+            />
+            <div className="relative flex flex-wrap items-center justify-between gap-2">
+              <span className="text-2xs uppercase font-bold tracking-[0.08em] text-[#7FDADB] whitespace-nowrap">
                 {isEn ? 'Key Clinical Metric' : 'Indikator Klinis Kunci'}
               </span>
               <span className="text-xs text-white/70">WHO 6th Ed. (2021)</span>
             </div>
 
-            <div>
+            <div className="relative">
               <p className="text-xs text-white/70">
                 {isEn ? 'Total Motile Sperm Count (TMSC):' : 'Total Sperma Bergerak Progresif (TMSC):'}
               </p>
-              <div className="flex items-baseline gap-2 mt-1">
-                <span className="text-3xl font-extrabold text-white">{tmsc}</span>
+              <div className="flex flex-wrap items-baseline gap-x-2 mt-1">
+                <span className="tabular text-4xl font-extrabold text-white">{tmsc}</span>
                 <span className="text-sm font-semibold text-brand-teal-light">
                   {isEn ? 'Million / Ejaculate' : 'Juta Sel / Ejakulat'}
                 </span>
@@ -452,18 +456,18 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
             </div>
 
             {/* TMSC Status */}
-            <div className="p-3.5 rounded-btn bg-white/10 border border-white/15 text-xs space-y-1">
+            <div className="relative p-4 rounded-2xl bg-white/[0.08] border border-white/10 text-xs space-y-1.5">
               <div className="font-bold text-brand-coral flex items-center gap-1.5">
                 {tmsc >= 20 ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-brand-teal" />
+                    <CheckCircle2 className="w-4 h-4 text-[#4FC6C8] shrink-0" />
                     <span className="text-white">
                       {isEn ? 'Optimal Natural Conception Potential (> 20 M)' : 'Peluang Konsepsi Alami Sangat Baik (> 20 M)'}
                     </span>
                   </>
                 ) : tmsc >= 10 ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-brand-teal" />
+                    <CheckCircle2 className="w-4 h-4 text-[#4FC6C8] shrink-0" />
                     <span className="text-white">
                       {isEn ? 'Good Natural Conception Potential (10–20 M)' : 'Peluang Konsepsi Alami Baik (10–20 M)'}
                     </span>
@@ -484,7 +488,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
                   </>
                 )}
               </div>
-              <p className="text-white/75 text-[11px] leading-relaxed">
+              <p className="text-white/75 text-2xs leading-relaxed">
                 {isEn
                   ? 'TMSC multiplies Volume × Concentration × Progressive Motility to calculate the actual sperm population capable of reaching the fallopian tube.'
                   : 'TMSC menggabungkan Volume × Konsentrasi × Gerak Progresif untuk memprediksi jumlah sperma yang mampu mencapai tuba falopi.'}
@@ -492,14 +496,14 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
             </div>
 
             {/* Clinical Classification */}
-            <div className="space-y-1.5 pt-2 border-t border-white/10">
+            <div className="relative space-y-2 pt-3 border-t border-white/10">
               <p className="text-xs font-semibold text-white/80">
                 {isEn ? 'Diagnostic Terminology:' : 'Interpretasi Istilah Medis:'}
               </p>
-              <div className="p-3 rounded-btn bg-black/20 text-xs">
+              <div className="p-3.5 rounded-xl bg-black/20 text-xs">
                 {isAllNormal ? (
                   <div className="text-brand-teal-light font-bold flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-brand-teal" />
+                    <CheckCircle2 className="w-4 h-4 text-[#4FC6C8] shrink-0" />
                     <span>{isEn ? 'Normozoospermia (All Within Reference)' : 'Normozoospermia (Semua Normal)'}</span>
                   </div>
                 ) : (
@@ -515,8 +519,8 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
           </div>
 
           {/* Reassuring Facts Card */}
-          <div className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-5 border border-brand-navy/5 space-y-3">
-            <h3 className="text-xs font-bold text-brand-navy dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+          <div className="card p-5 space-y-3">
+            <h3 className="eyebrow !text-brand-navy dark:!text-white flex items-center gap-1.5">
               <Info className="w-4 h-4 text-brand-teal" />
               <span>{isEn ? 'Reassuring Clinical Facts' : 'Fakta Medis yang Menenangkan'}</span>
             </h3>
@@ -554,9 +558,9 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
               <button
                 type="button"
                 onClick={() => navigate(isEn ? '/facilities' : '/layanan')}
-                className="w-full py-2.5 px-3 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-brand-navy-light transition"
+                className="btn btn-navy w-full"
               >
-                <MapPin className="w-3.5 h-3.5 text-brand-teal" />
+                <MapPin className="w-4 h-4 shrink-0" />
                 <span>{isEn ? 'Find Andrology & Urology Clinics' : 'Cari Klinik Andrologi & Urologi Terdekat'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>

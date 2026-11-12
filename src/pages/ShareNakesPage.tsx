@@ -61,36 +61,36 @@ export const ShareNakesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header Berbagi dengan Tenaga Kesehatan */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-2">
-        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-3 py-1 rounded-full">
+      <section className="page-header space-y-2.5">
+        <span className="badge badge-teal">
           <ShieldCheck className="w-4 h-4" />
           Kendali Privasi Pasien • Tautan Berlaku 1 Jam
         </span>
-        <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
+        <h1 className="page-title">
           Bagikan Ringkasan Pasien ke Tenaga Kesehatan
         </h1>
-        <p className="text-xs sm:text-sm text-brand-navy/75 dark:text-white/75 leading-relaxed">
+        <p className="page-lead">
           Pilih sendiri bagian mana yang ingin Anda tunjukkan kepada dokter saat konsultasi. Kode QR dan tautan otomatis kedaluwarsa dalam <strong>1 jam</strong> dan setiap akses oleh tenaga kesehatan tercatat di halaman ini.
         </p>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
         {/* Kolom Kiri: Pilih Cakupan Data & Buat Kode QR */}
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-          <h2 className="text-base font-bold text-brand-navy dark:text-white">
+        <section className="card p-5 sm:p-6 space-y-4">
+          <h2 className="section-title">
             1. Pilih Bagian Data yang Disetujui untuk Dibagikan
           </h2>
 
           <form onSubmit={handleGenerateQr} className="space-y-3">
-            <label className="p-3.5 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex items-start gap-3 cursor-pointer">
+            <label className="well p-4 flex items-start gap-3 cursor-pointer transition hover:border-brand-teal/50 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal-light/40 dark:has-[:checked]:bg-brand-teal/15">
               <input
                 type="checkbox"
                 checked={selectedScopes.includes('history')}
                 onChange={() => toggleScope('history')}
-                className="w-4 h-4 accent-brand-teal mt-0.5 shrink-0"
+                className="check mt-0.5 shrink-0"
               />
-              <div className="text-xs">
-                <div className="font-bold text-brand-navy dark:text-white">
+              <div className="text-xs leading-relaxed">
+                <div className="font-bold text-sm text-brand-navy dark:text-white">
                   Ringkasan Riwayat & Tingkat Saran Cek Awal
                 </div>
                 <p className="text-brand-navy/70 dark:text-white/70 mt-0.5">
@@ -99,15 +99,15 @@ export const ShareNakesPage: React.FC = () => {
               </div>
             </label>
 
-            <label className="p-3.5 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex items-start gap-3 cursor-pointer">
+            <label className="well p-4 flex items-start gap-3 cursor-pointer transition hover:border-brand-teal/50 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal-light/40 dark:has-[:checked]:bg-brand-teal/15">
               <input
                 type="checkbox"
                 checked={selectedScopes.includes('risk_factors')}
                 onChange={() => toggleScope('risk_factors')}
-                className="w-4 h-4 accent-brand-teal mt-0.5 shrink-0"
+                className="check mt-0.5 shrink-0"
               />
-              <div className="text-xs">
-                <div className="font-bold text-brand-navy dark:text-white">
+              <div className="text-xs leading-relaxed">
+                <div className="font-bold text-sm text-brand-navy dark:text-white">
                   Faktor Risiko Gaya Hidup & Medis yang Dilaporkan
                 </div>
                 <p className="text-brand-navy/70 dark:text-white/70 mt-0.5">
@@ -116,15 +116,15 @@ export const ShareNakesPage: React.FC = () => {
               </div>
             </label>
 
-            <label className="p-3.5 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex items-start gap-3 cursor-pointer">
+            <label className="well p-4 flex items-start gap-3 cursor-pointer transition hover:border-brand-teal/50 has-[:checked]:border-brand-teal has-[:checked]:bg-brand-teal-light/40 dark:has-[:checked]:bg-brand-teal/15">
               <input
                 type="checkbox"
                 checked={selectedScopes.includes('lab_results')}
                 onChange={() => toggleScope('lab_results')}
-                className="w-4 h-4 accent-brand-teal mt-0.5 shrink-0"
+                className="check mt-0.5 shrink-0"
               />
-              <div className="text-xs">
-                <div className="font-bold text-brand-navy dark:text-white">
+              <div className="text-xs leading-relaxed">
+                <div className="font-bold text-sm text-brand-navy dark:text-white">
                   Riwayat Angka Hasil Analisis Semen
                 </div>
                 <p className="text-brand-navy/70 dark:text-white/70 mt-0.5">
@@ -136,7 +136,7 @@ export const ShareNakesPage: React.FC = () => {
             <button
               type="submit"
               disabled={selectedScopes.length === 0}
-              className="touch-target w-full py-3 px-5 rounded-btn bg-brand-teal text-white font-bold text-xs shadow-soft hover:bg-brand-teal-dark transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="btn btn-primary btn-lg w-full"
             >
               <QrCode className="w-4 h-4" />
               Buat Kode QR & Tautan Berlaku 1 Jam
@@ -145,14 +145,14 @@ export const ShareNakesPage: React.FC = () => {
         </section>
 
         {/* Kolom Kanan: Tampilan Kode QR Aktif */}
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 flex flex-col justify-between space-y-4">
-          <h2 className="text-base font-bold text-brand-navy dark:text-white">
+        <section className="card p-5 sm:p-6 flex flex-col justify-between space-y-4">
+          <h2 className="section-title">
             2. Kode QR & Tautan Sementara (Berlaku 1 Jam)
           </h2>
 
           {shareToken && !shareToken.revoked ? (
             <div className="space-y-4 text-center">
-              <div className="bg-white p-4 rounded-card inline-block border-2 border-brand-teal shadow-sm mx-auto">
+              <div className="bg-white p-4 rounded-card inline-block border border-brand-teal/40 ring-4 ring-brand-teal/10 shadow-soft mx-auto">
                 <QRCodeSVG
                   value={`${window.location.origin}/nakes?code=${shareToken.token_code}`}
                   size={168}
@@ -165,10 +165,10 @@ export const ShareNakesPage: React.FC = () => {
                 <div className="text-xs text-brand-navy/70 dark:text-white/70">
                   Kode Akses Ringkasan Pasien:
                 </div>
-                <div className="text-lg font-bold tracking-wider text-brand-teal font-mono">
+                <div className="text-xl font-bold tracking-wider text-brand-teal-dark dark:text-[#7FDADB] font-mono">
                   {shareToken.token_code}
                 </div>
-                <div className="text-[11px] text-brand-navy/65 dark:text-white/65 flex items-center justify-center gap-1">
+                <div className="text-2xs text-brand-navy/65 dark:text-white/65 flex items-center justify-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-brand-coral" />
                   Kedaluwarsa pada: {new Date(shareToken.expires_at).toLocaleTimeString('id-ID')} WIB (1 Jam)
                 </div>
@@ -178,7 +178,7 @@ export const ShareNakesPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleCopyToken(shareToken.token_code)}
-                  className="touch-target px-3.5 py-2 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/15 text-xs font-bold flex items-center gap-1.5"
+                  className="btn btn-secondary"
                 >
                   {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   <span>{copiedCode ? 'Kode Disalin!' : 'Salin Kode'}</span>
@@ -187,16 +187,16 @@ export const ShareNakesPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSimulateDrMayaScan}
-                  className="touch-target px-3.5 py-2 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center gap-1.5 hover:bg-brand-navy-light transition"
+                  className="btn btn-navy"
                 >
-                  <Stethoscope className="w-4 h-4 text-brand-coral" />
+                  <Stethoscope className="w-4 h-4 shrink-0" />
                   <span>Simulasikan dr. Maya Membuka QR Ini</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={revokeShareToken}
-                  className="touch-target px-3.5 py-2 rounded-btn bg-status-urgent-bg text-status-urgent text-xs font-bold flex items-center gap-1.5"
+                  className="btn bg-status-urgent-bg text-[#B33834] hover:bg-status-urgent/20 dark:bg-status-urgent/20 dark:text-[#FF8A85]"
                 >
                   <XCircle className="w-4 h-4" />
                   <span>Cabut Akses</span>
@@ -204,14 +204,14 @@ export const ShareNakesPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="p-6 rounded-card bg-surface-muted dark:bg-surface-dark text-center space-y-2 my-auto">
-              <QrCode className="w-10 h-10 text-brand-navy/40 mx-auto" />
+            <div className="well border-dashed px-6 py-10 text-center space-y-2 my-auto">
+              <QrCode className="w-10 h-10 text-brand-navy/35 dark:text-white/35 mx-auto" />
               <p className="text-xs font-semibold text-brand-navy/75 dark:text-white/75">
                 {shareToken?.revoked
                   ? 'Kode QR sebelumnya telah dicabut oleh Anda.'
                   : 'Belum ada Kode QR aktif.'}
               </p>
-              <p className="text-[11px] text-brand-navy/60 dark:text-white/60">
+              <p className="text-2xs text-brand-navy/60 dark:text-white/60">
                 Pilih cakupan data di sebelah kiri lalu tekan “Buat Kode QR & Tautan Berlaku 1 Jam”.
               </p>
             </div>
@@ -220,11 +220,11 @@ export const ShareNakesPage: React.FC = () => {
       </div>
 
       {/* Catatan Akses Transparan (Access Log — F7) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
+      <section className="card p-5 sm:p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-              <Eye className="w-5 h-5 text-brand-teal" />
+          <div className="space-y-1">
+            <h2 className="section-title flex items-start gap-2">
+              <Eye className="w-5 h-5 text-brand-teal shrink-0 mt-1" />
               <span>Catatan Akses Tenaga Kesehatan (Audit Log Pasien)</span>
             </h2>
             <p className="text-xs text-brand-navy/70 dark:text-white/70">
@@ -234,7 +234,7 @@ export const ShareNakesPage: React.FC = () => {
         </div>
 
         {!shareToken || shareToken.accessed_log.length === 0 ? (
-          <div className="p-4 rounded-btn bg-surface-muted dark:bg-surface-dark text-xs text-brand-navy/70 dark:text-white/70">
+          <div className="well p-4 text-xs text-brand-navy/70 dark:text-white/70">
             Belum ada catatan akses pada kode QR saat ini.
           </div>
         ) : (
@@ -242,15 +242,15 @@ export const ShareNakesPage: React.FC = () => {
             {shareToken.accessed_log.map((log, i) => (
               <div
                 key={i}
-                className="p-3.5 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                className="well p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
               >
                 <div>
                   <span className="font-bold text-brand-navy dark:text-white">
                     {log.viewer_name}
                   </span>{' '}
-                  <span className="text-brand-teal font-semibold">({log.action})</span>
+                  <span className="text-brand-teal-dark dark:text-[#7FDADB] font-semibold">({log.action})</span>
                 </div>
-                <div className="text-brand-navy/65 dark:text-white/65 font-mono text-[11px]">
+                <div className="text-brand-navy/65 dark:text-white/65 font-mono text-2xs">
                   Waktu Akses: {new Date(log.accessed_at).toLocaleString('id-ID')}
                 </div>
               </div>

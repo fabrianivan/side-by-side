@@ -87,16 +87,16 @@ export const NakesDashboardPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header Mode Tenaga Kesehatan (dr. Maya) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-status-success bg-status-success-bg px-3 py-1 rounded-full">
-            <Stethoscope className="w-4 h-4" />
+      <section className="page-header flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div className="space-y-2.5 min-w-0">
+          <div className="badge badge-success">
+            <Stethoscope className="w-4 h-4 shrink-0" />
             <span>Mode Tenaga Kesehatan (Ringan) • Konsultasi Efisien & Bermutu</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
+          <h1 className="page-title">
             Dasbor Tenaga Kesehatan — {authMode === 'nakes' ? displayName : nakesName}
           </h1>
-          <p className="text-xs sm:text-sm text-brand-navy/75 dark:text-white/75">
+          <p className="page-lead">
             Tinjau ringkasan pasien dari Kode QR (berlaku 1 jam), salin templat konseling terstruktur, dan jawab tiket pertanyaan anonim.
           </p>
         </div>
@@ -107,7 +107,7 @@ export const NakesDashboardPage: React.FC = () => {
             onClick={() =>
               loginAccount('maya@puskesmas.id', 'nakes', 'dr. Maya (Dokter Umum Puskesmas)')
             }
-            className="touch-target px-4 py-2.5 rounded-btn bg-brand-navy text-white text-xs font-bold shrink-0"
+            className="btn btn-navy shrink-0 self-start lg:self-auto"
           >
             Masuk sebagai dr. Maya (Peran Nakes)
           </button>
@@ -115,15 +115,15 @@ export const NakesDashboardPage: React.FC = () => {
       </section>
 
       {/* Form Input Kode QR Pasien */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-        <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
-          <QrCode className="w-5 h-5 text-brand-teal" />
+      <section className="card p-5 sm:p-6 space-y-4">
+        <h2 className="section-title flex items-start gap-2">
+          <QrCode className="w-5 h-5 text-brand-teal shrink-0 mt-1" />
           <span>Buka Ringkasan Pasien (Kode QR / Tautan 1 Jam)</span>
         </h2>
 
-        <form onSubmit={handleOpenPatientCode} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <form onSubmit={handleOpenPatientCode} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1fr_1fr_auto] gap-3 items-end">
           <div>
-            <label htmlFor="nakes-viewer-name" className="block text-xs font-bold mb-1">
+            <label htmlFor="nakes-viewer-name" className="field-label">
               Identitas Tenaga Kesehatan Pemeriksa (Tercatat di Log Pasien)
             </label>
             <input
@@ -132,12 +132,12 @@ export const NakesDashboardPage: React.FC = () => {
               required
               value={nakesName}
               onChange={(e) => setNakesName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
+              className="field w-full"
             />
           </div>
 
           <div>
-            <label htmlFor="nakes-token-code" className="block text-xs font-bold mb-1">
+            <label htmlFor="nakes-token-code" className="field-label">
               Kode Ringkasan / Token QR Pasien
             </label>
             <input
@@ -147,14 +147,14 @@ export const NakesDashboardPage: React.FC = () => {
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
               placeholder="Contoh: MAYA-RENDRA-1H"
-              className="w-full px-3.5 py-2.5 rounded-btn border border-brand-navy/20 text-xs font-bold uppercase font-mono text-brand-navy bg-white"
+              className="field w-full font-bold uppercase font-mono"
             />
           </div>
 
-          <div className="flex items-end">
+          <div className="flex items-end md:col-span-2 xl:col-span-1">
             <button
               type="submit"
-              className="touch-target w-full py-2.5 px-4 rounded-btn bg-brand-teal text-white text-xs font-bold hover:bg-brand-teal-dark transition"
+              className="btn btn-primary w-full"
             >
               Buka & Catat Akses di Log Pasien
             </button>
@@ -162,7 +162,7 @@ export const NakesDashboardPage: React.FC = () => {
         </form>
 
         {errorMsg && (
-          <div className="p-3.5 rounded-btn bg-status-urgent-bg text-status-urgent text-xs font-semibold flex items-center gap-2">
+          <div role="alert" className="p-3.5 rounded-xl bg-status-urgent-bg text-[#B33834] text-xs font-semibold flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
@@ -171,14 +171,14 @@ export const NakesDashboardPage: React.FC = () => {
 
       {/* Ringkasan Pasien yang Dibagikan (Hanya Menampilkan Bagian yang Disetujui Pasien) */}
       {activeData && !activeData.revoked ? (
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border-2 border-brand-teal/40 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-navy/10 pb-3">
-            <div>
-              <span className="text-xs font-bold text-brand-teal flex items-center gap-1">
-                <ShieldCheck className="w-4 h-4" />
+        <section className="card p-5 sm:p-6 border-brand-teal/50 ring-4 ring-brand-teal/10 space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-navy/10 dark:border-white/10 pb-4">
+            <div className="space-y-1">
+              <span className="eyebrow flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
                 Ringkasan Pasien Terverifikasi • Kode: {activeData.token_code}
               </span>
-              <h2 className="text-lg font-bold text-brand-navy dark:text-white mt-0.5">
+              <h2 className="text-xl font-extrabold text-brand-navy dark:text-white">
                 Pasien: {activeData.snapshot.patientAlias}
               </h2>
             </div>
@@ -193,20 +193,20 @@ export const NakesDashboardPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Bagian 1: Ringkasan Riwayat */}
-            <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal flex items-center gap-1.5">
+            <div className="well p-4 sm:p-5 space-y-2.5">
+              <h3 className="eyebrow flex items-center gap-1.5">
                 <ClipboardList className="w-4 h-4" />
                 1. Ringkasan Riwayat & Tingkat Saran
               </h3>
               {activeData.scope.includes('history') ? (
-                <div className="space-y-1.5 text-xs">
+                <div className="space-y-1.5 text-xs leading-relaxed">
                   <div>
                     <span className="font-semibold">Durasi Program Hamil:</span>{' '}
                     {activeData.snapshot.programDuration}
                   </div>
                   <div>
                     <span className="font-semibold">Hasil Cek Awal Mandiri:</span>{' '}
-                    <strong className="text-brand-coral-dark">
+                    <strong className="text-[#B93E2B] dark:text-[#FFA596]">
                       {activeData.snapshot.assessmentLevel}
                     </strong>
                   </div>
@@ -219,14 +219,14 @@ export const NakesDashboardPage: React.FC = () => {
             </div>
 
             {/* Bagian 2: Faktor Risiko yang Dilaporkan */}
-            <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal flex items-center gap-1.5">
+            <div className="well p-4 sm:p-5 space-y-2.5">
+              <h3 className="eyebrow flex items-center gap-1.5">
                 <Activity className="w-4 h-4" />
                 2. Faktor Risiko yang Dilaporkan
               </h3>
               {activeData.scope.includes('risk_factors') &&
               activeData.snapshot.reportedRiskFactors ? (
-                <ul className="list-disc pl-4 space-y-1 text-xs text-brand-navy/85 dark:text-white/85">
+                <ul className="list-disc pl-4 space-y-1 text-xs leading-relaxed text-brand-navy/85 dark:text-white/85 marker:text-brand-teal">
                   {activeData.snapshot.reportedRiskFactors.map((rf, i) => (
                     <li key={i}>{rf}</li>
                   ))}
@@ -240,17 +240,17 @@ export const NakesDashboardPage: React.FC = () => {
           </div>
 
           {/* Bagian 3: Hasil Laboratorium yang Dibagikan */}
-          <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal">
+          <div className="well p-4 sm:p-5 space-y-3">
+            <h3 className="eyebrow">
               3. Hasil Analisis Semen yang Dibagikan (Acuan Rujukan WHO 2021)
             </h3>
             {activeData.scope.includes('lab_results') &&
             activeData.snapshot.labResults &&
             activeData.snapshot.labResults.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="overflow-x-auto thin-scroll -mx-1 px-1">
+                <table className="w-full min-w-[36rem] text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-brand-navy/15 text-brand-navy/70 dark:text-white/70">
+                    <tr className="border-b border-brand-navy/15 dark:border-white/15 text-2xs text-brand-navy/65 dark:text-white/65 whitespace-nowrap">
                       <th className="py-2 pr-3">Tanggal Tes</th>
                       <th className="py-2 pr-3">Volume (≥1,4 mL)</th>
                       <th className="py-2 pr-3">Konsentrasi (≥16 jt/mL)</th>
@@ -259,16 +259,16 @@ export const NakesDashboardPage: React.FC = () => {
                       <th className="py-2">Morfologi (≥4%)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-brand-navy/10">
+                  <tbody className="divide-y divide-brand-navy/10 dark:divide-white/10">
                     {activeData.snapshot.labResults.map((lr, idx) => (
                       <tr key={idx} className="font-medium">
-                        <td className="py-2 pr-3 font-bold">{lr.testDate}</td>
+                        <td className="py-2.5 pr-3 font-bold whitespace-nowrap">{lr.testDate}</td>
                         <td className="py-2 pr-3">{lr.volume_ml} mL</td>
                         <td
                           className={`py-2 pr-3 font-bold ${
                             lr.concentration_m_per_ml < 16
-                              ? 'text-status-warning'
-                              : 'text-status-success'
+                              ? 'text-[#946A00] dark:text-[#F3C64D]'
+                              : 'text-[#1F7A50] dark:text-[#7BD9AC]'
                           }`}
                         >
                           {lr.concentration_m_per_ml} jt/mL
@@ -276,8 +276,8 @@ export const NakesDashboardPage: React.FC = () => {
                         <td
                           className={`py-2 pr-3 font-bold ${
                             lr.total_motility_pct < 42
-                              ? 'text-status-warning'
-                              : 'text-status-success'
+                              ? 'text-[#946A00] dark:text-[#F3C64D]'
+                              : 'text-[#1F7A50] dark:text-[#7BD9AC]'
                           }`}
                         >
                           {lr.total_motility_pct}%
@@ -299,10 +299,10 @@ export const NakesDashboardPage: React.FC = () => {
       ) : null}
 
       {/* Templat Konseling Tenaga Kesehatan (4 Topik Wajib: Gaya Hidup, Kecemasan, Komunikasi Pasangan, Rencana Tindak Lanjut) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h2 className="text-lg font-bold text-brand-navy dark:text-white">
+      <section className="card p-5 sm:p-6 space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <h2 className="section-title">
               Templat Konseling Siap Salin (Untuk Edukasi Pasien & Catatan Klinis)
             </h2>
             <p className="text-xs text-brand-navy/70 dark:text-white/70">
@@ -318,7 +318,7 @@ export const NakesDashboardPage: React.FC = () => {
                 templatesConfig.counselingTemplates.map((t) => t.content).join('\n\n')
               )
             }
-            className="touch-target px-4 py-2 rounded-btn bg-brand-teal text-white text-xs font-bold flex items-center gap-1.5 shrink-0"
+            className="btn btn-primary shrink-0 self-start lg:self-auto"
           >
             {copiedTplId === 'all' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             <span>
@@ -331,14 +331,14 @@ export const NakesDashboardPage: React.FC = () => {
           {templatesConfig.counselingTemplates.map((tpl) => (
             <div
               key={tpl.id}
-              className="p-5 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex flex-col justify-between space-y-3"
+              className="well p-5 flex flex-col justify-between space-y-4"
             >
-              <div className="space-y-2">
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal">
+              <div className="space-y-2.5">
+                <span className="badge badge-teal">
                   Topik: {tpl.topic}
                 </span>
-                <h3 className="font-bold text-sm text-brand-navy dark:text-white">{tpl.title}</h3>
-                <pre className="whitespace-pre-wrap font-sans text-xs text-brand-navy/85 dark:text-white/85 leading-relaxed bg-surface dark:bg-surface-dark-card p-3.5 rounded-btn border border-brand-navy/5">
+                <h3 className="font-bold text-base leading-snug text-brand-navy dark:text-white">{tpl.title}</h3>
+                <pre className="whitespace-pre-wrap font-sans text-xs text-brand-navy/85 dark:text-white/85 leading-relaxed bg-surface dark:bg-surface-dark-card p-4 rounded-xl border border-brand-navy/5 dark:border-white/10">
                   {tpl.content}
                 </pre>
               </div>
@@ -346,7 +346,7 @@ export const NakesDashboardPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleCopyCounselingTemplate(tpl.id, tpl.content)}
-                className="touch-target w-full py-2.5 px-4 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-brand-teal transition"
+                className="btn btn-secondary w-full"
               >
                 {copiedTplId === tpl.id ? (
                   <Check className="w-4 h-4" />
@@ -365,10 +365,10 @@ export const NakesDashboardPage: React.FC = () => {
       </section>
 
       {/* Antrean Tiket Pertanyaan Anonim (Tanya Nakes — F6 & F7) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-brand-navy dark:text-white flex items-center gap-2">
-            <MessageCircleQuestion className="w-5 h-5 text-brand-coral" />
+      <section className="card p-5 sm:p-6 space-y-4">
+        <div className="space-y-1">
+          <h2 className="section-title flex items-start gap-2">
+            <MessageCircleQuestion className="w-5 h-5 text-brand-coral shrink-0 mt-1" />
             <span>Tiket Pertanyaan Anonim Masuk (Tanya Nakes)</span>
           </h2>
           <p className="text-xs text-brand-navy/70 dark:text-white/70">
@@ -380,47 +380,48 @@ export const NakesDashboardPage: React.FC = () => {
           {tickets.map((tItem) => (
             <div
               key={tItem.id}
-              className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 space-y-3 text-xs"
+              className="well p-4 sm:p-5 space-y-3 text-xs leading-relaxed"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-brand-teal">{tItem.category}</span>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-bold text-brand-teal-dark dark:text-[#7FDADB]">{tItem.category}</span>
                 <span
-                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                  className={`badge ${
                     tItem.status === 'dijawab'
-                      ? 'bg-status-success-bg text-status-success'
-                      : 'bg-status-warning-bg text-brand-navy'
+                      ? 'badge-success'
+                      : 'bg-status-warning-bg text-[#7A5600] dark:bg-status-warning/20 dark:text-[#F3C64D]'
                   }`}
                 >
                   {tItem.status === 'dijawab' ? 'Sudah Dijawab' : 'Menunggu Jawaban Nakes'}
                 </span>
               </div>
 
-              <p className="font-bold text-brand-navy dark:text-white">“{tItem.text}”</p>
+              <p className="font-bold text-sm leading-relaxed text-brand-navy dark:text-white">“{tItem.text}”</p>
 
               {tItem.reply_text ? (
-                <div className="p-3 rounded-btn bg-surface dark:bg-surface-dark-card border-l-4 border-brand-teal space-y-1">
-                  <div className="font-bold text-brand-teal">{tItem.replied_by}:</div>
+                <div className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card border-l-4 border-brand-teal space-y-1">
+                  <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB]">{tItem.replied_by}:</div>
                   <p className="text-brand-navy/85 dark:text-white/85 leading-relaxed">
                     {tItem.reply_text}
                   </p>
                 </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
+                    aria-label="Tanggapan untuk tiket pertanyaan"
                     value={replyDrafts[tItem.id] || ''}
                     onChange={(e) =>
                       setReplyDrafts((prev) => ({ ...prev, [tItem.id]: e.target.value }))
                     }
                     placeholder="Tulis tanggapan edukasi medis untuk pertanyaan anonim ini..."
-                    className="flex-1 px-3 py-2 rounded-btn border border-brand-navy/20 text-xs text-brand-navy bg-white"
+                    className="field flex-1"
                   />
                   <button
                     type="button"
                     onClick={() => handleSendReply(tItem.id)}
-                    className="touch-target px-4 py-2 rounded-btn bg-brand-teal text-white font-bold flex items-center gap-1"
+                    className="btn btn-primary"
                   >
-                    <Send className="w-3.5 h-3.5" /> Jawab
+                    <Send className="w-4 h-4" /> Jawab
                   </button>
                 </div>
               )}

@@ -135,38 +135,40 @@ export const CoupleModePage: React.FC = () => {
   };
 
   const statusColors: Record<'not_started' | 'in_progress' | 'done', string> = {
-    not_started: 'bg-brand-navy/10 text-brand-navy/70 dark:bg-white/10 dark:text-white/70',
-    in_progress: 'bg-status-warning-bg text-brand-navy border border-status-warning/40',
-    done: 'bg-status-success-bg text-status-success border border-status-success/30',
+    not_started:
+      'bg-brand-navy/[0.07] text-brand-navy/75 border border-brand-navy/10 dark:bg-white/10 dark:text-white/80 dark:border-white/15',
+    in_progress:
+      'bg-status-warning-bg text-[#7A5600] border border-status-warning/50 dark:bg-status-warning/20 dark:text-[#F3C64D]',
+    done: 'bg-status-success-bg text-[#1F7A50] border border-status-success/40 dark:bg-status-success/20 dark:text-[#7BD9AC]',
   };
 
   return (
     <div className="space-y-6">
       {/* Header Mode Berdua */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-2">
+      <section className="page-header space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-teal bg-brand-teal-light px-3 py-1 rounded-full">
+          <span className="badge badge-teal">
             <Users className="w-4 h-4" />
             Mode Berdua — “Better together.”
           </span>
           {activePersona === 'sari' && (
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-brand-coral text-white">
+            <span className="badge badge-coral">
               Tampilan Sudut Pandang Pasangan: Sari (Istri)
             </span>
           )}
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-brand-navy dark:text-white">
+        <h1 className="page-title">
           Rencana Kita & Pendampingan Pasangan
         </h1>
-        <p className="text-xs sm:text-sm text-brand-navy/75 dark:text-white/75 leading-relaxed">
+        <p className="page-lead">
           Melangkah bersama pasangan tanpa kehilangan ruang privasi. Secara default hanya progres tahapan, checklist persiapan, dan pengingat yang terlihat bersama—isi kuesioner dan hasil lab Anda tetap tertutup kecuali Anda memilih membagikannya.
         </p>
       </section>
 
       {/* Seksi 1: Tautkan Pasangan (Tiket Kode Tautan 24 Jam, QR Code & WhatsApp) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 sm:p-7 border border-brand-navy/10 space-y-6">
+      <section className="card p-5 sm:p-7 space-y-6">
         {pairSuccessMsg && (
-          <div className="p-3.5 rounded-card bg-status-success-bg text-status-success text-xs font-bold flex items-center gap-2 border border-status-success/30 shadow-xs animate-in fade-in duration-200">
+          <div className="p-3.5 rounded-card bg-status-success-bg text-status-success text-xs font-bold flex items-center gap-2 border border-status-success/30 shadow-xs animate-fade-in">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{pairSuccessMsg}</span>
           </div>
@@ -177,13 +179,13 @@ export const CoupleModePage: React.FC = () => {
           <div className="space-y-6">
             {/* Top Bar: Status Hubungan & Expiry */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-brand-navy/10">
-              <div className="flex items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-status-success animate-pulse shrink-0" />
-                <h2 className="text-base font-bold text-brand-navy dark:text-white flex items-center gap-2">
+                <h2 className="section-title flex items-center gap-2">
                   <Heart className="w-4 h-4 text-brand-coral fill-brand-coral" />
                   <span>Tautan Pasangan Aktif</span>
                 </h2>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success">
+                <span className="badge badge-success">
                   Mode Berdua Siap
                 </span>
               </div>
@@ -195,24 +197,24 @@ export const CoupleModePage: React.FC = () => {
             </div>
 
             {/* Visualizer Pasangan: Suami <---> Istri */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-brand-teal/5 via-pink-500/5 to-brand-coral/5 border border-brand-navy/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-brand-teal/[0.07] via-surface to-brand-coral/[0.08] dark:via-transparent border border-brand-navy/10 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
               {/* Partner A */}
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-brand-teal to-teal-700 text-white font-black text-sm flex items-center justify-center shadow-xs ring-2 ring-brand-teal/20">
                   {pairing.partner_a_alias.charAt(0)}
                 </div>
                 <div>
-                  <div className="text-xs font-extrabold text-brand-navy dark:text-white">
+                  <div className="text-sm font-extrabold text-brand-navy dark:text-white">
                     {pairing.partner_a_alias}
                   </div>
-                  <div className="text-[10px] font-semibold text-brand-teal">
+                  <div className="text-2xs font-semibold text-brand-teal-dark dark:text-[#7FDADB]">
                     Pengundang Utama
                   </div>
                 </div>
               </div>
 
               {/* Connecting badge */}
-              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white dark:bg-surface-dark border border-pink-500/30 text-pink-500 text-xs font-bold shadow-xs">
+              <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface dark:bg-surface-dark border border-brand-coral/40 text-[#B93E2B] dark:text-[#FFA596] text-xs font-bold shadow-xs">
                 <HeartHandshake className="w-4 h-4" />
                 <span>Saling Terhubung</span>
               </div>
@@ -220,10 +222,10 @@ export const CoupleModePage: React.FC = () => {
               {/* Partner B */}
               <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                 <div className="text-right">
-                  <div className="text-xs font-extrabold text-brand-navy dark:text-white">
+                  <div className="text-sm font-extrabold text-brand-navy dark:text-white">
                     {pairing.partner_b_alias}
                   </div>
-                  <div className="text-[10px] font-semibold text-brand-coral">
+                  <div className="text-2xs font-semibold text-[#B93E2B] dark:text-[#FFA596]">
                     Pasangan Pendamping
                   </div>
                 </div>
@@ -234,9 +236,9 @@ export const CoupleModePage: React.FC = () => {
             </div>
 
             {/* Digital Voucher / Ticket Box for Invite Code */}
-            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-brand-teal/50 bg-brand-teal/5 p-6 text-center space-y-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold tracking-widest text-brand-teal uppercase">
+            <div className="relative overflow-hidden rounded-2xl border-2 border-dashed border-brand-teal/40 bg-brand-teal-soft dark:bg-brand-teal/10 p-4 sm:p-7 text-center space-y-4">
+              <div className="space-y-1.5">
+                <span className="eyebrow">
                   Kode Tautan Undangan Pasangan (24 Jam)
                 </span>
                 <p className="text-xs text-brand-navy/70 dark:text-white/70">
@@ -245,11 +247,11 @@ export const CoupleModePage: React.FC = () => {
               </div>
 
               {/* Segmented Code Display */}
-              <div className="flex items-center justify-center gap-1.5 sm:gap-2 flex-wrap py-1">
+              <div className="flex items-center justify-center gap-1 sm:gap-2 py-1">
                 {pairing.invite_code.split('').map((char, idx) => (
                   <span
                     key={idx}
-                    className="w-9 h-12 sm:w-12 sm:h-14 rounded-xl bg-white dark:bg-surface-dark border-2 border-brand-teal/30 flex items-center justify-center text-lg sm:text-2xl font-black font-mono text-brand-teal shadow-xs tracking-normal"
+                    className="w-[1.625rem] h-10 sm:w-12 sm:h-14 rounded-lg sm:rounded-xl bg-white dark:bg-surface-dark border sm:border-2 border-brand-teal/35 flex items-center justify-center text-base sm:text-2xl font-black font-mono text-brand-teal-dark dark:text-[#7FDADB] shadow-xs tracking-normal"
                   >
                     {char}
                   </span>
@@ -257,12 +259,12 @@ export const CoupleModePage: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center gap-2 pt-2">
                 {/* 1. Bagikan via WhatsApp */}
                 <button
                   type="button"
                   onClick={handleShareWhatsApp}
-                  className="touch-target px-4 py-2.5 rounded-btn bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold flex items-center gap-2 shadow-xs transition"
+                  className="btn btn-whatsapp"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>Kirim ke WhatsApp</span>
@@ -277,7 +279,7 @@ export const CoupleModePage: React.FC = () => {
                       `${window.location.origin}/berdua?code=${pairing.invite_code}`
                     )
                   }
-                  className="touch-target px-4 py-2.5 rounded-btn bg-brand-teal hover:bg-brand-teal-dark text-white text-xs font-bold flex items-center gap-2 shadow-xs transition"
+                  className="btn btn-primary"
                 >
                   {copiedId === 'invite-url' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   <span>{copiedId === 'invite-url' ? 'Tautan Disalin!' : 'Salin Tautan'}</span>
@@ -287,7 +289,7 @@ export const CoupleModePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleCopyText('invite-code', pairing.invite_code)}
-                  className="touch-target px-3.5 py-2.5 rounded-btn bg-white dark:bg-surface-dark border border-brand-navy/15 text-brand-navy dark:text-white text-xs font-bold hover:border-brand-teal flex items-center gap-1.5 transition"
+                  className="btn btn-secondary"
                 >
                   {copiedId === 'invite-code' ? <Check className="w-4 h-4 text-brand-teal" /> : <Copy className="w-4 h-4" />}
                   <span>{copiedId === 'invite-code' ? 'Kode Disalin!' : 'Salin Kode'}</span>
@@ -297,20 +299,17 @@ export const CoupleModePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowQrModal(!showQrModal)}
-                  className={`touch-target px-3.5 py-2.5 rounded-btn border text-xs font-bold flex items-center gap-1.5 transition ${
-                    showQrModal
-                      ? 'bg-brand-teal/15 text-brand-teal border-brand-teal'
-                      : 'bg-white dark:bg-surface-dark border-brand-navy/15 text-brand-navy dark:text-white hover:border-brand-teal'
-                  }`}
+                  aria-expanded={showQrModal}
+                  className={`btn ${showQrModal ? 'btn-soft' : 'btn-secondary'}`}
                 >
-                  <QrCode className="w-4 h-4 text-brand-teal" />
+                  <QrCode className="w-4 h-4" />
                   <span>{showQrModal ? 'Tutup QR' : 'Tampilkan QR'}</span>
                 </button>
               </div>
 
               {/* QR Code Container (Inline expander) */}
               {showQrModal && (
-                <div className="pt-4 mt-4 border-t border-brand-teal/20 space-y-3 animate-in fade-in duration-200">
+                <div className="pt-4 mt-4 border-t border-brand-teal/20 space-y-3 animate-fade-in">
                   <div className="p-3.5 bg-white rounded-2xl inline-block border-2 border-brand-teal/40 shadow-sm mx-auto">
                     <QRCodeSVG
                       value={`${window.location.origin}/berdua?code=${pairing.invite_code}`}
@@ -319,7 +318,7 @@ export const CoupleModePage: React.FC = () => {
                       level="M"
                     />
                   </div>
-                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 max-w-sm mx-auto">
+                  <p className="text-2xs text-brand-navy/70 dark:text-white/70 max-w-sm mx-auto">
                     Arahkan kamera HP pasangan Anda langsung ke kode QR ini untuk menghubungkan linimasa secara otomatis.
                   </p>
                 </div>
@@ -328,7 +327,7 @@ export const CoupleModePage: React.FC = () => {
 
             {/* Cabut Tautan Footer */}
             <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
+              <span className="text-2xs text-brand-navy/60 dark:text-white/60">
                 Tautan dapat dicabut kapan saja jika Anda ingin membatalkan akses pasangan.
               </span>
               {confirmRevoke ? (
@@ -340,14 +339,14 @@ export const CoupleModePage: React.FC = () => {
                       revokePairing();
                       setConfirmRevoke(false);
                     }}
-                    className="px-3 py-1 rounded-btn bg-status-urgent text-white font-bold text-xs"
+                    className="btn btn-danger btn-sm"
                   >
                     Ya, Cabut
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmRevoke(false)}
-                    className="px-2.5 py-1 rounded-btn border border-brand-navy/20 text-xs"
+                    className="btn btn-secondary btn-sm"
                   >
                     Batal
                   </button>
@@ -370,7 +369,7 @@ export const CoupleModePage: React.FC = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Link2 className="w-5 h-5 text-brand-teal" />
-                <h2 className="text-base sm:text-lg font-bold text-brand-navy dark:text-white">
+                <h2 className="section-title">
                   Tautkan Pasangan (Mode Berdua)
                 </h2>
               </div>
@@ -394,7 +393,7 @@ export const CoupleModePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => createNewPairing('Rendra (Suami)', 'Sari (Istri)', urlCode)}
-                  className="px-5 py-2.5 rounded-btn bg-brand-teal text-white text-xs font-bold hover:bg-brand-teal-dark shadow-xs transition shrink-0"
+                  className="btn btn-primary shrink-0"
                 >
                   Hubungkan Sekarang →
                 </button>
@@ -403,7 +402,7 @@ export const CoupleModePage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* OPSI 1: Buat Kode Undangan Baru */}
-              <div className="p-5 rounded-2xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 flex flex-col justify-between space-y-4">
+              <div className="well p-5 flex flex-col justify-between space-y-4">
                 <div className="space-y-2">
                   <div className="w-10 h-10 rounded-xl bg-brand-teal/15 text-brand-teal flex items-center justify-center">
                     <Sparkles className="w-5 h-5" />
@@ -421,7 +420,7 @@ export const CoupleModePage: React.FC = () => {
                   aria-label="Tautkan / Buat Kode 24 Jam"
                   onClick={handleCreateNewInvite}
                   disabled={isCreating}
-                  className="w-full py-2.5 rounded-btn bg-brand-teal hover:bg-brand-teal-dark text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition disabled:opacity-50"
+                  className="btn btn-primary w-full"
                 >
                   {isCreating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
                   <span>{isCreating ? 'Membuat Kode...' : 'Buat Kode Undangan 24 Jam'}</span>
@@ -429,9 +428,9 @@ export const CoupleModePage: React.FC = () => {
               </div>
 
               {/* OPSI 2: Masukkan Kode dari Pasangan */}
-              <div className="p-5 rounded-2xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 flex flex-col justify-between space-y-4">
+              <div className="well p-5 flex flex-col justify-between space-y-4">
                 <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-brand-coral/15 text-brand-coral flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral flex items-center justify-center">
                     <HeartHandshake className="w-5 h-5" />
                   </div>
                   <h3 className="text-sm font-bold text-brand-navy dark:text-white">
@@ -450,12 +449,12 @@ export const CoupleModePage: React.FC = () => {
                       onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())}
                       placeholder="Mis: BERSAMA24"
                       aria-label="Kode undangan pasangan"
-                      className="flex-1 px-3.5 py-2 rounded-btn border border-brand-navy/20 text-xs font-mono font-bold uppercase text-brand-navy bg-white dark:bg-surface-dark dark:text-white focus:outline-none focus:border-brand-teal"
+                      className="field flex-1 font-mono font-bold uppercase"
                     />
                     <button
                       type="submit"
                       disabled={!joinCodeInput.trim()}
-                      className="px-4 py-2 rounded-btn bg-brand-coral hover:bg-brand-coral-dark text-white text-xs font-bold transition shadow-xs disabled:opacity-50 shrink-0"
+                      className="btn btn-coral shrink-0"
                     >
                       Hubungkan
                     </button>
@@ -468,22 +467,22 @@ export const CoupleModePage: React.FC = () => {
 
         {/* Batas Privasi Pasangan & Kendali Per Item (Kriteria Penerimaan #3) */}
         {pairing && pairing.status === 'active' && (
-          <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4" />
+          <div className="well p-4 sm:p-5 space-y-3.5">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-1.5">
+              <h3 className="eyebrow flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
                 Kendali Privasi Per Item (Default: TIDAK Dibagikan ke Pasangan)
               </h3>
-              <span className="text-[11px] text-brand-navy/60 dark:text-white/60">
+              <span className="text-2xs text-brand-navy/60 dark:text-white/60">
                 Hanya Rendra yang dapat mengubah izin berbagi datanya
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-              <label className="p-3 rounded-btn bg-surface dark:bg-surface-dark-card border border-brand-navy/10 flex items-start justify-between gap-2 cursor-pointer">
+              <label className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-navy/10 dark:border-white/10 flex items-center justify-between gap-3 cursor-pointer">
                 <div>
                   <div className="font-bold">Jawaban Kuesioner Cek Awal</div>
-                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 mt-0.5">
+                  <p className="text-2xs text-brand-navy/70 dark:text-white/70 mt-0.5">
                     {pairing.shared_items.shareAssessmentAnswers
                       ? 'Terbuka untuk pasangan'
                       : 'Tertutup rapat (Privat)'}
@@ -496,14 +495,14 @@ export const CoupleModePage: React.FC = () => {
                   onChange={(e) =>
                     updatePairingSharedItems({ shareAssessmentAnswers: e.target.checked })
                   }
-                  className="w-4 h-4 accent-brand-teal mt-0.5"
+                  className="switch"
                 />
               </label>
 
-              <label className="p-3 rounded-btn bg-surface dark:bg-surface-dark-card border border-brand-navy/10 flex items-start justify-between gap-2 cursor-pointer">
+              <label className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-navy/10 dark:border-white/10 flex items-center justify-between gap-3 cursor-pointer">
                 <div>
                   <div className="font-bold">Tingkat Saran Hasil Cek Awal</div>
-                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 mt-0.5">
+                  <p className="text-2xs text-brand-navy/70 dark:text-white/70 mt-0.5">
                     {pairing.shared_items.shareAssessmentLevel
                       ? 'Terbuka untuk pasangan'
                       : 'Tertutup rapat (Privat)'}
@@ -516,14 +515,14 @@ export const CoupleModePage: React.FC = () => {
                   onChange={(e) =>
                     updatePairingSharedItems({ shareAssessmentLevel: e.target.checked })
                   }
-                  className="w-4 h-4 accent-brand-teal mt-0.5"
+                  className="switch"
                 />
               </label>
 
-              <label className="p-3 rounded-btn bg-surface dark:bg-surface-dark-card border border-brand-navy/10 flex items-start justify-between gap-2 cursor-pointer">
+              <label className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-navy/10 dark:border-white/10 flex items-center justify-between gap-3 cursor-pointer">
                 <div>
                   <div className="font-bold">Angka Hasil Laboratorium</div>
-                  <p className="text-[11px] text-brand-navy/70 dark:text-white/70 mt-0.5">
+                  <p className="text-2xs text-brand-navy/70 dark:text-white/70 mt-0.5">
                     {pairing.shared_items.shareLabSummary
                       ? 'Terbuka untuk pasangan'
                       : 'Tertutup rapat (Privat)'}
@@ -536,13 +535,13 @@ export const CoupleModePage: React.FC = () => {
                   onChange={(e) =>
                     updatePairingSharedItems({ shareLabSummary: e.target.checked })
                   }
-                  className="w-4 h-4 accent-brand-teal mt-0.5"
+                  className="switch"
                 />
               </label>
             </div>
 
             {/* Bukti Visual Privasi Saat Dilihat oleh Pasangan (Sari) */}
-            <div className="p-3 rounded-btn bg-brand-navy/5 dark:bg-white/5 text-xs space-y-1">
+            <div className="p-3.5 rounded-xl bg-brand-navy/5 dark:bg-white/5 text-xs leading-relaxed space-y-1">
               <div className="font-bold flex items-center gap-1.5 text-brand-navy dark:text-white">
                 <Lock className="w-3.5 h-3.5 text-brand-teal" />
                 Apa yang Dilihat Pasangan ({pairing.partner_b_alias}) Saat Ini:
@@ -574,44 +573,44 @@ export const CoupleModePage: React.FC = () => {
 
       {/* Seksi 2: Layar Bersama "Rencana Kita" (6 Tahapan Tanpa Membuka Isi Hasil) */}
       {pairing && pairing.status === 'active' && (
-        <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-5">
+        <section className="card p-5 sm:p-6 space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h2 className="text-lg font-bold text-brand-navy dark:text-white">
+            <div className="space-y-1">
+              <h2 className="section-title">
                 Layar Bersama: “Rencana Kita”
               </h2>
-              <p className="text-xs text-brand-navy/70 dark:text-white/70">
+              <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
                 Klik status pada tiap tahapan untuk memperbarui progres masing-masing tanpa menampilkan detail medis pribadi.
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {pairing.plan_steps.map((step) => (
               <div
                 key={step.step_key}
-                className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="well p-4 flex flex-col justify-between gap-3.5"
               >
-                <div className="flex items-center gap-3">
-                  <span className="w-7 h-7 rounded-full bg-brand-teal text-white font-bold text-xs flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-3">
+                  <span className="w-8 h-8 rounded-full bg-brand-teal-strong text-white font-extrabold text-xs flex items-center justify-center shrink-0">
                     {step.step_order}
                   </span>
                   <div>
                     <h3 className="font-bold text-sm text-brand-navy dark:text-white">
                       {step.title}
                     </h3>
-                    <p className="text-[11px] text-brand-navy/65 dark:text-white/65">
+                    <p className="text-2xs text-brand-navy/65 dark:text-white/65">
                       Status tahapan bersama (tanpa menampilkan isi hasil)
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5 sm:w-80">
+                <div className="grid grid-cols-2 gap-2.5">
                   {/* Status Suami (Rendra) */}
                   <div className="space-y-1">
                     <label
                       htmlFor={`step-a-${step.step_key}`}
-                      className="block text-[10px] font-bold uppercase text-brand-navy/70 dark:text-white/70"
+                      className="block text-3xs font-bold uppercase tracking-wide text-brand-navy/65 dark:text-white/65 truncate"
                     >
                       {pairing.partner_a_alias}
                     </label>
@@ -625,7 +624,7 @@ export const CoupleModePage: React.FC = () => {
                           e.target.value as 'not_started' | 'in_progress' | 'done'
                         )
                       }
-                      className={`w-full px-2.5 py-1.5 rounded-btn text-xs font-bold ${statusColors[step.status_a]}`}
+                      className={`status-select ${statusColors[step.status_a]}`}
                     >
                       <option value="not_started">{statusLabels.not_started}</option>
                       <option value="in_progress">{statusLabels.in_progress}</option>
@@ -637,7 +636,7 @@ export const CoupleModePage: React.FC = () => {
                   <div className="space-y-1">
                     <label
                       htmlFor={`step-b-${step.step_key}`}
-                      className="block text-[10px] font-bold uppercase text-brand-navy/70 dark:text-white/70"
+                      className="block text-3xs font-bold uppercase tracking-wide text-brand-navy/65 dark:text-white/65 truncate"
                     >
                       {pairing.partner_b_alias}
                     </label>
@@ -651,7 +650,7 @@ export const CoupleModePage: React.FC = () => {
                           e.target.value as 'not_started' | 'in_progress' | 'done'
                         )
                       }
-                      className={`w-full px-2.5 py-1.5 rounded-btn text-xs font-bold ${statusColors[step.status_b]}`}
+                      className={`status-select ${statusColors[step.status_b]}`}
                     >
                       <option value="not_started">{statusLabels.not_started}</option>
                       <option value="in_progress">{statusLabels.in_progress}</option>
@@ -664,9 +663,9 @@ export const CoupleModePage: React.FC = () => {
           </div>
 
           {/* Linimasa Persiapan Bersama (Checklist) & Jadwal Pemeriksaan Berdua */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-brand-navy/10">
-            <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-2.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal flex items-center gap-1.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-5 border-t border-brand-navy/10 dark:border-white/10">
+            <div className="well p-4 sm:p-5 space-y-3">
+              <h3 className="eyebrow flex items-center gap-1.5">
                 <CheckSquare className="w-4 h-4" />
                 Linimasa Persiapan Bersama (Checklist)
               </h3>
@@ -674,13 +673,13 @@ export const CoupleModePage: React.FC = () => {
                 {sharedPrepChecklist.map((item) => (
                   <label
                     key={item.id}
-                    className="flex items-start gap-2.5 text-xs cursor-pointer"
+                    className="flex items-start gap-2.5 text-xs leading-relaxed cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={item.checked}
                       onChange={() => togglePrepItem(item.id)}
-                      className="w-4 h-4 accent-brand-teal mt-0.5 shrink-0"
+                      className="check mt-0.5 shrink-0"
                     />
                     <span className={item.checked ? 'line-through opacity-65' : ''}>
                       {item.text}
@@ -690,8 +689,8 @@ export const CoupleModePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-2.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-coral flex items-center gap-1.5">
+            <div className="well p-4 sm:p-5 space-y-3">
+              <h3 className="eyebrow !text-[#B93E2B] dark:!text-[#FFA596] flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
                 Jadwal & Pengingat Pemeriksaan Keduanya
               </h3>
@@ -704,13 +703,13 @@ export const CoupleModePage: React.FC = () => {
                   {reminders.map((rem) => (
                     <div
                       key={rem.id}
-                      className="p-2.5 rounded bg-surface dark:bg-surface-dark-card text-xs border border-brand-navy/5"
+                      className="p-3 rounded-xl bg-surface dark:bg-surface-dark-card text-xs border border-brand-navy/5 dark:border-white/10"
                     >
                       <div className="font-bold text-brand-navy dark:text-white">{rem.title}</div>
                       {rem.facilityName && (
                         <div className="text-brand-teal font-medium">{rem.facilityName}</div>
                       )}
-                      <div className="text-[11px] opacity-75">
+                      <div className="text-2xs opacity-75">
                         Waktu: {rem.remindAt.replace('T', ' ')}
                       </div>
                     </div>
@@ -721,8 +720,8 @@ export const CoupleModePage: React.FC = () => {
           </div>
 
           {/* Pesan Semangat Singkat yang Disediakan */}
-          <div className="pt-2 space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal flex items-center gap-1.5">
+          <div className="pt-1 space-y-2.5">
+            <h3 className="eyebrow flex items-center gap-1.5">
               <HeartHandshake className="w-4 h-4" />
               Kirim Pesan Semangat Singkat ke Pasangan
             </h3>
@@ -736,7 +735,7 @@ export const CoupleModePage: React.FC = () => {
                       activePersona === 'sari' ? { noteFromB: note } : { noteFromA: note }
                     )
                   }
-                  className="px-3 py-2 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 hover:border-brand-teal text-xs text-left transition"
+                  className="px-3.5 py-2.5 rounded-2xl bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 dark:border-white/10 hover:border-brand-teal hover:bg-brand-teal-soft dark:hover:bg-white/5 text-xs text-left transition"
                 >
                   “{note}”
                 </button>
@@ -747,11 +746,11 @@ export const CoupleModePage: React.FC = () => {
       )}
 
       {/* Seksi 3: "Ajak dengan Lembut" (3 Gaya Nada: Hangat, Santai, Praktis) */}
-      <section className="bg-surface dark:bg-surface-dark-card rounded-card shadow-soft p-6 border border-brand-navy/5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold text-brand-navy dark:text-white flex items-center gap-2">
-              <MessageSquareHeart className="w-5 h-5 text-brand-coral" />
+      <section className="card p-5 sm:p-6 space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <h2 className="section-title flex items-start gap-2">
+              <MessageSquareHeart className="w-5 h-5 text-brand-coral shrink-0 mt-1" />
               <span>“Ajak dengan Lembut” — Templat Pesan Tanpa Menyalahkan</span>
             </h2>
             <p className="text-xs text-brand-navy/70 dark:text-white/70">
@@ -760,16 +759,17 @@ export const CoupleModePage: React.FC = () => {
           </div>
 
           {/* Filter 3 Gaya Nada */}
-          <div className="flex gap-1.5">
+          <div className="flex gap-1 p-1 rounded-full bg-brand-navy/[0.05] dark:bg-white/[0.06] self-start shrink-0">
             {['Semua', 'Hangat', 'Santai', 'Praktis'].map((tone) => (
               <button
                 key={tone}
                 type="button"
                 onClick={() => setSelectedTone(tone)}
-                className={`px-3 py-1.5 rounded-btn text-xs font-bold transition ${
+                aria-pressed={selectedTone === tone}
+                className={`px-3.5 py-2 rounded-full text-xs font-bold transition ${
                   selectedTone === tone
-                    ? 'bg-brand-teal text-white'
-                    : 'bg-surface-muted dark:bg-surface-dark text-brand-navy/75 dark:text-white/75'
+                    ? 'bg-brand-teal-strong text-white shadow-xs'
+                    : 'text-brand-navy/70 dark:text-white/70 hover:text-brand-navy dark:hover:text-white'
                 }`}
               >
                 {tone}
@@ -778,23 +778,23 @@ export const CoupleModePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredTemplates.map((tpl) => (
             <div
               key={tpl.id}
-              className="p-5 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 flex flex-col justify-between space-y-3"
+              className="well p-5 flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-coral/15 text-brand-coral-dark">
+                  <span className="badge badge-coral">
                     Nada: {tpl.tone}
                   </span>
-                  <span className="text-[11px] font-semibold text-brand-navy/60 dark:text-white/60">
+                  <span className="text-2xs font-semibold text-brand-navy/60 dark:text-white/60">
                     {tpl.senderRole}
                   </span>
                 </div>
                 <h3 className="font-bold text-sm text-brand-navy dark:text-white">{tpl.title}</h3>
-                <p className="text-xs sm:text-sm text-brand-navy/85 dark:text-white/85 leading-relaxed italic bg-surface dark:bg-surface-dark-card p-3.5 rounded-btn border border-brand-navy/5">
+                <p className="text-sm text-brand-navy/85 dark:text-white/85 leading-relaxed italic bg-surface dark:bg-surface-dark-card p-4 rounded-xl border border-brand-navy/5 dark:border-white/10">
                   “{tpl.message}”
                 </p>
               </div>
@@ -803,7 +803,7 @@ export const CoupleModePage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleCopyText(tpl.id, tpl.message)}
-                  className="touch-target flex-1 py-2.5 px-4 rounded-btn bg-brand-navy text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-brand-navy-light transition"
+                  className="btn btn-navy flex-1"
                 >
                   {copiedId === tpl.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   <span>
@@ -815,7 +815,7 @@ export const CoupleModePage: React.FC = () => {
                   href={`https://wa.me/?text=${encodeURIComponent(tpl.message)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="touch-target py-2.5 px-3.5 rounded-btn bg-status-success text-white text-xs font-bold flex items-center gap-1 hover:opacity-90 transition"
+                  className="btn btn-whatsapp shrink-0"
                 >
                   <span>WhatsApp</span>
                   <ExternalLink className="w-3.5 h-3.5" />

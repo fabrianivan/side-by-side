@@ -12,8 +12,9 @@
   --color-success: #2E9E6B;
   --color-warning: #E0A100;
   --radius-btn: 12px;
-  --radius-card: 16px;
+  --radius-card: 20px;
   --font-size-base: 16px;
+  --focus-ring: 0 0 0 4px rgba(15, 139, 141, 0.16);
 }
 
 html {
@@ -22,6 +23,10 @@ html {
   color: var(--color-text);
   background-color: var(--color-soft-gray);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+  scroll-padding-top: 5rem;
 }
 
 html.text-scale-lg {
@@ -33,11 +38,13 @@ html.text-scale-xl {
 }
 
 html.dark {
-  --color-bg: #121C2B;
-  --color-soft-gray: #0D1520;
+  --color-bg: #0F1826;
+  --color-soft-gray: #0B121D;
   --color-text: #F4F7F8;
+  --focus-ring: 0 0 0 4px rgba(79, 198, 200, 0.22);
   color: #F4F7F8;
-  background-color: #0D1520;
+  background-color: #0B121D;
+  color-scheme: dark;
 }
 
 /* Hormati preferensi reduced motion untuk aksesibilitas */
@@ -62,4 +69,398 @@ html.dark {
 *:focus-visible {
   outline: 2px solid #0F8B8D;
   outline-offset: 2px;
+}
+
+html.dark *:focus-visible {
+  outline-color: #4FC6C8;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: rgba(15, 139, 141, 0.2);
+  }
+
+  /* Kontrol bawaan (checkbox, radio, slider) mengikuti warna merek */
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'] {
+    accent-color: #0F8B8D;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    cursor: pointer;
+  }
+
+  /* Angka pada tabel, skor, dan hasil lab sejajar rapi */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* ---------- Kanvas aplikasi ---------- */
+  .app-canvas {
+    background-color: #F4F7F8;
+    background-image:
+      radial-gradient(60rem 26rem at 0% -8%, rgba(15, 139, 141, 0.08), transparent 62%),
+      radial-gradient(48rem 22rem at 100% -6%, rgba(255, 122, 102, 0.07), transparent 60%);
+    background-repeat: no-repeat;
+  }
+
+  .dark .app-canvas {
+    background-color: #0B121D;
+    background-image:
+      radial-gradient(60rem 26rem at 0% -8%, rgba(15, 139, 141, 0.16), transparent 62%),
+      radial-gradient(48rem 22rem at 100% -6%, rgba(255, 122, 102, 0.07), transparent 60%);
+  }
+
+  /* ---------- Kartu ---------- */
+  .card {
+    @apply bg-surface dark:bg-surface-dark-card rounded-card shadow-soft border border-brand-navy/[0.07] dark:border-white/[0.08];
+  }
+
+  .card-interactive {
+    @apply transition duration-200 hover:-translate-y-0.5 hover:shadow-soft-lg hover:border-brand-teal/50;
+  }
+
+  /* Sumur (well): kotak sekunder di dalam kartu */
+  .well {
+    @apply rounded-2xl bg-surface-muted dark:bg-surface-dark border border-brand-navy/[0.05] dark:border-white/[0.06];
+  }
+
+  /* ---------- Kepala halaman (langsung di atas kanvas, tanpa kartu) ---------- */
+  .page-header {
+    @apply px-0.5 pt-1;
+  }
+
+  /* ---------- Tipografi ---------- */
+  .page-title {
+    @apply text-2xl sm:text-3xl font-extrabold text-brand-navy dark:text-white;
+  }
+
+  .page-lead {
+    @apply text-sm leading-relaxed text-brand-navy/70 dark:text-white/70 max-w-3xl;
+  }
+
+  .section-title {
+    @apply text-lg font-bold text-brand-navy dark:text-white;
+  }
+
+  .eyebrow {
+    @apply text-2xs font-bold uppercase tracking-[0.08em] text-brand-teal;
+  }
+
+  /* ---------- Lencana / chip ---------- */
+  /* Radius 0.8rem: tampak seperti pil saat satu baris, tetap rapi bila teks melipat jadi dua baris. */
+  .badge {
+    @apply inline-flex items-center gap-1.5 max-w-full px-2.5 py-1 text-2xs font-semibold leading-snug;
+    border-radius: 0.8rem;
+  }
+
+  .badge-teal {
+    @apply bg-brand-teal-light text-brand-teal-dark dark:bg-brand-teal/20 dark:text-[#7FDADB];
+  }
+
+  .badge-coral {
+    @apply bg-brand-coral-light text-[#B93E2B] dark:bg-brand-coral/20 dark:text-[#FFA596];
+  }
+
+  .badge-navy {
+    @apply bg-brand-navy/[0.07] text-brand-navy dark:bg-white/10 dark:text-white;
+  }
+
+  .badge-success {
+    @apply bg-status-success-bg text-[#1F7A50] dark:bg-status-success/20 dark:text-[#7BD9AC];
+  }
+
+  /* ---------- Tombol ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-btn px-4 py-2.5 text-xs font-bold leading-tight select-none
+      transition duration-150 ease-out active:translate-y-px disabled:opacity-55 disabled:pointer-events-none;
+    min-height: 44px;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-sm;
+    min-height: 50px;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-2xs gap-1.5;
+    min-height: 36px;
+  }
+
+  .btn-primary {
+    @apply bg-brand-teal-strong text-white shadow-btn hover:bg-brand-teal-dark;
+  }
+
+  .btn-navy {
+    @apply bg-brand-navy text-white shadow-xs hover:bg-brand-navy-light
+      dark:bg-white/[0.12] dark:hover:bg-white/20 dark:ring-1 dark:ring-inset dark:ring-white/15;
+  }
+
+  /* Coral memakai teks navy: kontras 5.7:1 (teks putih di atas coral hanya 2.6:1). */
+  .btn-coral {
+    @apply bg-brand-coral text-brand-navy-deep hover:bg-[#FF8E7C];
+    box-shadow: 0 1px 2px rgba(229, 99, 79, 0.25), 0 8px 18px -10px rgba(229, 99, 79, 0.7);
+  }
+
+  .btn-secondary {
+    @apply bg-surface text-brand-navy border border-brand-navy/15 shadow-xs hover:border-brand-teal hover:text-brand-teal-dark
+      dark:bg-white/[0.06] dark:text-white dark:border-white/15 dark:hover:border-brand-teal dark:hover:text-white;
+  }
+
+  .btn-soft {
+    @apply bg-brand-teal-light text-brand-teal-dark hover:bg-brand-teal/20
+      dark:bg-brand-teal/20 dark:text-[#7FDADB] dark:hover:bg-brand-teal/30;
+  }
+
+  .btn-coral-soft {
+    @apply bg-brand-coral/15 text-[#B93E2B] hover:bg-brand-coral/25 dark:bg-brand-coral/20 dark:text-[#FFA596];
+  }
+
+  .btn-danger {
+    @apply bg-[#C9423E] text-white shadow-xs hover:bg-[#B33834];
+  }
+
+  /* Hijau WhatsApp yang digelapkan agar teks putih terbaca (4.7:1). */
+  .btn-whatsapp {
+    @apply bg-[#0F8546] text-white shadow-xs hover:bg-[#0C6E3A];
+  }
+
+  .btn-ghost {
+    @apply text-brand-navy/80 hover:bg-brand-navy/[0.06] dark:text-white/80 dark:hover:bg-white/10;
+  }
+
+  /* ---------- Isian formulir ---------- */
+  .field {
+    @apply rounded-btn border border-brand-navy/15 bg-white px-3.5 py-2.5 text-xs text-brand-navy
+      placeholder:text-brand-navy/40 transition duration-150
+      dark:bg-surface-dark dark:border-white/15 dark:text-white dark:placeholder:text-white/40;
+    min-height: 44px;
+    min-width: 0;
+  }
+
+  .field:hover {
+    @apply border-brand-navy/30 dark:border-white/30;
+  }
+
+  .field:focus,
+  .field:focus-visible {
+    outline: none;
+    border-color: #0F8B8D;
+    box-shadow: var(--focus-ring);
+  }
+
+  textarea.field {
+    @apply leading-relaxed;
+    min-height: 5rem;
+  }
+
+  select.field {
+    appearance: none;
+    padding-right: 2.25rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231B2A41' stroke-opacity='0.6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+  }
+
+  .dark select.field {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-opacity='0.7' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+
+  /* iOS memperbesar halaman saat fokus pada isian < 16px; cegah di layar sentuh kecil. */
+  @media (max-width: 639px) and (pointer: coarse) {
+    .field {
+      font-size: 1rem;
+    }
+  }
+
+  /* Sakelar (toggle) untuk persetujuan & izin */
+  .switch {
+    appearance: none;
+    position: relative;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 1.625rem;
+    border-radius: 9999px;
+    background-color: rgba(27, 42, 65, 0.2);
+    cursor: pointer;
+    transition: background-color 180ms ease;
+  }
+
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 9999px;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(19, 31, 49, 0.3);
+    transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .switch:checked {
+    background-color: #0F8B8D;
+  }
+
+  .switch:checked::after {
+    transform: translateX(1.125rem);
+  }
+
+  .switch:disabled,
+  .check:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .dark .switch {
+    background-color: rgba(255, 255, 255, 0.22);
+  }
+
+  .dark .switch:checked {
+    background-color: #17A7A0;
+  }
+
+  /* Kotak centang */
+  .check {
+    appearance: none;
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 0.4rem;
+    border: 1.5px solid rgba(27, 42, 65, 0.3);
+    background-color: #ffffff;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+  }
+
+  .check:hover {
+    border-color: #0F8B8D;
+  }
+
+  .check:checked {
+    background-color: #0F8B8D;
+    border-color: #0F8B8D;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+  }
+
+  .dark .check {
+    background-color: #0F1826;
+    border-color: rgba(255, 255, 255, 0.35);
+  }
+
+  .dark .check:checked {
+    background-color: #0F8B8D;
+    border-color: #0F8B8D;
+  }
+
+  /* Pemilih status berwarna (warna latar/teks diberikan oleh utilitas di elemen) */
+  .status-select {
+    @apply w-full rounded-btn pl-3 pr-8 py-2 text-xs font-bold cursor-pointer transition;
+    min-height: 40px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%231B2A41' stroke-opacity='0.65' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+  }
+
+  .dark .status-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-opacity='0.75' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+
+  .dark .status-select option {
+    color: #1B2A41;
+  }
+
+  .status-select:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  .field-label {
+    @apply block text-xs font-semibold text-brand-navy dark:text-white mb-1.5;
+  }
+
+  /* ---------- Ubin ikon ---------- */
+  .icon-tile {
+    @apply inline-flex items-center justify-center shrink-0 w-11 h-11 rounded-2xl;
+  }
+
+  /* ---------- Bilah progres ---------- */
+  .progress-track {
+    @apply w-full h-2.5 rounded-full overflow-hidden bg-brand-navy/[0.07] dark:bg-white/10;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500;
+    background-image: linear-gradient(90deg, #0F8B8D, #17A7A0);
+  }
+
+  /* ---------- Navigasi ---------- */
+  .nav-link {
+    @apply flex items-center gap-3 rounded-btn px-3 py-2.5 text-xs font-semibold text-brand-navy/75
+      transition duration-150 hover:bg-brand-navy/[0.05] hover:text-brand-navy
+      dark:text-white/70 dark:hover:bg-white/[0.07] dark:hover:text-white;
+    min-height: 42px;
+  }
+
+  .nav-link-active {
+    @apply bg-brand-teal-light text-brand-teal-dark font-bold hover:bg-brand-teal-light hover:text-brand-teal-dark
+      dark:bg-brand-teal/20 dark:text-[#7FDADB] dark:hover:bg-brand-teal/20 dark:hover:text-[#7FDADB];
+  }
+
+  /* Bilah gulir tipis untuk panel yang dapat digulir */
+  .thin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(27, 42, 65, 0.2) transparent;
+  }
+
+  .dark .thin-scroll {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+}
+
+@layer utilities {
+  /* Ruang aman untuk perangkat berponi / gesture bar */
+  .pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .glass {
+    background-color: rgba(255, 255, 255, 0.82);
+    -webkit-backdrop-filter: saturate(160%) blur(14px);
+    backdrop-filter: saturate(160%) blur(14px);
+  }
+
+  .dark .glass {
+    background-color: rgba(15, 24, 38, 0.82);
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .app-canvas {
+    background: #ffffff !important;
+  }
 }

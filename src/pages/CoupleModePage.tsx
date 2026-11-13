@@ -27,11 +27,49 @@ import {
 } from 'lucide-react';
 import { templatesConfig } from '../config/schemas';
 import { useApp } from '../context/AppContext';
+import { loadEncryptedItem, saveEncryptedItem } from '../lib/crypto-storage';
+
+interface PrepChecklistItem {
+  id: string;
+  text: string;
+  textEn: string;
+  checked: boolean;
+}
+
+const DEFAULT_PREP_CHECKLIST: PrepChecklistItem[] = [
+  {
+    id: 'prep-1',
+    text: 'Sepakati jendela masa pantang (abstinensia 2–7 hari) sebelum jadwal analisis semen',
+    textEn: 'Agree on the 2–7 day abstinence window before your semen analysis appointment',
+    checked: true,
+  },
+  {
+    id: 'prep-2',
+    text: 'Siapkan kartu identitas & rujukan JKN/asuransi untuk kunjungan klinik',
+    textEn: 'Prepare ID cards and insurance / JKN referral paperwork for the clinic visit',
+    checked: true,
+  },
+  {
+    id: 'prep-3',
+    text: 'Susun daftar pertanyaan bersama untuk ditanyakan saat konsultasi dokter',
+    textEn: 'Prepare a shared list of questions to bring to the doctor consultation',
+    checked: false,
+  },
+  {
+    id: 'prep-4',
+    text: 'Jadwalkan waktu santai berdua setelah kunjungan klinik (zona bebas stres)',
+    textEn: 'Schedule relaxing time together after the clinic visit (stress-free zone)',
+    checked: false,
+  },
+];
 
 export const CoupleModePage: React.FC = () => {
   const {
+    locale,
     activePersona,
+    displayName,
     pairing,
+    assessmentAnswers,
     assessmentResult,
     labResults,
     reminders,
@@ -40,6 +78,7 @@ export const CoupleModePage: React.FC = () => {
     updatePairingSharedItems,
     revokePairing,
   } = useApp();
+  const isEn = locale === 'en';
 
   const [searchParams] = useSearchParams();
   const urlCode = searchParams.get('code');
@@ -58,34 +97,43 @@ export const CoupleModePage: React.FC = () => {
     }
   }, [urlCode, pairing]);
 
-  // Linimasa Persiapan Bersama (Checklist Default yang Dibagikan)
-  const [sharedPrepChecklist, setSharedPrepChecklist] = useState([
-    {
-      id: 'prep-1',
-      text: 'Sepakati jendela masa pantang (abstinensia 2–7 hari) sebelum jadwal analisis semen',
-      checked: true,
-    },
-    {
-      id: 'prep-2',
-      text: 'Siapkan kartu identitas & rujukan JKN/asuransi untuk kunjungan klinik',
-      checked: true,
-    },
-    {
-      id: 'prep-3',
-      text: 'Susun daftar pertanyaan bersama untuk ditanyakan saat konsultasi dokter',
-      checked: false,
-    },
-    {
-      id: 'prep-4',
-      text: 'Jadwalkan waktu santai berdua setelah kunjungan klinik (zona bebas stres)',
-      checked: false,
-    },
-  ]);
+  // Linimasa Persiapan Bersama (Checklist Default yang Dibagikan & Disimpan Terenkripsi)
+  const [sharedPrepChecklist, setSharedPrepChecklist] =
+    useState<PrepChecklistItem[]>(DEFAULT_PREP_CHECKLIST);
+
+  useEffect(() => {
+    let active = true;
+    loadEncryptedItem<PrepChecklistItem[]>('prep_checklist').then((saved) => {
+      if (active && saved && Array.isArray(saved) && saved.length > 0) {
+        setSharedPrepChecklist(saved);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const togglePrepItem = (id: string) => {
-    setSharedPrepChecklist((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item))
-    );
+    setSharedPrepChecklist((prev) => {
+      const next = prev.map((item) =>
+        item.id === id ? { ...item, checked: !item.checked } : item
+      );
+      void saveEncryptedItem('prep_checklist', next);
+      return next;
+    });
+  };
+
+  const resolvePairingAliases = (): [string, string] => {
+    if (activePersona === 'rendra' || activePersona === 'sari') {
+      return ['Rendra (Suami)', 'Sari (Istri)'];
+    }
+    const a = !displayName.includes('Anonim')
+      ? displayName
+      : isEn
+      ? 'Partner A'
+      : 'Pasangan A';
+    const b = isEn ? 'Partner B' : 'Pasangan';
+    return [a, b];
   };
 
   const handleCopyText = async (id: string, text: string) => {
@@ -100,9 +148,14 @@ export const CoupleModePage: React.FC = () => {
 
   const handleCreateNewInvite = async () => {
     setIsCreating(true);
-    await createNewPairing('Rendra (Suami)', 'Sari (Istri)');
+    const [aliasA, aliasB] = resolvePairingAliases();
+    await createNewPairing(aliasA, aliasB);
     setIsCreating(false);
-    setPairSuccessMsg('Kode tautan pasangan 24 jam berhasil dibuat!');
+    setPairSuccessMsg(
+      isEn
+        ? '24-hour partner invite link created!'
+        : 'Kode tautan pasangan 24 jam berhasil dibuat!'
+    );
     setTimeout(() => setPairSuccessMsg(''), 4000);
   };
 
@@ -110,16 +163,23 @@ export const CoupleModePage: React.FC = () => {
     e.preventDefault();
     if (!joinCodeInput.trim()) return;
     setIsCreating(true);
-    await createNewPairing('Rendra (Suami)', 'Sari (Istri)', joinCodeInput.trim());
+    const [aliasA, aliasB] = resolvePairingAliases();
+    await createNewPairing(aliasA, aliasB, joinCodeInput.trim());
     setIsCreating(false);
-    setPairSuccessMsg(`Berhasil terhubung dengan pasangan menggunakan kode ${joinCodeInput.trim().toUpperCase()}!`);
+    setPairSuccessMsg(
+      isEn
+        ? `Connected with your partner using code ${joinCodeInput.trim().toUpperCase()}!`
+        : `Berhasil terhubung dengan pasangan menggunakan kode ${joinCodeInput.trim().toUpperCase()}!`
+    );
     setTimeout(() => setPairSuccessMsg(''), 4000);
   };
 
   const handleShareWhatsApp = () => {
     if (!pairing) return;
-    const shareUrl = `${window.location.origin}/berdua?code=${pairing.invite_code}`;
-    const text = `Hai sayang, yuk kita buka linimasa persiapan & jadwal pemeriksaan kita di Side by Side. Gunakan kode tautan kita: *${pairing.invite_code}*\n\nBuka langsung di sini:\n${shareUrl}`;
+    const shareUrl = `${window.location.origin}${isEn ? '/couple' : '/berdua'}?code=${pairing.invite_code}`;
+    const text = isEn
+      ? `Hey, let's open our shared preparation timeline and appointment reminders on Side by Side. Use our partner code: *${pairing.invite_code}*\n\nOpen here:\n${shareUrl}`
+      : `Hai sayang, yuk kita buka linimasa persiapan & jadwal pemeriksaan kita di Side by Side. Gunakan kode tautan kita: *${pairing.invite_code}*\n\nBuka langsung di sini:\n${shareUrl}`;
     const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
@@ -129,9 +189,9 @@ export const CoupleModePage: React.FC = () => {
   );
 
   const statusLabels: Record<'not_started' | 'in_progress' | 'done', string> = {
-    not_started: 'Belum mulai',
-    in_progress: 'Sedang berjalan',
-    done: 'Selesai',
+    not_started: isEn ? 'Not started' : 'Belum mulai',
+    in_progress: isEn ? 'In progress' : 'Sedang berjalan',
+    done: isEn ? 'Completed' : 'Selesai',
   };
 
   const statusColors: Record<'not_started' | 'in_progress' | 'done', string> = {
@@ -149,19 +209,21 @@ export const CoupleModePage: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="badge badge-teal">
             <Users className="w-4 h-4" />
-            Mode Berdua — “Better together.”
+            {isEn ? 'Couple Mode — “Better together.”' : 'Mode Berdua — “Better together.”'}
           </span>
           {activePersona === 'sari' && (
             <span className="badge badge-coral">
-              Tampilan Sudut Pandang Pasangan: Sari (Istri)
+              {isEn ? 'Viewing as Partner: Sari (Wife)' : 'Tampilan Sudut Pandang Pasangan: Sari (Istri)'}
             </span>
           )}
         </div>
         <h1 className="page-title">
-          Rencana Kita & Pendampingan Pasangan
+          {isEn ? 'Our Plan & Partner Support' : 'Rencana Kita & Pendampingan Pasangan'}
         </h1>
         <p className="page-lead">
-          Melangkah bersama pasangan tanpa kehilangan ruang privasi. Secara default hanya progres tahapan, checklist persiapan, dan pengingat yang terlihat bersama—isi kuesioner dan hasil lab Anda tetap tertutup kecuali Anda memilih membagikannya.
+          {isEn
+            ? 'Move forward together without losing personal privacy. By default, only shared milestone steps, prep checklist, and reminders are visible—your questionnaire answers and lab numbers remain private unless you explicitly choose to share them.'
+            : 'Melangkah bersama pasangan tanpa kehilangan ruang privasi. Secara default hanya progres tahapan, checklist persiapan, dan pengingat yang terlihat bersama—isi kuesioner dan hasil lab Anda tetap tertutup kecuali Anda memilih membagikannya.'}
         </p>
       </section>
 
@@ -178,21 +240,21 @@ export const CoupleModePage: React.FC = () => {
           /* TAMPILAN TERTAUT (PAIRED TICKET) */
           <div className="space-y-6">
             {/* Top Bar: Status Hubungan & Expiry */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-brand-navy/10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-brand-navy/10 dark:border-white/10">
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-status-success animate-pulse shrink-0" />
                 <h2 className="section-title flex items-center gap-2">
                   <Heart className="w-4 h-4 text-brand-coral fill-brand-coral" />
-                  <span>Tautan Pasangan Aktif</span>
+                  <span>{isEn ? 'Partner Link Active' : 'Tautan Pasangan Aktif'}</span>
                 </h2>
                 <span className="badge badge-success">
-                  Mode Berdua Siap
+                  {isEn ? 'Couple Mode Ready' : 'Mode Berdua Siap'}
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5 text-xs text-brand-navy/60 dark:text-white/60 font-medium">
                 <Clock className="w-3.5 h-3.5 text-brand-teal" />
-                <span>Berlaku 24 jam sejak dibuat</span>
+                <span>{isEn ? 'Valid 24 hours from creation' : 'Berlaku 24 jam sejak dibuat'}</span>
               </div>
             </div>
 
@@ -392,10 +454,13 @@ export const CoupleModePage: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => createNewPairing('Rendra (Suami)', 'Sari (Istri)', urlCode)}
+                  onClick={() => {
+                    const [aliasA, aliasB] = resolvePairingAliases();
+                    void createNewPairing(aliasA, aliasB, urlCode);
+                  }}
                   className="btn btn-primary shrink-0"
                 >
-                  Hubungkan Sekarang →
+                  {isEn ? 'Connect Now →' : 'Hubungkan Sekarang →'}
                 </button>
               </div>
             )}
@@ -471,20 +536,30 @@ export const CoupleModePage: React.FC = () => {
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-1.5">
               <h3 className="eyebrow flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 shrink-0" />
-                Kendali Privasi Per Item (Default: TIDAK Dibagikan ke Pasangan)
+                {isEn
+                  ? 'Per-Item Privacy Controls (Default: NOT Shared with Partner)'
+                  : 'Kendali Privasi Per Item (Default: TIDAK Dibagikan ke Pasangan)'}
               </h3>
               <span className="text-2xs text-brand-navy/60 dark:text-white/60">
-                Hanya Rendra yang dapat mengubah izin berbagi datanya
+                {isEn
+                  ? `Only ${pairing.partner_a_alias} can change data sharing permissions`
+                  : `Hanya ${pairing.partner_a_alias} yang dapat mengubah izin berbagi datanya`}
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
               <label className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-navy/10 dark:border-white/10 flex items-center justify-between gap-3 cursor-pointer">
                 <div>
-                  <div className="font-bold">Jawaban Kuesioner Cek Awal</div>
+                  <div className="font-bold">
+                    {isEn ? 'Self-Check Answers' : 'Jawaban Kuesioner Cek Awal'}
+                  </div>
                   <p className="text-2xs text-brand-navy/70 dark:text-white/70 mt-0.5">
                     {pairing.shared_items.shareAssessmentAnswers
-                      ? 'Terbuka untuk pasangan'
+                      ? isEn
+                        ? 'Visible to partner'
+                        : 'Terbuka untuk pasangan'
+                      : isEn
+                      ? 'Strictly private'
                       : 'Tertutup rapat (Privat)'}
                   </p>
                 </div>
@@ -501,10 +576,16 @@ export const CoupleModePage: React.FC = () => {
 
               <label className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-navy/10 dark:border-white/10 flex items-center justify-between gap-3 cursor-pointer">
                 <div>
-                  <div className="font-bold">Tingkat Saran Hasil Cek Awal</div>
+                  <div className="font-bold">
+                    {isEn ? 'Self-Check Guidance Level' : 'Tingkat Saran Hasil Cek Awal'}
+                  </div>
                   <p className="text-2xs text-brand-navy/70 dark:text-white/70 mt-0.5">
                     {pairing.shared_items.shareAssessmentLevel
-                      ? 'Terbuka untuk pasangan'
+                      ? isEn
+                        ? 'Visible to partner'
+                        : 'Terbuka untuk pasangan'
+                      : isEn
+                      ? 'Strictly private'
                       : 'Tertutup rapat (Privat)'}
                   </p>
                 </div>
@@ -521,10 +602,16 @@ export const CoupleModePage: React.FC = () => {
 
               <label className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-navy/10 dark:border-white/10 flex items-center justify-between gap-3 cursor-pointer">
                 <div>
-                  <div className="font-bold">Angka Hasil Laboratorium</div>
+                  <div className="font-bold">
+                    {isEn ? 'Semen Lab Numbers' : 'Angka Hasil Laboratorium'}
+                  </div>
                   <p className="text-2xs text-brand-navy/70 dark:text-white/70 mt-0.5">
                     {pairing.shared_items.shareLabSummary
-                      ? 'Terbuka untuk pasangan'
+                      ? isEn
+                        ? 'Visible to partner'
+                        : 'Terbuka untuk pasangan'
+                      : isEn
+                      ? 'Strictly private'
                       : 'Tertutup rapat (Privat)'}
                   </p>
                 </div>
@@ -540,28 +627,56 @@ export const CoupleModePage: React.FC = () => {
               </label>
             </div>
 
-            {/* Bukti Visual Privasi Saat Dilihat oleh Pasangan (Sari) */}
+            {/* Bukti Visual Privasi Saat Dilihat oleh Pasangan */}
             <div className="p-3.5 rounded-xl bg-brand-navy/5 dark:bg-white/5 text-xs leading-relaxed space-y-1">
               <div className="font-bold flex items-center gap-1.5 text-brand-navy dark:text-white">
                 <Lock className="w-3.5 h-3.5 text-brand-teal" />
-                Apa yang Dilihat Pasangan ({pairing.partner_b_alias}) Saat Ini:
+                {isEn
+                  ? `What Partner (${pairing.partner_b_alias}) Currently Sees:`
+                  : `Apa yang Dilihat Pasangan (${pairing.partner_b_alias}) Saat Ini:`}
               </div>
               {!pairing.shared_items.shareAssessmentAnswers &&
               !pairing.shared_items.shareAssessmentLevel &&
               !pairing.shared_items.shareLabSummary ? (
                 <p className="text-brand-navy/75 dark:text-white/75">
-                  Pasangan <strong>hanya melihat status tahapan Rencana Kita di bawah ini</strong>. Isi jawaban kuesioner dan hasil laboratorium Rendra disembunyikan sepenuhnya.
+                  {isEn ? (
+                    <>
+                      Partner <strong>only sees the Our Plan milestone statuses below</strong>. {pairing.partner_a_alias}’s questionnaire answers and lab results remain completely hidden.
+                    </>
+                  ) : (
+                    <>
+                      Pasangan <strong>hanya melihat status tahapan Rencana Kita di bawah ini</strong>. Isi jawaban kuesioner dan hasil laboratorium {pairing.partner_a_alias} disembunyikan sepenuhnya.
+                    </>
+                  )}
                 </p>
               ) : (
                 <div className="space-y-1 text-brand-navy/85 dark:text-white/85">
+                  {pairing.shared_items.shareAssessmentAnswers && (
+                    <div>
+                      • {isEn ? 'Shared self-check answers:' : 'Jawaban Cek Awal yang dibagikan:'}{' '}
+                      <strong>
+                        {Object.keys(assessmentAnswers).length > 0
+                          ? isEn
+                            ? `${Object.keys(assessmentAnswers).length} topics answered${assessmentResult?.factors.length ? ` (${assessmentResult.factors.map((f) => f.topic).join(', ')})` : ''}`
+                            : `${Object.keys(assessmentAnswers).length} topik dijawab${assessmentResult?.factors.length ? ` (${assessmentResult.factors.map((f) => f.topic).join(', ')})` : ''}`
+                          : isEn
+                          ? 'No answers recorded yet'
+                          : 'Belum ada jawaban tersimpan'}
+                      </strong>
+                    </div>
+                  )}
                   {pairing.shared_items.shareAssessmentLevel && assessmentResult && (
                     <div>
-                      • Saran Cek Awal yang dibagikan: <strong>{assessmentResult.levelLabel}</strong>
+                      • {isEn ? 'Shared self-check guidance level:' : 'Saran Cek Awal yang dibagikan:'}{' '}
+                      <strong>{assessmentResult.levelLabel}</strong>
                     </div>
                   )}
                   {pairing.shared_items.shareLabSummary && (
                     <div>
-                      • Jumlah catatan hasil lab yang dibagikan: <strong>{labResults.length} hasil tes</strong>
+                      • {isEn ? 'Shared lab log count:' : 'Jumlah catatan hasil lab yang dibagikan:'}{' '}
+                      <strong>
+                        {isEn ? `${labResults.length} test entries` : `${labResults.length} hasil tes`}
+                      </strong>
                     </div>
                   )}
                 </div>
@@ -577,10 +692,12 @@ export const CoupleModePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="space-y-1">
               <h2 className="section-title">
-                Layar Bersama: “Rencana Kita”
+                {isEn ? 'Shared Screen: “Our Plan”' : 'Layar Bersama: “Rencana Kita”'}
               </h2>
               <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
-                Klik status pada tiap tahapan untuk memperbarui progres masing-masing tanpa menampilkan detail medis pribadi.
+                {isEn
+                  ? 'Update the status for each milestone step together without exposing private medical details.'
+                  : 'Klik status pada tiap tahapan untuk memperbarui progres masing-masing tanpa menampilkan detail medis pribadi.'}
               </p>
             </div>
           </div>
@@ -682,7 +799,7 @@ export const CoupleModePage: React.FC = () => {
                       className="check mt-0.5 shrink-0"
                     />
                     <span className={item.checked ? 'line-through opacity-65' : ''}>
-                      {item.text}
+                      {isEn ? item.textEn : item.text}
                     </span>
                   </label>
                 ))}

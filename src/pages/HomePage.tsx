@@ -42,44 +42,48 @@ export const HomePage: React.FC = () => {
     if (!assessmentResult) {
       return {
         step: 1,
-        badge: 'Langkah 1 dari 4',
+        badge: isEn ? 'Step 1 of 4' : 'Langkah 1 dari 4',
         title: isEn ? 'Start Self-Check (< 3 Min)' : 'Mulai Cek Awal Mandiri (< 3 Menit)',
-        description:
-          'Jawab 12 pertanyaan singkat secara privat tanpa akun untuk mengetahui apakah dan kapan Anda sebaiknya berkonsultasi ke dokter.',
+        description: isEn
+          ? 'Answer 12 short questions privately without an account to see if and when seeing a doctor is recommended.'
+          : 'Jawab 12 pertanyaan singkat secara privat tanpa akun untuk mengetahui apakah dan kapan Anda sebaiknya berkonsultasi ke dokter.',
         ctaText: t.cta.startAssessment,
-        to: '/cek-awal',
+        to: isEn ? '/assessment' : '/cek-awal',
       };
     }
     if (!pairing || pairing.status !== 'active') {
       return {
         step: 2,
-        badge: 'Langkah 2 dari 4',
-        title: 'Susun Rencana Bersama Pasangan',
-        description:
-          'Bagikan jadwal dan daftar langkah persiapan bersama pasangan lewat Mode Berdua—tanpa membuka jawaban kuesioner pribadi Anda.',
-        ctaText: 'Buka Rencana Kita',
-        to: '/berdua',
+        badge: isEn ? 'Step 2 of 4' : 'Langkah 2 dari 4',
+        title: isEn ? 'Plan Together with Your Partner' : 'Susun Rencana Bersama Pasangan',
+        description: isEn
+          ? 'Share schedules and preparation checklists in Couple Mode—without revealing private questionnaire answers.'
+          : 'Bagikan jadwal dan daftar langkah persiapan bersama pasangan lewat Mode Berdua—tanpa membuka jawaban kuesioner pribadi Anda.',
+        ctaText: isEn ? 'Open Our Plan' : 'Buka Rencana Kita',
+        to: isEn ? '/couple' : '/berdua',
       };
     }
     if (labResults.length === 0) {
       return {
         step: 3,
-        badge: 'Langkah 3 dari 4',
-        title: 'Pilih Layanan Pemeriksaan Ramah Pria',
-        description:
-          'Lihat panduan persiapan analisis semen (masa pantang 2–7 hari), estimasi biaya, info JKN, dan buat daftar pertanyaan untuk dokter.',
+        badge: isEn ? 'Step 3 of 4' : 'Langkah 3 dari 4',
+        title: isEn ? 'Find Men-Friendly Screening Care' : 'Pilih Layanan Pemeriksaan Ramah Pria',
+        description: isEn
+          ? 'Review semen analysis preparation (2–7 day abstinence window), cost & JKN guides, and generate doctor questions.'
+          : 'Lihat panduan persiapan analisis semen (masa pantang 2–7 hari), estimasi biaya, info JKN, dan buat daftar pertanyaan untuk dokter.',
         ctaText: t.cta.findFacility,
-        to: '/layanan',
+        to: isEn ? '/facilities' : '/layanan',
       };
     }
     return {
       step: 4,
-      badge: 'Langkah 4 dari 4',
-      title: 'Siapkan Ringkasan untuk Konsultasi Dokter',
-      description:
-        'Anda sudah memiliki hasil Cek Awal dan catatan laboratorium. Buat kode QR sementara (berlaku 1 jam) untuk ditunjukkan ke dokter saat konsultasi.',
-      ctaText: 'Bagikan Ringkasan ke Nakes',
-      to: '/bagikan-nakes',
+      badge: isEn ? 'Step 4 of 4' : 'Langkah 4 dari 4',
+      title: isEn ? 'Prepare Your Doctor Consultation Summary' : 'Siapkan Ringkasan untuk Konsultasi Dokter',
+      description: isEn
+        ? 'You have Self-Check insights and lab logs ready. Generate a temporary 1-hour QR summary to share with your clinician.'
+        : 'Anda sudah memiliki hasil Cek Awal dan catatan laboratorium. Buat kode QR sementara (berlaku 1 jam) untuk ditunjukkan ke dokter saat konsultasi.',
+      ctaText: isEn ? 'Share Summary to Doctor' : 'Bagikan Ringkasan ke Nakes',
+      to: isEn ? '/share' : '/bagikan-nakes',
     };
   };
 
@@ -114,7 +118,7 @@ export const HomePage: React.FC = () => {
                 onClick={() => startAnonymousMode()}
                 className="btn btn-navy"
               >
-                Aktifkan Mode Anonim
+                {isEn ? 'Enable Anonymous Mode' : 'Aktifkan Mode Anonim'}
               </button>
             )}
             <button
@@ -123,7 +127,7 @@ export const HomePage: React.FC = () => {
               className="btn btn-coral-soft"
             >
               <Sparkles className="w-4 h-4" />
-              Isi Skenario Rendra
+              {isEn ? 'Load Rendra Demo' : 'Isi Skenario Rendra'}
             </button>
           </>
         }
@@ -148,7 +152,7 @@ export const HomePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <span className="text-2xs font-bold uppercase tracking-[0.08em] text-[#7FDADB]">
-                Langkah Berikutnya • {nextStep.badge}
+                {isEn ? 'Next Step' : 'Langkah Berikutnya'} • {nextStep.badge}
               </span>
               <span className="flex items-center gap-1" aria-hidden="true">
                 {[1, 2, 3, 4].map((n) => (
@@ -163,7 +167,8 @@ export const HomePage: React.FC = () => {
             </div>
             {assessmentResult && (
               <span className="self-start sm:self-auto rounded-xl bg-white/10 px-3 py-1.5 text-2xs leading-snug text-white/85 font-medium">
-                Saran Cek Awal: <strong className="text-[#FFA596]">{assessmentResult.levelLabel}</strong>
+                {isEn ? 'Self-Check Guidance:' : 'Saran Cek Awal:'}{' '}
+                <strong className="text-[#FFA596]">{assessmentResult.levelLabel}</strong>
               </span>
             )}
           </div>
@@ -193,7 +198,7 @@ export const HomePage: React.FC = () => {
                 onClick={() => navigate('/welcome')}
                 className="btn btn-lg bg-white/10 hover:bg-white/20 text-white"
               >
-                Lihat Pengaturan Privasi
+                {isEn ? 'Review Privacy Settings' : 'Lihat Pengaturan Privasi'}
               </button>
             )}
           </div>
@@ -209,10 +214,13 @@ export const HomePage: React.FC = () => {
               <span className="icon-tile w-9 h-9 rounded-xl bg-brand-teal-light text-brand-teal dark:bg-brand-teal/20">
                 <Users className="w-[18px] h-[18px]" />
               </span>
-              <span>Progres Rencana Kita</span>
+              <span>{isEn ? 'Our Plan Progress' : 'Progres Rencana Kita'}</span>
             </h2>
-            <Link to="/berdua" className="text-xs font-bold text-brand-teal hover:underline underline-offset-4 shrink-0">
-              Lihat Detail →
+            <Link
+              to={isEn ? '/couple' : '/berdua'}
+              className="text-xs font-bold text-brand-teal hover:underline underline-offset-4 shrink-0"
+            >
+              {isEn ? 'View Details →' : 'Lihat Detail →'}
             </Link>
           </div>
 
@@ -230,13 +238,25 @@ export const HomePage: React.FC = () => {
 
           <p className="text-xs leading-relaxed text-brand-navy/75 dark:text-white/75">
             {pairing && pairing.status === 'active' ? (
-              <>
-                Terhubung bersama <strong>{pairing.partner_b_alias}</strong> (Kode Tautan:{' '}
-                <span className="font-mono font-bold text-brand-teal bg-brand-teal/15 px-2 py-0.5 rounded-md border border-brand-teal/25 tracking-wide">
-                  {pairing.invite_code}
-                </span>
-                ). {completedStepsCount} dari 6 tahapan selesai.
-              </>
+              isEn ? (
+                <>
+                  Paired with <strong>{pairing.partner_b_alias}</strong> (Code:{' '}
+                  <span className="font-mono font-bold text-brand-teal bg-brand-teal/15 px-2 py-0.5 rounded-md border border-brand-teal/25 tracking-wide">
+                    {pairing.invite_code}
+                  </span>
+                  ). {completedStepsCount} of 6 milestones completed.
+                </>
+              ) : (
+                <>
+                  Terhubung bersama <strong>{pairing.partner_b_alias}</strong> (Kode Tautan:{' '}
+                  <span className="font-mono font-bold text-brand-teal bg-brand-teal/15 px-2 py-0.5 rounded-md border border-brand-teal/25 tracking-wide">
+                    {pairing.invite_code}
+                  </span>
+                  ). {completedStepsCount} dari 6 tahapan selesai.
+                </>
+              )
+            ) : isEn ? (
+              'No partner linked yet. Invite your partner whenever you are ready—your private answers remain hidden.'
             ) : (
               'Belum menautkan pasangan. Anda bisa mengundang pasangan kapan pun Anda siap tanpa membuka data pribadi.'
             )}
@@ -244,8 +264,10 @@ export const HomePage: React.FC = () => {
 
           {pairing?.shared_items.noteFromB && (
             <div className="p-3.5 rounded-2xl bg-brand-teal-light/60 dark:bg-brand-teal/20 text-xs leading-relaxed text-brand-navy dark:text-white">
-              <span className="font-bold text-brand-teal-dark dark:text-[#7FDADB]">Pesan Semangat Pasangan: </span>“
-              {pairing.shared_items.noteFromB}”
+              <span className="font-bold text-brand-teal-dark dark:text-[#7FDADB]">
+                {isEn ? 'Partner Encouragement Note:' : 'Pesan Semangat Pasangan:'}{' '}
+              </span>
+              “{pairing.shared_items.noteFromB}”
             </div>
           )}
         </section>
@@ -257,16 +279,21 @@ export const HomePage: React.FC = () => {
               <span className="icon-tile w-9 h-9 rounded-xl bg-brand-coral-light text-brand-coral-dark dark:bg-brand-coral/20 dark:text-brand-coral">
                 <Calendar className="w-[18px] h-[18px]" />
               </span>
-              <span>Jadwal & Pengingat</span>
+              <span>{isEn ? 'Schedule & Reminders' : 'Jadwal & Pengingat'}</span>
             </h2>
-            <Link to="/hasil" className="text-xs font-bold text-brand-teal hover:underline underline-offset-4 shrink-0">
-              Kelola →
+            <Link
+              to={isEn ? '/results' : '/hasil'}
+              className="text-xs font-bold text-brand-teal hover:underline underline-offset-4 shrink-0"
+            >
+              {isEn ? 'Manage →' : 'Kelola →'}
             </Link>
           </div>
 
           {reminders.length === 0 ? (
             <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
-              Belum ada pengingat terjadwal. Anda dapat membuat pengingat pemeriksaan (termasuk masa pantang 2–7 hari) dari halaman Cari Layanan atau Hasil Saya.
+              {isEn
+                ? 'No reminders scheduled yet. Set check-up or abstinence-window reminders from Find Care or My Results.'
+                : 'Belum ada pengingat terjadwal. Anda dapat membuat pengingat pemeriksaan (termasuk masa pantang 2–7 hari) dari halaman Cari Layanan atau Hasil Saya.'}
             </p>
           ) : (
             <ul className="space-y-2">
@@ -281,7 +308,7 @@ export const HomePage: React.FC = () => {
                       <div className="text-brand-teal font-medium">{rem.facilityName}</div>
                     )}
                     <div className="tabular text-brand-navy/60 dark:text-white/60 mt-0.5">
-                      Jadwal: {rem.remindAt.replace('T', ' ')}
+                      {isEn ? 'Scheduled:' : 'Jadwal:'} {rem.remindAt.replace('T', ' ')}
                     </div>
                   </div>
                   {rem.completed && <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />}
@@ -293,97 +320,121 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Pintasan Fitur Utama */}
-      <section aria-label="Pintasan Fitur">
+      <section aria-label={isEn ? 'Feature Shortcuts' : 'Pintasan Fitur'}>
         <h2 className="eyebrow !text-brand-navy/55 dark:!text-white/55 mb-3">
-          Pintasan Layanan & Panduan
+          {isEn ? 'Care Tools & Quick Shortcuts' : 'Pintasan Layanan & Panduan'}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           <Link
-            to="/cek-awal"
+            to={isEn ? '/assessment' : '/cek-awal'}
             className="card card-interactive p-5 flex items-start gap-4"
           >
             <div className="icon-tile bg-brand-teal-light text-brand-teal dark:bg-brand-teal/20">
               <ClipboardCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Cek Awal Mandiri</h3>
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+                {isEn ? 'Private Self-Check' : 'Cek Awal Mandiri'}
+              </h3>
               <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
-                12 pertanyaan privat berbasis aturan medis untuk memetakan langkah pertama.
+                {isEn
+                  ? '12 rule-based clinical questions on-device to map your first step privately.'
+                  : '12 pertanyaan privat berbasis aturan medis untuk memetakan langkah pertama.'}
               </p>
             </div>
           </Link>
 
           <Link
-            to="/layanan"
+            to={isEn ? '/facilities' : '/layanan'}
             className="card card-interactive p-5 flex items-start gap-4"
           >
             <div className="icon-tile bg-brand-coral-light text-brand-coral-dark dark:bg-brand-coral/20 dark:text-brand-coral">
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Cari Layanan & Panduan Tes</h3>
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+                {isEn ? 'Find Care & Test Prep' : 'Cari Layanan & Panduan Tes'}
+              </h3>
               <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
-                16 direktori klinik/RS ramah pria, filter JKN, & pembuat daftar pertanyaan dokter.
+                {isEn
+                  ? 'Curated men-friendly clinics & labs, JKN filters, cost estimates, and prep steps.'
+                  : '16 direktori klinik/RS ramah pria, filter JKN, & pembuat daftar pertanyaan dokter.'}
               </p>
             </div>
           </Link>
 
           <Link
-            to="/berdua"
+            to={isEn ? '/couple' : '/berdua'}
             className="card card-interactive p-5 flex items-start gap-4"
           >
             <div className="icon-tile bg-brand-teal-light text-brand-teal dark:bg-brand-teal/20">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Mode Berdua (Rencana Kita)</h3>
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+                {isEn ? 'Couple Mode (Our Plan)' : 'Mode Berdua (Rencana Kita)'}
+              </h3>
               <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
-                Templat pesan "Ajak dengan lembut" & checklist bersama tanpa buka data pribadi.
+                {isEn
+                  ? '“Invite Gently” message templates & shared milestone board without exposing private data.'
+                  : 'Templat pesan "Ajak dengan lembut" & checklist bersama tanpa buka data pribadi.'}
               </p>
             </div>
           </Link>
 
           <Link
-            to="/hasil"
+            to={isEn ? '/results' : '/hasil'}
             className="card card-interactive p-5 flex items-start gap-4"
           >
             <div className="icon-tile bg-status-success-bg text-status-success dark:bg-status-success/20">
               <Activity className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Hasil Saya & Grafik Tren</h3>
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+                {isEn ? 'My Results & WHO Trends' : 'Hasil Saya & Grafik Tren'}
+              </h3>
               <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
-                Catat hasil analisis semen, pahami istilah rujukan WHO 2021, dan pantau tren.
+                {isEn
+                  ? 'Log semen analysis numbers, understand WHO 2021 limits, and track longitudinal trends.'
+                  : 'Catat hasil analisis semen, pahami istilah rujukan WHO 2021, dan pantau tren.'}
               </p>
             </div>
           </Link>
 
           <Link
-            to="/pustaka"
+            to={isEn ? '/library' : '/pustaka'}
             className="card card-interactive p-5 flex items-start gap-4"
           >
             <div className="icon-tile bg-status-warning-bg text-[#B07E00] dark:bg-status-warning/20 dark:text-status-warning">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Pustaka Edukasi & Tanya Nakes</h3>
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+                {isEn ? 'Library & Ask Clinician' : 'Pustaka Edukasi & Tanya Nakes'}
+              </h3>
               <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
-                12 artikel pendek terkurasi, mitos vs fakta, FAQ, dan tiket tanya nakes anonim.
+                {isEn
+                  ? '12 curated short articles, myth vs fact cards, FAQs, and anonymous clinician Q&A tickets.'
+                  : '12 artikel pendek terkurasi, mitos vs fakta, FAQ, dan tiket tanya nakes anonim.'}
               </p>
             </div>
           </Link>
 
           <Link
-            to="/bagikan-nakes"
+            to={isEn ? '/share' : '/bagikan-nakes'}
             className="card card-interactive p-5 flex items-start gap-4"
           >
             <div className="icon-tile bg-brand-teal-light text-brand-teal dark:bg-brand-teal/20">
               <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-brand-navy dark:text-white">Berbagi ke Nakes (QR 1 Jam)</h3>
+              <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+                {isEn ? 'Share to Doctor (1-Hr QR)' : 'Berbagi ke Nakes (QR 1 Jam)'}
+              </h3>
               <p className="text-xs leading-relaxed text-brand-navy/70 dark:text-white/70 mt-1">
-                Bagikan ringkasan yang Anda setujui ke dokter & lihat catatan akses transparan.
+                {isEn
+                  ? 'Share consented clinical summaries via expiring QR and review transparent access logs.'
+                  : 'Bagikan ringkasan yang Anda setujui ke dokter & lihat catatan akses transparan.'}
               </p>
             </div>
           </Link>

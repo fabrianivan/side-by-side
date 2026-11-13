@@ -9,7 +9,8 @@ Aplikasi web responsif (mobile-first, PWA-ready) untuk tantangan hackathon **"[K
 ## Cara Menjalankan Proyek (Lokal & Demo Hackathon)
 
 ```bash
-cd /Users/fabrianivan/.gemini/antigravity/scratch/side-by-side
+git clone https://github.com/fabrianivan/side-by-side.git
+cd side-by-side
 
 # 1. Instal dependensi
 npm install
@@ -20,8 +21,11 @@ npm run db:setup
 # 3. Jalankan server API Fastify (port 3001) + frontend Vite (port 5173)
 npm run dev
 
-# 4. Jalankan seluruh pengujian (23 unit, flow, & accessibility tests)
+# 4. Jalankan seluruh pengujian (31 unit, flow, privacy & accessibility tests)
 npm test
+
+# 5. Bangun bundle produksi (TypeScript + Vite)
+npm run build
 
 # 5. Build produksi (TypeScript + Vite PWA bundle)
 npm run build
@@ -57,7 +61,7 @@ Di bagian bawah layar aplikasi terdapat **Panel Demo Hackathon** yang memungkink
    - Menggunakan SQLite (`file:./dev.db`) secara default agar demo berjalan instan tanpa ketergantungan server DB eksternal, dengan skema Prisma yang siap dialihkan ke PostgreSQL melalui variabel `DATABASE_URL`.
 2. **Enkripsi Sisi Klien (Web Crypto AES-GCM 256-bit) & IndexedDB:**
    - Pada **Mode Anonim**, jawaban kuesioner dan catatan hasil dienkripsi di perangkat (`src/lib/crypto-storage.ts`) menggunakan `AES-GCM` 256-bit dan disimpan di IndexedDB (`sbs_encrypted_vault`). Jawaban mentah tidak pernah dikirim ke server.
-   - Kunci perangkat dibuat otomatis saat menekan *"Mulai tanpa akun"* agar alur Cek Awal selesai < 3 menit, dan dibungkus dengan turunan kunci `PBKDF2` ketika pengguna mengaktifkan PIN.
+   - Kunci perangkat (`sbs_device_key`) dibuat otomatis secara lokal agar alur Cek Awal selesai < 3 menit tanpa wajib membuat akun, serta dapat diaudit langsung melalui *Vault Inspector* di halaman Pengaturan.
 3. **Konfigurasi Aturan Medis & Rujukan WHO Terpisah (Mudah Diaudit Dokter):**
    - Aturan penilaian mandiri disimpan di `src/config/assessment-rules.json` dan rentang rujukan analisis semen WHO Edisi ke-6 (2021) disimpan di `src/config/semen-reference.json`, keduanya divalidasi dengan skema Zod di `src/config/schemas.ts`.
    - Aturan wajib: lama program hamil > 12 bulan (atau > 6 bulan bila usia pasangan perempuan ≥ 35 tahun) menghasilkan saran minimal *"Sebaiknya periksa dalam 1 sampai 2 bulan"* **tanpa membocorkan data usia pasangan** di daftar faktor hasil.
@@ -66,5 +70,6 @@ Di bagian bawah layar aplikasi terdapat **Panel Demo Hackathon** yang memungkink
    - Tidak ada klaim diagnosis, pengobatan, janji kesuburan, maupun saran obat/dosis/suplemen di seluruh aplikasi.
    - Dilengkapi pendeteksi tekanan emosional berat pada isian teks bebas untuk menampilkan informasi bantuan profesional (Hotline SEJIWA Kemenkes `119 ext 8`).
    - Tombol **"Hapus semua data saya"** selalu terlihat di Pengaturan dengan konfirmasi 2 langkah yang memusnahkan data lokal (IndexedDB/LocalStorage) dan data server.
-5. **Mode Samaran (Discreet Mode) & Kunci PIN:**
-   - Mengubah judul tab browser, favicon, dan header menjadi aplikasi kebugaran netral **"Catatan Harian"** serta menyediakan kunci layar berbasis PIN untuk menjaga kenyamanan di tempat umum.
+5. **Alat Klinis Interaktif & Aksesibilitas Dwi-Bahasa (`ID`/`EN` + Mode Gelap):**
+   - Dilengkapi **Simulator Sperma WHO 2021** (menghitung *Total Motile Sperm Count* / TMSC dan membandingkan parameter terhadap referensi WHO Edisi ke-6), **Pelacak Siklus Spermatogenesis 72–74 Hari**, serta **Pembuat Checklist Pertanyaan Dokter** siap salin/cetak.
+   - Menyediakan pengalih bahasa instan (`ID`/`EN`), tombol **Mode Gelap (Dark Mode)** di header, serta panel demo 3 persona (Rendra, Sari, dr. Maya) yang juga tersedia pada demo daring (`https://side-by-side-omega.vercel.app`).

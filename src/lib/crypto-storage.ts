@@ -12,6 +12,42 @@ const PIN_VERIFIER_STORAGE = 'sbs_pin_verifier_v1';
 
 // Fallback in-memory map bila lingkungan pengujian (jsdom) tidak mendukung IndexedDB penuh
 const memoryStore = new Map<string, string>();
+const fallbackKv = new Map<string, string>();
+
+function getSafeStorage(kind: 'localStorage' | 'sessionStorage'): Storage | null {
+  try {
+    const store = typeof window !== 'undefined' ? window[kind] : globalThis[kind];
+    if (store && typeof store.getItem === 'function' && typeof store.setItem === 'function') {
+      return store;
+    }
+  } catch {
+    // Abaikan bila akses storage dibatasi
+  }
+  return null;
+}
+
+export function readLocalValue(key: string): string | null {
+  const ls = getSafeStorage('localStorage');
+  return ls ? ls.getItem(key) : (fallbackKv.get(key) ?? null);
+}
+
+export function writeLocalValue(key: string, value: string): void {
+  const ls = getSafeStorage('localStorage');
+  if (ls) {
+    ls.setItem(key, value);
+  } else {
+    fallbackKv.set(key, value);
+  }
+}
+
+export function removeLocalValue(key: string): void {
+  const ls = getSafeStorage('localStorage');
+  if (ls) {
+    ls.removeItem(key);
+  } else {
+    fallbackKv.delete(key);
+  }
+}
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
@@ -42,11 +78,11 @@ async function getOrCreateDeviceKey(pin?: string): Promise<CryptoKey> {
   }
 
   if (pin) {
-    let saltB64 = localStorage.getItem(PIN_SALT_STORAGE);
+    let saltB64 = readLocalValue(PIN_SALT_STORAGE);
     if (!saltB64) {
       const saltBytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
       saltB64 = arrayBufferToBase64(saltBytes.buffer);
-      localStorage.setItem(PIN_SALT_STORAGE, saltB64);
+      writeLocalValue(PIN_SALT_STORAGE, saltB64);
     }
     const enc = new TextEncoder();
     const keyMaterial = await subtle.importKey('raw', enc.encode(pin), 'PBKDF2', false, ['deriveKey']);
@@ -64,7 +100,7 @@ async function getOrCreateDeviceKey(pin?: string): Promise<CryptoKey> {
     );
   }
 
-  const existingRawB64 = localStorage.getItem(DEVICE_KEY_STORAGE);
+  const existingRawB64 = readLocalValue(DEVICE_KEY_STORAGE);
   if (existingRawB64) {
     const rawBuffer = base64ToArrayBuffer(existingRawB64);
     return subtle.importKey('raw', rawBuffer, { name: 'AES-GCM', length: 256 }, true, [
@@ -78,7 +114,7 @@ async function getOrCreateDeviceKey(pin?: string): Promise<CryptoKey> {
     'decrypt',
   ]);
   const exported = await subtle.exportKey('raw', newKey);
-  localStorage.setItem(DEVICE_KEY_STORAGE, arrayBufferToBase64(exported));
+  writeLocalValue(DEVICE_KEY_STORAGE, arrayBufferToBase64(exported));
   return newKey;
 }
 
@@ -154,7 +190,7 @@ export async function saveEncryptedItem<T>(key: string, value: T): Promise<void>
   const encrypted = await encryptPayload(value);
   memoryStore.set(key, encrypted);
   try {
-    localStorage.setItem(`sbs_enc_${key}`, encrypted);
+    writeLocalValue(`sbs_enc_${key}`, encrypted);
   } catch {
     // Abaikan bila quota penuh
   }
@@ -199,7 +235,7 @@ export async function loadEncryptedItem<T>(key: string): Promise<T | null> {
   }
 
   if (!encrypted) {
-    encrypted = localStorage.getItem(`sbs_enc_${key}`) || memoryStore.get(key) || null;
+    encrypted = readLocalValue(`sbs_enc_${key}`) || memoryStore.get(key) || null;
   }
   if (!encrypted) return null;
   return decryptPayload<T>(encrypted);
@@ -210,23 +246,23 @@ export async function loadEncryptedItem<T>(key: string): Promise<T | null> {
  */
 export async function setSecurityPin(pin: string): Promise<void> {
   const verifierCipher = await encryptPayload({ verified: 'SIDE_BY_SIDE_PIN_OK' }, pin);
-  localStorage.setItem(PIN_VERIFIER_STORAGE, verifierCipher);
+  writeLocalValue(PIN_VERIFIER_STORAGE, verifierCipher);
 }
 
 export async function verifySecurityPin(pin: string): Promise<boolean> {
-  const verifierCipher = localStorage.getItem(PIN_VERIFIER_STORAGE);
+  const verifierCipher = readLocalValue(PIN_VERIFIER_STORAGE);
   if (!verifierCipher) return false;
   const result = await decryptPayload<{ verified: string }>(verifierCipher, pin);
   return result?.verified === 'SIDE_BY_SIDE_PIN_OK';
 }
 
 export function hasSecurityPin(): boolean {
-  return Boolean(localStorage.getItem(PIN_VERIFIER_STORAGE));
+  return Boolean(readLocalValue(PIN_VERIFIER_STORAGE));
 }
 
 export function clearSecurityPin(): void {
-  localStorage.removeItem(PIN_VERIFIER_STORAGE);
-  localStorage.removeItem(PIN_SALT_STORAGE);
+  removeLocalValue(PIN_VERIFIER_STORAGE);
+  removeLocalValue(PIN_SALT_STORAGE);
 }
 
 export interface EncryptedVaultInspectionItem {
@@ -250,11 +286,15 @@ export function inspectEncryptedVault(): EncryptedVaultInspectionItem[] {
     'reminders',
     'pairing',
     'share_token',
+    'tickets',
+    'habit_log',
+    'cycle_start_date',
+    'prep_checklist',
   ];
   const results: EncryptedVaultInspectionItem[] = [];
 
   for (const k of keys) {
-    const raw = localStorage.getItem(`sbs_enc_${k}`) || memoryStore.get(k);
+    const raw = readLocalValue(`sbs_enc_${k}`) || memoryStore.get(k);
     if (!raw) continue;
     try {
       const parsed = JSON.parse(raw) as { alg?: string; iv?: string; ct?: string; ts?: number };
@@ -280,8 +320,9 @@ export function inspectEncryptedVault(): EncryptedVaultInspectionItem[] {
  */
 export async function wipeAllLocalData(): Promise<void> {
   memoryStore.clear();
-  localStorage.clear();
-  sessionStorage.clear();
+  fallbackKv.clear();
+  getSafeStorage('localStorage')?.clear();
+  getSafeStorage('sessionStorage')?.clear();
 
   if (typeof indexedDB !== 'undefined') {
     await new Promise<void>((resolve) => {

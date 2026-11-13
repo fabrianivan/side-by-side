@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -20,10 +20,12 @@ import { useApp } from '../context/AppContext';
 
 export const AssessmentPage: React.FC = () => {
   const {
+    locale,
     assessmentAnswers,
     assessmentResult,
     saveAssessment,
   } = useApp();
+  const isEn = locale === 'en';
   const navigate = useNavigate();
 
   const questions = assessmentRulesConfig.questions;
@@ -37,6 +39,15 @@ export const AssessmentPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'quiz' | 'result'>(() =>
     assessmentResult ? 'result' : 'quiz'
   );
+
+  useEffect(() => {
+    setDraftAnswers({ ...assessmentAnswers });
+    setViewMode(assessmentResult ? 'result' : 'quiz');
+    if (!assessmentResult && Object.keys(assessmentAnswers).length === 0) {
+      setCurrentIndex(0);
+      setFreeTextNote('');
+    }
+  }, [assessmentAnswers, assessmentResult]);
 
   // Kalkulator IMT Opsional untuk Pertanyaan 10 (bmi_category)
   const [weightKg, setWeightKg] = useState<string>('');
@@ -101,9 +112,9 @@ export const AssessmentPage: React.FC = () => {
   // TAMPILAN HASIL CEK AWAL
   if (viewMode === 'result' && assessmentResult) {
     const badgeColorStyles = {
-      success: 'bg-status-success-bg text-[#1F7A50] border-status-success/30',
-      warning: 'bg-status-warning-bg text-brand-navy border-status-warning/40',
-      urgent: 'bg-status-urgent-bg text-[#B33834] border-status-urgent/30',
+      success: 'bg-status-success-bg dark:bg-status-success/15 text-[#1F7A50] dark:text-[#7BD9AC] border-status-success/30',
+      warning: 'bg-status-warning-bg dark:bg-status-warning/15 text-brand-navy dark:text-[#F3C64D] border-status-warning/40',
+      urgent: 'bg-status-urgent-bg dark:bg-status-urgent/15 text-[#B33834] dark:text-[#FF8A85] border-status-urgent/30',
     };
 
     return (
@@ -112,10 +123,10 @@ export const AssessmentPage: React.FC = () => {
         {assessmentResult.showEmotionalSupport && (
           <section
             role="alert"
-            className="bg-brand-coral-light border-2 border-brand-coral rounded-card p-5 space-y-3 text-brand-navy"
+            className="bg-brand-coral-light dark:bg-brand-coral/15 border-2 border-brand-coral rounded-card p-5 space-y-3 text-brand-navy dark:text-white"
           >
             <div className="flex items-start gap-3">
-              <HeartHandshake className="w-6 h-6 text-brand-coral-dark shrink-0 mt-0.5" />
+              <HeartHandshake className="w-6 h-6 text-brand-coral-dark dark:text-brand-coral shrink-0 mt-0.5" />
               <div className="space-y-2">
                 <h2 className="font-bold text-base">
                   {assessmentResult.emotionalSupportBanner.title}
@@ -127,9 +138,9 @@ export const AssessmentPage: React.FC = () => {
                   {assessmentResult.emotionalSupportBanner.contacts.map((c) => (
                     <div
                       key={c.name}
-                      className="px-3 py-1.5 rounded-btn bg-white text-xs font-semibold border border-brand-coral/30"
+                      className="px-3 py-1.5 rounded-btn bg-white dark:bg-surface-dark-card text-xs font-semibold border border-brand-coral/30"
                     >
-                      {c.name}: <span className="text-brand-teal">{c.contact}</span>
+                      {c.name}: <span className="text-brand-teal dark:text-[#7FDADB]">{c.contact}</span>
                     </div>
                   ))}
                 </div>
@@ -143,14 +154,16 @@ export const AssessmentPage: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="badge badge-teal">
               <ShieldCheck className="w-4 h-4" />
-              Hasil Cek Awal Mandiri (Tersimpan Terenkripsi di Perangkat)
+              {isEn
+                ? 'Self-Check Summary (Encrypted Locally on Device)'
+                : 'Hasil Cek Awal Mandiri (Tersimpan Terenkripsi di Perangkat)'}
             </span>
             <button
               type="button"
               onClick={handleRetake}
               className="text-xs font-semibold text-brand-navy/70 dark:text-white/70 hover:text-brand-teal flex items-center gap-1"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Ulangi Kuesioner
+              <RotateCcw className="w-3.5 h-3.5" /> {isEn ? 'Retake Questionnaire' : 'Ulangi Kuesioner'}
             </button>
           </div>
 
@@ -158,7 +171,7 @@ export const AssessmentPage: React.FC = () => {
             className={`p-5 sm:p-6 rounded-card border-2 ${badgeColorStyles[assessmentResult.badgeColor]} space-y-2.5`}
           >
             <div className="text-xs font-bold uppercase tracking-wider opacity-80">
-              Tingkat Saran Pemeriksaan
+              {isEn ? 'Recommended Check-Up Window' : 'Tingkat Saran Pemeriksaan'}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold">{assessmentResult.levelLabel}</h1>
             <p className="text-sm leading-relaxed">{assessmentResult.summary}</p>
@@ -223,23 +236,23 @@ export const AssessmentPage: React.FC = () => {
           </div>
 
           {/* Tombol Aksi Utama Sesuai Spesifikasi F2 */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-brand-navy/10">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-brand-navy/10 dark:border-white/10">
             <button
               type="button"
-              onClick={() => navigate('/layanan')}
+              onClick={() => navigate(isEn ? '/facilities' : '/layanan')}
               className="btn btn-primary btn-lg flex-1"
             >
               <MapPin className="w-4 h-4" />
-              Cari layanan pemeriksaan
+              {isEn ? 'Find care clinics' : 'Cari layanan pemeriksaan'}
             </button>
 
             <button
               type="button"
-              onClick={() => navigate('/berdua')}
+              onClick={() => navigate(isEn ? '/couple' : '/berdua')}
               className="btn btn-coral btn-lg flex-1"
             >
               <Users className="w-4 h-4" />
-              Ajak pasangan
+              {isEn ? 'Invite partner' : 'Ajak pasangan'}
             </button>
           </div>
         </section>
@@ -256,10 +269,12 @@ export const AssessmentPage: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <span className="eyebrow">
-                Cek Awal Mandiri • Pertanyaan {currentIndex + 1} dari {totalQuestions}
+                {isEn
+                  ? `Self-Check Assessment • Question ${currentIndex + 1} of ${totalQuestions}`
+                  : `Cek Awal Mandiri • Pertanyaan ${currentIndex + 1} dari ${totalQuestions}`}
               </span>
               <h1 className="text-base font-bold text-brand-navy dark:text-white">
-                Topik: {currentQuestion.topic}
+                {isEn ? 'Topic:' : 'Topik:'} {currentQuestion.topic}
               </h1>
             </div>
 
@@ -269,7 +284,7 @@ export const AssessmentPage: React.FC = () => {
               className="btn btn-coral-soft"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Isi Contoh Rendra (Selesai Instan)
+              {isEn ? 'Fill Rendra Demo (Instant Finish)' : 'Isi Contoh Rendra (Selesai Instan)'}
             </button>
           </div>
 
@@ -280,7 +295,7 @@ export const AssessmentPage: React.FC = () => {
               aria-valuenow={progressPct}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label={`Progres kuesioner ${progressPct}%`}
+              aria-label={isEn ? `Questionnaire progress ${progressPct}%` : `Progres kuesioner ${progressPct}%`}
               className="progress-track"
             >
               <div className="progress-fill" style={{ width: `${progressPct}%` }} />
@@ -307,19 +322,19 @@ export const AssessmentPage: React.FC = () => {
 
           {/* Kalkulator Cepat Berat/Tinggi Badan (Khusus Pertanyaan 10: bmi_category) */}
           {currentQuestion.id === 'bmi_category' && (
-            <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 space-y-3">
-              <div className="text-xs font-bold text-brand-teal">
-                Opsional: Hitung Cepat Indeks Massa Tubuh (IMT)
+            <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 dark:border-white/10 space-y-3">
+              <div className="text-xs font-bold text-brand-teal dark:text-[#7FDADB]">
+                {isEn ? 'Optional: Quick Body Mass Index (BMI) Calculator' : 'Opsional: Hitung Cepat Indeks Massa Tubuh (IMT)'}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 items-end">
                 <div>
                   <label htmlFor="bmi-weight" className="block text-2xs font-semibold mb-1">
-                    Berat Badan (kg)
+                    {isEn ? 'Weight (kg)' : 'Berat Badan (kg)'}
                   </label>
                   <input
                     id="bmi-weight"
                     type="number"
-                    placeholder="Mis: 72"
+                    placeholder={isEn ? 'e.g. 72' : 'Mis: 72'}
                     value={weightKg}
                     onChange={(e) => setWeightKg(e.target.value)}
                     className="field w-full"
@@ -327,12 +342,12 @@ export const AssessmentPage: React.FC = () => {
                 </div>
                 <div>
                   <label htmlFor="bmi-height" className="block text-2xs font-semibold mb-1">
-                    Tinggi Badan (cm)
+                    {isEn ? 'Height (cm)' : 'Tinggi Badan (cm)'}
                   </label>
                   <input
                     id="bmi-height"
                     type="number"
-                    placeholder="Mis: 170"
+                    placeholder={isEn ? 'e.g. 170' : 'Mis: 170'}
                     value={heightCm}
                     onChange={(e) => setHeightCm(e.target.value)}
                     className="field w-full"
@@ -343,9 +358,32 @@ export const AssessmentPage: React.FC = () => {
                   onClick={handleCalculateBmi}
                   className="btn btn-navy"
                 >
-                  Gunakan IMT
+                  {isEn ? 'Use BMI' : 'Gunakan IMT'}
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Isian Catatan Bebas Opsional pada Pertanyaan Terakhir (Ditampilkan sebelum memilih jawaban agar tidak terlewat) */}
+          {currentIndex === totalQuestions - 1 && (
+            <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-2 border border-brand-navy/10 dark:border-white/10">
+              <label htmlFor="free-text-feeling" className="block text-xs font-bold">
+                {isEn
+                  ? 'Personal Note or How You Are Feeling (Optional, Saved Strictly on This Device)'
+                  : 'Catatan Pribadi atau Perasaan Anda Saat Ini (Opsional, Hanya Tersimpan di Perangkat)'}
+              </label>
+              <textarea
+                id="free-text-feeling"
+                rows={2}
+                value={freeTextNote}
+                onChange={(e) => setFreeTextNote(e.target.value)}
+                placeholder={
+                  isEn
+                    ? 'Write anything weighing on your mind before choosing an option below...'
+                    : 'Tuliskan bila ada hal yang mengganjal pikiran Anda sebelum memilih opsi di bawah...'
+                }
+                className="field w-full"
+              />
             </div>
           )}
 
@@ -373,7 +411,7 @@ export const AssessmentPage: React.FC = () => {
                   <span className="text-sm leading-snug">{opt.label}</span>
                   <span
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                      isSelected ? 'border-brand-teal bg-brand-teal text-white' : 'border-brand-navy/30'
+                      isSelected ? 'border-brand-teal bg-brand-teal text-white' : 'border-brand-navy/30 dark:border-white/30'
                     }`}
                   >
                     {isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
@@ -383,25 +421,8 @@ export const AssessmentPage: React.FC = () => {
             })}
           </div>
 
-          {/* Isian Catatan Bebas Opsional pada Pertanyaan Terakhir (Dilengkapi Deteksi Tekanan Emosional) */}
-          {currentIndex === totalQuestions - 1 && (
-            <div className="p-4 rounded-card bg-surface-muted dark:bg-surface-dark space-y-2 border border-brand-navy/10">
-              <label htmlFor="free-text-feeling" className="block text-xs font-bold">
-                Catatan Pribadi atau Perasaan Anda Saat Ini (Opsional, Hanya Tersimpan di Perangkat)
-              </label>
-              <textarea
-                id="free-text-feeling"
-                rows={2}
-                value={freeTextNote}
-                onChange={(e) => setFreeTextNote(e.target.value)}
-                placeholder="Tuliskan bila ada hal yang mengganjal pikiran Anda..."
-                className="field w-full"
-              />
-            </div>
-          )}
-
           {/* Navigasi Bawah Pertanyaan: Tombol "Kembali" dan "Lewati" */}
-          <div className="flex items-center justify-between pt-4 border-t border-brand-navy/10">
+          <div className="flex items-center justify-between pt-4 border-t border-brand-navy/10 dark:border-white/10">
             <button
               type="button"
               onClick={handleBack}
@@ -409,7 +430,7 @@ export const AssessmentPage: React.FC = () => {
               className="btn btn-secondary"
             >
               <ArrowLeft className="w-4 h-4" />
-              Kembali
+              {isEn ? 'Back' : 'Kembali'}
             </button>
 
             <div className="flex items-center gap-2">
@@ -418,7 +439,7 @@ export const AssessmentPage: React.FC = () => {
                 onClick={handleSkip}
                 className="touch-target px-4 py-2.5 rounded-btn bg-surface-muted dark:bg-surface-dark text-brand-navy/80 dark:text-white/80 text-xs font-semibold flex items-center gap-1.5 hover:bg-brand-navy/10 transition"
               >
-                <span>Lewati</span>
+                <span>{isEn ? 'Skip' : 'Lewati'}</span>
                 <SkipForward className="w-4 h-4" />
               </button>
 
@@ -428,7 +449,15 @@ export const AssessmentPage: React.FC = () => {
                   onClick={() => handleSelectOption(draftAnswers[currentQuestion.id])}
                   className="btn btn-primary"
                 >
-                  <span>{currentIndex === totalQuestions - 1 ? 'Lihat Hasil' : 'Lanjut'}</span>
+                  <span>
+                    {currentIndex === totalQuestions - 1
+                      ? isEn
+                        ? 'View Results'
+                        : 'Lihat Hasil'
+                      : isEn
+                      ? 'Continue'
+                      : 'Lanjut'}
+                  </span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
@@ -446,7 +475,7 @@ export const AssessmentPage: React.FC = () => {
       <aside className="lg:col-span-4 space-y-4">
         <div className="card p-5 space-y-3">
           <h3 className="eyebrow">
-            Peta 12 Topik Cek Awal
+            {isEn ? '12 Self-Check Topics Map' : 'Peta 12 Topik Cek Awal'}
           </h3>
           <div className="grid grid-cols-2 gap-2">
             {questions.map((q, idx) => {
@@ -476,10 +505,12 @@ export const AssessmentPage: React.FC = () => {
         <div className="card p-5 space-y-2.5 text-xs">
           <div className="flex items-center gap-2 font-bold text-brand-navy dark:text-white">
             <ShieldCheck className="w-4 h-4 text-brand-teal shrink-0" />
-            <span>Privasi Penuh di Perangkat Anda</span>
+            <span>{isEn ? 'Full Privacy on Your Device' : 'Privasi Penuh di Perangkat Anda'}</span>
           </div>
           <p className="text-brand-navy/75 dark:text-white/75 leading-relaxed">
-            Seluruh jawaban Anda dihitung dan disimpan secara privat langsung di perangkat ini. Anda bebas melewati pertanyaan mana pun.
+            {isEn
+              ? 'All answers are evaluated and encrypted privately on this device. You can skip any question anytime.'
+              : 'Seluruh jawaban Anda dihitung dan disimpan secara privat langsung di perangkat ini. Anda bebas melewati pertanyaan mana pun.'}
           </p>
         </div>
       </aside>

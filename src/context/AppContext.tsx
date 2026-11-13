@@ -3,10 +3,6 @@ import {
   loadEncryptedItem,
   saveEncryptedItem,
   wipeAllLocalData,
-  hasSecurityPin,
-  setSecurityPin,
-  verifySecurityPin,
-  clearSecurityPin,
 } from '../lib/crypto-storage';
 import {
   evaluateAssessment,
@@ -114,11 +110,6 @@ interface AppContextValue {
   locale: Locale;
   textScale: TextScale;
   darkMode: boolean;
-  discreetMode: boolean;
-  hasPin: boolean;
-  isLocked: boolean;
-  autoLock: boolean;
-  setAutoLock: (enabled: boolean) => void;
   consents: ConsentState;
   assessmentAnswers: AssessmentAnswers;
   assessmentResult: AssessmentEvaluationResult | null;
@@ -141,11 +132,6 @@ interface AppContextValue {
   setLocale: (loc: Locale) => void;
   setTextScale: (scale: TextScale) => void;
   setDarkMode: (dark: boolean) => void;
-  setDiscreetMode: (discreet: boolean) => void;
-  setupPin: (pin: string) => Promise<void>;
-  removePin: () => void;
-  lockApp: () => void;
-  unlockApp: (pin: string) => Promise<boolean>;
   updateConsent: (key: keyof ConsentState, granted: boolean) => Promise<void>;
   saveAssessment: (answers: AssessmentAnswers, freeText?: string) => Promise<AssessmentEvaluationResult>;
   addLabResult: (entry: Omit<LabResultEntry, 'id' | 'createdAt'>) => Promise<void>;
@@ -239,10 +225,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [locale, setLocaleState] = useState<Locale>(() => (localStorage.getItem('sbs_locale') as Locale) || 'id');
   const [textScale, setTextScaleState] = useState<TextScale>(() => (localStorage.getItem('sbs_text_scale') as TextScale) || 'normal');
   const [darkMode, setDarkModeState] = useState<boolean>(() => localStorage.getItem('sbs_dark_mode') === 'true');
-  const [discreetMode, setDiscreetModeState] = useState<boolean>(() => localStorage.getItem('sbs_discreet_mode') === 'true');
-  const [hasPin, setHasPin] = useState<boolean>(false);
-  const [autoLock, setAutoLockState] = useState<boolean>(false);
-  const [isLocked, setIsLocked] = useState<boolean>(false);
 
   const [consents, setConsents] = useState<ConsentState>(DEFAULT_CONSENTS);
   const [assessmentAnswers, setAssessmentAnswers] = useState<AssessmentAnswers>({});
@@ -505,7 +487,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logoutToWelcome = useCallback(() => {
     setAuthMode('welcome');
     setActivePersona('custom');
+    setUserEmail(null);
+    setDisplayName('Pengguna Anonim');
     localStorage.setItem('sbs_auth_mode', 'welcome');
+    localStorage.removeItem('sbs_user_email');
+    localStorage.removeItem('sbs_display_name');
   }, []);
 
   const updateProfile = useCallback(
@@ -573,26 +559,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const setDarkMode = useCallback((dark: boolean) => {
     setDarkModeState(dark);
   }, []);
-
-  const setDiscreetMode = useCallback((discreet: boolean) => {
-    setDiscreetModeState(discreet);
-  }, []);
-
-  const setAutoLock = useCallback((_enabled: boolean) => {}, []);
-
-  const setupPin = useCallback(async (_pin: string) => {}, []);
-
-  const removePin = useCallback(() => {
-    clearSecurityPin();
-    setHasPin(false);
-    setIsLocked(false);
-    localStorage.removeItem('sbs_is_locked');
-    localStorage.removeItem('sbs_auto_lock');
-  }, []);
-
-  const lockApp = useCallback(() => {}, []);
-
-  const unlockApp = useCallback(async (_pin: string) => true, []);
 
   const updateConsent = useCallback(
     async (key: keyof ConsentState, granted: boolean) => {
@@ -696,13 +662,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   );
 
   const createNewPairing = useCallback(
-    async (aliasA = 'Rendra (Suami)', aliasB = 'Sari (Istri)', customCode?: string) => {
+    async (aliasA?: string, aliasB?: string, customCode?: string) => {
+      const resolvedA =
+        aliasA?.trim() ||
+        (!displayName.includes('Anonim') ? displayName : 'Pasangan A');
+      const resolvedB = aliasB?.trim() || 'Pasangan';
       const cleanCustom = customCode?.trim().toUpperCase();
       const code = cleanCustom && cleanCustom.length >= 4 ? cleanCustom : Math.random().toString(36).substring(2, 6).toUpperCase() + '24';
       const newPairing: PairingState = {
         invite_code: code,
-        partner_a_alias: aliasA,
-        partner_b_alias: aliasB,
+        partner_a_alias: resolvedA,
+        partner_b_alias: resolvedB,
         status: 'active',
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         shared_items: {
@@ -721,7 +691,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setPairing(newPairing);
       await saveEncryptedItem('pairing', newPairing);
     },
-    [assessmentResult]
+    [assessmentResult, displayName]
   );
 
   const updatePlanStep = useCallback(
@@ -775,28 +745,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const code = 'MAYA-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-1H';
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
+      const ttcDurationLabels: Record<string, string> = {
+        under_6_months: 'Kurang dari 6 bulan program hamil',
+        '6_to_12_months': '6 sampai 12 bulan program hamil',
+        '12_to_24_months': '12 sampai 24 bulan program hamil',
+        over_24_months: 'Lebih dari 24 bulan program hamil',
+      };
+
       const snapshot: ShareTokenState['snapshot'] = {
         patientAlias: displayName.includes('Anonim') ? 'Pasien (Mode Anonim)' : displayName,
       };
       if (scope.includes('history')) {
-        snapshot.programDuration =
-          assessmentAnswers.ttc_duration === '6_to_12_months'
-            ? '6 sampai 12 bulan (8 bulan program hamil bersama istri)'
-            : assessmentAnswers.ttc_duration === '12_to_24_months'
-            ? 'Lebih dari 12 bulan'
-            : 'Sedang dalam program hamil bersama pasangan';
+        const durationKey = typeof assessmentAnswers.ttc_duration === 'string' ? assessmentAnswers.ttc_duration : '';
+        snapshot.programDuration = ttcDurationLabels[durationKey] || 'Belum mengisi durasi program hamil';
         snapshot.assessmentLevel =
-          assessmentResult?.levelLabel || 'Sebaiknya periksa dalam 1 sampai 2 bulan';
+          assessmentResult?.levelLabel || 'Belum menyelesaikan Cek Awal';
       }
       if (scope.includes('risk_factors')) {
-        snapshot.reportedRiskFactors =
-          assessmentResult && assessmentResult.factors.length > 0
+        snapshot.reportedRiskFactors = assessmentResult
+          ? assessmentResult.factors.length > 0
             ? assessmentResult.factors.map((f) => `${f.factorTitle} (${f.topic})`)
-            : [
-                'Durasi program hamil 6–12 bulan (8 bulan)',
-                'Paparan panas: memangku laptop & duduk > 6 jam/hari',
-                'Kebiasaan merokok ringan/vape',
-              ];
+            : ['Tidak ada faktor risiko utama yang dilaporkan pada Cek Awal']
+          : ['Belum menyelesaikan Cek Awal'];
       }
       if (scope.includes('lab_results')) {
         snapshot.labResults = labResults;
@@ -817,7 +787,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId, scope, snapshot }),
         });
-        if (res.ok) {
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
           const data = await res.json();
           tokenObj.token_code = data.token_code;
           tokenObj.expires_at = data.expires_at;
@@ -852,7 +822,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const res = await fetch(
           `/api/share-tokens/${encodeURIComponent(code)}?viewer=${encodeURIComponent(viewerName)}`
         );
-        if (res.ok) {
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
           const serverToken = (await res.json()) as ShareTokenState;
           if (shareToken && shareToken.token_code.toUpperCase() === code.toUpperCase()) {
             setShareToken(serverToken);
@@ -976,10 +946,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTickets(INITIAL_TICKETS);
     setHabitLog({});
     setCycleStartDateState(new Date().toISOString().slice(0, 10));
-    setDiscreetModeState(false);
-    setHasPin(false);
-    setAutoLockState(false);
-    setIsLocked(false);
     localStorage.removeItem('sbs_is_locked');
     localStorage.removeItem('sbs_auto_lock');
   }, [userId]);
@@ -995,11 +961,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         locale,
         textScale,
         darkMode,
-        discreetMode,
-        hasPin,
-        isLocked,
-        autoLock,
-        setAutoLock,
         consents,
         assessmentAnswers,
         assessmentResult,
@@ -1020,11 +981,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLocale,
         setTextScale,
         setDarkMode,
-        setDiscreetMode,
-        setupPin,
-        removePin,
-        lockApp,
-        unlockApp,
         updateConsent,
         saveAssessment,
         addLabResult,

@@ -18,6 +18,7 @@ import { useApp, type ShareTokenState } from '../context/AppContext';
 
 export const NakesDashboardPage: React.FC = () => {
   const {
+    locale,
     authMode,
     displayName,
     shareToken,
@@ -27,11 +28,13 @@ export const NakesDashboardPage: React.FC = () => {
     replyToTicket,
     loadRendraDemoScenario,
   } = useApp();
+  const isEn = locale === 'en';
   const [searchParams] = useSearchParams();
+  const urlCode = searchParams.get('code');
 
   const [nakesName, setNakesName] = useState<string>('dr. Maya (Dokter Umum Puskesmas)');
   const [codeInput, setCodeInput] = useState<string>(() => {
-    return searchParams.get('code') || shareToken?.token_code || 'MAYA-RENDRA-1H';
+    return urlCode || shareToken?.token_code || 'MAYA-RENDRA-1H';
   });
   const [loadedSummary, setLoadedSummary] = useState<ShareTokenState | null>(shareToken);
   const [errorMsg, setErrorMsg] = useState<string>('');
@@ -39,11 +42,27 @@ export const NakesDashboardPage: React.FC = () => {
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (shareToken && !loadedSummary) {
+    if (urlCode) {
+      setCodeInput(urlCode.toUpperCase());
+      recordNakesAccess(urlCode, nakesName).then((found) => {
+        if (found) {
+          setLoadedSummary(found);
+          setErrorMsg('');
+        } else {
+          setLoadedSummary(null);
+          setErrorMsg(
+            isEn
+              ? 'Summary code not found, revoked by patient, or past the 1-hour expiry window.'
+              : 'Kode ringkasan tidak ditemukan, sudah dicabut oleh pasien, atau telah melewati batas waktu 1 jam.'
+          );
+        }
+      });
+    } else if (shareToken && !loadedSummary) {
       setLoadedSummary(shareToken);
       setCodeInput(shareToken.token_code);
     }
-  }, [shareToken, loadedSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlCode, shareToken]);
 
   const handleOpenPatientCode = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -55,11 +74,15 @@ export const NakesDashboardPage: React.FC = () => {
       setLoadedSummary(found);
     } else {
       if (codeInput.trim().toUpperCase() === 'MAYA-RENDRA-1H') {
+        setLoadedSummary(null);
         await loadRendraDemoScenario();
         setErrorMsg('');
       } else {
+        setLoadedSummary(null);
         setErrorMsg(
-          'Kode ringkasan tidak ditemukan, sudah dicabut oleh pasien, atau telah melewati batas waktu 1 jam.'
+          isEn
+            ? 'Summary code not found, revoked by patient, or past the 1-hour expiry window.'
+            : 'Kode ringkasan tidak ditemukan, sudah dicabut oleh pasien, atau telah melewati batas waktu 1 jam.'
         );
       }
     }
@@ -83,6 +106,9 @@ export const NakesDashboardPage: React.FC = () => {
   };
 
   const activeData = loadedSummary || shareToken;
+  const isActiveExpired = Boolean(
+    activeData && new Date(activeData.expires_at).getTime() <= Date.now()
+  );
 
   return (
     <div className="space-y-6">
@@ -91,13 +117,20 @@ export const NakesDashboardPage: React.FC = () => {
         <div className="space-y-2.5 min-w-0">
           <div className="badge badge-success">
             <Stethoscope className="w-4 h-4 shrink-0" />
-            <span>Mode Tenaga Kesehatan (Ringan) • Konsultasi Efisien & Bermutu</span>
+            <span>
+              {isEn
+                ? 'Clinician Mode (Lightweight) • Efficient, Empathetic Consultation'
+                : 'Mode Tenaga Kesehatan (Ringan) • Konsultasi Efisien & Bermutu'}
+            </span>
           </div>
           <h1 className="page-title">
-            Dasbor Tenaga Kesehatan — {authMode === 'nakes' ? displayName : nakesName}
+            {isEn ? 'Healthcare Provider Dashboard' : 'Dasbor Tenaga Kesehatan'} —{' '}
+            {authMode === 'nakes' ? displayName : nakesName}
           </h1>
           <p className="page-lead">
-            Tinjau ringkasan pasien dari Kode QR (berlaku 1 jam), salin templat konseling terstruktur, dan jawab tiket pertanyaan anonim.
+            {isEn
+              ? 'Review 1-hour patient QR summaries, copy structured counseling templates, and answer anonymous patient questions.'
+              : 'Tinjau ringkasan pasien dari Kode QR (berlaku 1 jam), salin templat konseling terstruktur, dan jawab tiket pertanyaan anonim.'}
           </p>
         </div>
 
@@ -109,7 +142,7 @@ export const NakesDashboardPage: React.FC = () => {
             }
             className="btn btn-navy shrink-0 self-start lg:self-auto"
           >
-            Masuk sebagai dr. Maya (Peran Nakes)
+            {isEn ? 'Sign In as Dr. Maya (Provider Role)' : 'Masuk sebagai dr. Maya (Peran Nakes)'}
           </button>
         )}
       </section>
@@ -118,13 +151,15 @@ export const NakesDashboardPage: React.FC = () => {
       <section className="card p-5 sm:p-6 space-y-4">
         <h2 className="section-title flex items-start gap-2">
           <QrCode className="w-5 h-5 text-brand-teal shrink-0 mt-1" />
-          <span>Buka Ringkasan Pasien (Kode QR / Tautan 1 Jam)</span>
+          <span>{isEn ? 'Open Patient Summary (1-Hour QR / Token)' : 'Buka Ringkasan Pasien (Kode QR / Tautan 1 Jam)'}</span>
         </h2>
 
         <form onSubmit={handleOpenPatientCode} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1fr_1fr_auto] gap-3 items-end">
           <div>
             <label htmlFor="nakes-viewer-name" className="field-label">
-              Identitas Tenaga Kesehatan Pemeriksa (Tercatat di Log Pasien)
+              {isEn
+                ? 'Examining Provider Identity (Recorded in Patient Log)'
+                : 'Identitas Tenaga Kesehatan Pemeriksa (Tercatat di Log Pasien)'}
             </label>
             <input
               id="nakes-viewer-name"
@@ -138,7 +173,7 @@ export const NakesDashboardPage: React.FC = () => {
 
           <div>
             <label htmlFor="nakes-token-code" className="field-label">
-              Kode Ringkasan / Token QR Pasien
+              {isEn ? 'Patient Summary Code / QR Token' : 'Kode Ringkasan / Token QR Pasien'}
             </label>
             <input
               id="nakes-token-code"
@@ -146,7 +181,7 @@ export const NakesDashboardPage: React.FC = () => {
               required
               value={codeInput}
               onChange={(e) => setCodeInput(e.target.value.toUpperCase())}
-              placeholder="Contoh: MAYA-RENDRA-1H"
+              placeholder={isEn ? 'Example: MAYA-RENDRA-1H' : 'Contoh: MAYA-RENDRA-1H'}
               className="field w-full font-bold uppercase font-mono"
             />
           </div>
@@ -156,37 +191,40 @@ export const NakesDashboardPage: React.FC = () => {
               type="submit"
               className="btn btn-primary w-full"
             >
-              Buka & Catat Akses di Log Pasien
+              {isEn ? 'Open & Log Access' : 'Buka & Catat Akses di Log Pasien'}
             </button>
           </div>
         </form>
 
         {errorMsg && (
-          <div role="alert" className="p-3.5 rounded-xl bg-status-urgent-bg text-[#B33834] text-xs font-semibold flex items-center gap-2">
+          <div role="alert" className="p-3.5 rounded-xl bg-status-urgent-bg dark:bg-status-urgent/20 text-[#B33834] dark:text-[#FF8A85] text-xs font-semibold flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMsg}</span>
           </div>
         )}
       </section>
 
-      {/* Ringkasan Pasien yang Dibagikan (Hanya Menampilkan Bagian yang Disetujui Pasien) */}
-      {activeData && !activeData.revoked ? (
+      {/* Ringkasan Pasien yang Dibagikan (Hanya Menampilkan Bagian yang Disetujui Pasien & Belum Kedaluwarsa) */}
+      {activeData && !activeData.revoked && !isActiveExpired ? (
         <section className="card p-5 sm:p-6 border-brand-teal/50 ring-4 ring-brand-teal/10 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-navy/10 dark:border-white/10 pb-4">
             <div className="space-y-1">
               <span className="eyebrow flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 shrink-0" />
-                Ringkasan Pasien Terverifikasi • Kode: {activeData.token_code}
+                {isEn ? 'Verified Patient Summary' : 'Ringkasan Pasien Terverifikasi'} •{' '}
+                {isEn ? 'Code:' : 'Kode:'} {activeData.token_code}
               </span>
               <h2 className="text-xl font-extrabold text-brand-navy dark:text-white">
-                Pasien: {activeData.snapshot.patientAlias}
+                {isEn ? 'Patient:' : 'Pasien:'} {activeData.snapshot.patientAlias}
               </h2>
             </div>
 
             <div className="text-xs text-brand-navy/70 dark:text-white/70 flex items-center gap-1">
               <Clock className="w-4 h-4 text-brand-coral" />
               <span>
-                Berlaku s.d. {new Date(activeData.expires_at).toLocaleTimeString('id-ID')} WIB
+                {isEn
+                  ? `Valid until ${new Date(activeData.expires_at).toLocaleTimeString('en-US')}`
+                  : `Berlaku s.d. ${new Date(activeData.expires_at).toLocaleTimeString('id-ID')} WIB`}
               </span>
             </div>
           </div>
@@ -196,16 +234,20 @@ export const NakesDashboardPage: React.FC = () => {
             <div className="well p-4 sm:p-5 space-y-2.5">
               <h3 className="eyebrow flex items-center gap-1.5">
                 <ClipboardList className="w-4 h-4" />
-                1. Ringkasan Riwayat & Tingkat Saran
+                {isEn ? '1. History Summary & Guidance Level' : '1. Ringkasan Riwayat & Tingkat Saran'}
               </h3>
               {activeData.scope.includes('history') ? (
                 <div className="space-y-1.5 text-xs leading-relaxed">
                   <div>
-                    <span className="font-semibold">Durasi Program Hamil:</span>{' '}
+                    <span className="font-semibold">
+                      {isEn ? 'Trying to Conceive Duration:' : 'Durasi Program Hamil:'}
+                    </span>{' '}
                     {activeData.snapshot.programDuration}
                   </div>
                   <div>
-                    <span className="font-semibold">Hasil Cek Awal Mandiri:</span>{' '}
+                    <span className="font-semibold">
+                      {isEn ? 'Self-Check Guidance:' : 'Hasil Cek Awal Mandiri:'}
+                    </span>{' '}
                     <strong className="text-[#B93E2B] dark:text-[#FFA596]">
                       {activeData.snapshot.assessmentLevel}
                     </strong>
@@ -213,7 +255,9 @@ export const NakesDashboardPage: React.FC = () => {
                 </div>
               ) : (
                 <p className="text-xs italic text-brand-navy/60 dark:text-white/60">
-                  Tidak termasuk dalam cakupan persetujuan berbagi pasien.
+                  {isEn
+                    ? 'Excluded by patient sharing consent.'
+                    : 'Tidak termasuk dalam cakupan persetujuan berbagi pasien.'}
                 </p>
               )}
             </div>
@@ -222,7 +266,7 @@ export const NakesDashboardPage: React.FC = () => {
             <div className="well p-4 sm:p-5 space-y-2.5">
               <h3 className="eyebrow flex items-center gap-1.5">
                 <Activity className="w-4 h-4" />
-                2. Faktor Risiko yang Dilaporkan
+                {isEn ? '2. Reported Risk Factors' : '2. Faktor Risiko yang Dilaporkan'}
               </h3>
               {activeData.scope.includes('risk_factors') &&
               activeData.snapshot.reportedRiskFactors ? (
@@ -233,7 +277,9 @@ export const NakesDashboardPage: React.FC = () => {
                 </ul>
               ) : (
                 <p className="text-xs italic text-brand-navy/60 dark:text-white/60">
-                  Tidak termasuk dalam cakupan persetujuan berbagi pasien.
+                  {isEn
+                    ? 'Excluded by patient sharing consent.'
+                    : 'Tidak termasuk dalam cakupan persetujuan berbagi pasien.'}
                 </p>
               )}
             </div>
@@ -242,7 +288,9 @@ export const NakesDashboardPage: React.FC = () => {
           {/* Bagian 3: Hasil Laboratorium yang Dibagikan */}
           <div className="well p-4 sm:p-5 space-y-3">
             <h3 className="eyebrow">
-              3. Hasil Analisis Semen yang Dibagikan (Acuan Rujukan WHO 2021)
+              {isEn
+                ? '3. Shared Semen Analysis Results (WHO 2021 Reference)'
+                : '3. Hasil Analisis Semen yang Dibagikan (Acuan Rujukan WHO 2021)'}
             </h3>
             {activeData.scope.includes('lab_results') &&
             activeData.snapshot.labResults &&
@@ -251,12 +299,12 @@ export const NakesDashboardPage: React.FC = () => {
                 <table className="w-full min-w-[36rem] text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-brand-navy/15 dark:border-white/15 text-2xs text-brand-navy/65 dark:text-white/65 whitespace-nowrap">
-                      <th className="py-2 pr-3">Tanggal Tes</th>
-                      <th className="py-2 pr-3">Volume (≥1,4 mL)</th>
-                      <th className="py-2 pr-3">Konsentrasi (≥16 jt/mL)</th>
-                      <th className="py-2 pr-3">Motilitas Total (≥42%)</th>
-                      <th className="py-2 pr-3">Progresif (≥30%)</th>
-                      <th className="py-2">Morfologi (≥4%)</th>
+                      <th className="py-2 pr-3">{isEn ? 'Test Date' : 'Tanggal Tes'}</th>
+                      <th className="py-2 pr-3">{isEn ? 'Volume (≥1.4 mL)' : 'Volume (≥1,4 mL)'}</th>
+                      <th className="py-2 pr-3">{isEn ? 'Conc. (≥16 M/mL)' : 'Konsentrasi (≥16 jt/mL)'}</th>
+                      <th className="py-2 pr-3">{isEn ? 'Total Motility (≥42%)' : 'Motilitas Total (≥42%)'}</th>
+                      <th className="py-2 pr-3">{isEn ? 'Progressive (≥30%)' : 'Progresif (≥30%)'}</th>
+                      <th className="py-2">{isEn ? 'Morphology (≥4%)' : 'Morfologi (≥4%)'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-brand-navy/10 dark:divide-white/10">
@@ -271,7 +319,7 @@ export const NakesDashboardPage: React.FC = () => {
                               : 'text-[#1F7A50] dark:text-[#7BD9AC]'
                           }`}
                         >
-                          {lr.concentration_m_per_ml} jt/mL
+                          {lr.concentration_m_per_ml} {isEn ? 'M/mL' : 'jt/mL'}
                         </td>
                         <td
                           className={`py-2 pr-3 font-bold ${
@@ -291,22 +339,28 @@ export const NakesDashboardPage: React.FC = () => {
               </div>
             ) : (
               <p className="text-xs italic text-brand-navy/60 dark:text-white/60">
-                Belum ada hasil laboratorium yang dibagikan dalam ringkasan ini.
+                {isEn
+                  ? 'No semen analysis lab results shared in this summary yet.'
+                  : 'Belum ada hasil laboratorium yang dibagikan dalam ringkasan ini.'}
               </p>
             )}
           </div>
         </section>
       ) : null}
 
-      {/* Templat Konseling Tenaga Kesehatan (4 Topik Wajib: Gaya Hidup, Kecemasan, Komunikasi Pasangan, Rencana Tindak Lanjut) */}
+      {/* Templat Konseling Tenaga Kesehatan */}
       <section className="card p-5 sm:p-6 space-y-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="space-y-1">
             <h2 className="section-title">
-              Templat Konseling Siap Salin (Untuk Edukasi Pasien & Catatan Klinis)
+              {isEn
+                ? 'Ready-to-Copy Counseling Templates (Patient Education & Clinical Notes)'
+                : 'Templat Konseling Siap Salin (Untuk Edukasi Pasien & Catatan Klinis)'}
             </h2>
             <p className="text-xs text-brand-navy/70 dark:text-white/70">
-              Membantu dokter umum di Puskesmas/FKTP memberikan konseling singkat yang empatik, tidak menyalahkan, dan bermutu.
+              {isEn
+                ? 'Helps primary care clinicians deliver empathetic, blame-free, evidence-informed counseling quickly.'
+                : 'Membantu dokter umum di Puskesmas/FKTP memberikan konseling singkat yang empatik, tidak menyalahkan, dan bermutu.'}
             </p>
           </div>
 
@@ -322,7 +376,13 @@ export const NakesDashboardPage: React.FC = () => {
           >
             {copiedTplId === 'all' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             <span>
-              {copiedTplId === 'all' ? 'Semua Templat Disalin!' : 'Salin Paket Konseling Lengkap'}
+              {copiedTplId === 'all'
+                ? isEn
+                  ? 'All Templates Copied!'
+                  : 'Semua Templat Disalin!'
+                : isEn
+                ? 'Copy Full Counseling Pack'
+                : 'Salin Paket Konseling Lengkap'}
             </span>
           </button>
         </div>
@@ -335,7 +395,7 @@ export const NakesDashboardPage: React.FC = () => {
             >
               <div className="space-y-2.5">
                 <span className="badge badge-teal">
-                  Topik: {tpl.topic}
+                  {isEn ? 'Topic:' : 'Topik:'} {tpl.topic}
                 </span>
                 <h3 className="font-bold text-base leading-snug text-brand-navy dark:text-white">{tpl.title}</h3>
                 <pre className="whitespace-pre-wrap font-sans text-xs text-brand-navy/85 dark:text-white/85 leading-relaxed bg-surface dark:bg-surface-dark-card p-4 rounded-xl border border-brand-navy/5 dark:border-white/10">
@@ -355,7 +415,11 @@ export const NakesDashboardPage: React.FC = () => {
                 )}
                 <span>
                   {copiedTplId === tpl.id
-                    ? 'Templat Konseling Disalin!'
+                    ? isEn
+                      ? 'Counseling Template Copied!'
+                      : 'Templat Konseling Disalin!'
+                    : isEn
+                    ? 'Copy Counseling Template'
                     : 'Salin Templat Konseling'}
                 </span>
               </button>
@@ -369,10 +433,12 @@ export const NakesDashboardPage: React.FC = () => {
         <div className="space-y-1">
           <h2 className="section-title flex items-start gap-2">
             <MessageCircleQuestion className="w-5 h-5 text-brand-coral shrink-0 mt-1" />
-            <span>Tiket Pertanyaan Anonim Masuk (Tanya Nakes)</span>
+            <span>{isEn ? 'Anonymous Patient Question Queue (Ask Clinician)' : 'Tiket Pertanyaan Anonim Masuk (Tanya Nakes)'}</span>
           </h2>
           <p className="text-xs text-brand-navy/70 dark:text-white/70">
-            Jawab pertanyaan anonim yang dikirimkan pengguna melalui fitur Tanya Tenaga Kesehatan.
+            {isEn
+              ? 'Reply to anonymous questions submitted through the Ask Healthcare Provider feature.'
+              : 'Jawab pertanyaan anonim yang dikirimkan pengguna melalui fitur Tanya Tenaga Kesehatan.'}
           </p>
         </div>
 
@@ -391,7 +457,13 @@ export const NakesDashboardPage: React.FC = () => {
                       : 'bg-status-warning-bg text-[#7A5600] dark:bg-status-warning/20 dark:text-[#F3C64D]'
                   }`}
                 >
-                  {tItem.status === 'dijawab' ? 'Sudah Dijawab' : 'Menunggu Jawaban Nakes'}
+                  {tItem.status === 'dijawab'
+                    ? isEn
+                      ? 'Answered'
+                      : 'Sudah Dijawab'
+                    : isEn
+                    ? 'Awaiting Clinician Reply'
+                    : 'Menunggu Jawaban Nakes'}
                 </span>
               </div>
 
@@ -408,12 +480,16 @@ export const NakesDashboardPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
-                    aria-label="Tanggapan untuk tiket pertanyaan"
+                    aria-label={isEn ? 'Reply to question ticket' : 'Tanggapan untuk tiket pertanyaan'}
                     value={replyDrafts[tItem.id] || ''}
                     onChange={(e) =>
                       setReplyDrafts((prev) => ({ ...prev, [tItem.id]: e.target.value }))
                     }
-                    placeholder="Tulis tanggapan edukasi medis untuk pertanyaan anonim ini..."
+                    placeholder={
+                      isEn
+                        ? 'Write an educational clinical response for this anonymous question...'
+                        : 'Tulis tanggapan edukasi medis untuk pertanyaan anonim ini...'
+                    }
                     className="field flex-1"
                   />
                   <button
@@ -421,7 +497,7 @@ export const NakesDashboardPage: React.FC = () => {
                     onClick={() => handleSendReply(tItem.id)}
                     className="btn btn-primary"
                   >
-                    <Send className="w-4 h-4" /> Jawab
+                    <Send className="w-4 h-4" /> {isEn ? 'Reply' : 'Jawab'}
                   </button>
                 </div>
               )}

@@ -4,9 +4,7 @@ export const translations = {
   id: {
     brand: {
       name: 'Side by Side',
-      discreetName: 'Catatan Harian',
       slogan: 'Better together.',
-      discreetSlogan: 'Kesejahteraan & Kebiasaan Harian',
       welcomeGreeting: 'Selamat datang. Di sini, bertanya itu aman.',
       valueProposition:
         'Ruang privat tanpa penghakiman untuk memahami kesehatan reproduksi pria, melangkah bersama pasangan, dan terhubung ke layanan medis yang tepat.',
@@ -22,8 +20,6 @@ export const translations = {
       nakesDashboard: 'Dasbor Nakes',
       account: 'Akun Saya',
       settings: 'Pengaturan',
-      discreetMode: 'Mode Samaran',
-      lockScreen: 'Kunci PIN',
     },
     cta: {
       startAnonymous: 'Mulai tanpa akun',
@@ -91,9 +87,7 @@ export const translations = {
   en: {
     brand: {
       name: 'Side by Side',
-      discreetName: 'Daily Notes',
       slogan: 'Better together.',
-      discreetSlogan: 'Daily Habits & Wellness Log',
       welcomeGreeting: 'Welcome. Here, asking questions is safe.',
       valueProposition:
         'A private, judgment-free space to understand male reproductive health, walk together with your partner, and connect with trusted care.',
@@ -109,8 +103,6 @@ export const translations = {
       nakesDashboard: 'Provider View',
       account: 'My Account',
       settings: 'Settings',
-      discreetMode: 'Discreet Mode',
-      lockScreen: 'PIN Lock',
     },
     cta: {
       startAnonymous: 'Start without account',

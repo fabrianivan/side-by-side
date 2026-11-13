@@ -34,6 +34,7 @@ export const ResultsPage: React.FC = () => {
   } = useApp();
 
   const t = getTranslations(locale);
+  const isEn = locale === 'en';
   const navigate = useNavigate();
 
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
@@ -105,34 +106,34 @@ export const ResultsPage: React.FC = () => {
       <section className="page-header flex flex-col gap-4">
         <div className="space-y-2.5">
           <h1 className="page-title">
-            Tindak Lanjut Hasil Analisis Semen & Tren
+            {isEn ? 'Semen Analysis Follow-Up & Trends' : 'Tindak Lanjut Hasil Analisis Semen & Tren'}
           </h1>
           <p className="page-lead">
-            Sumber acuan: <strong>{semenReferenceConfig.source}</strong>
+            {isEn ? 'Reference source:' : 'Sumber acuan:'} <strong>{semenReferenceConfig.source}</strong>
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <Link
-            to="/simulator"
+            to={isEn ? '/semen-calculator' : '/simulator'}
             className="btn btn-secondary"
           >
             <Sliders className="w-4 h-4 text-brand-teal" />
-            <span>Simulator WHO</span>
+            <span>{isEn ? 'WHO Simulator' : 'Simulator WHO'}</span>
           </Link>
           <Link
-            to="/siklus-72-hari"
+            to={isEn ? '/cycle-tracker' : '/siklus-72-hari'}
             className="btn btn-secondary"
           >
             <Clock className="w-4 h-4 text-brand-teal" />
-            <span>Siklus 72 Hari</span>
+            <span>{isEn ? '72-Day Cycle' : 'Siklus 72 Hari'}</span>
           </Link>
           <Link
-            to="/checklist-dokter"
+            to={isEn ? '/doctor-checklist' : '/checklist-dokter'}
             className="btn btn-secondary"
           >
             <FileText className="w-4 h-4 text-brand-teal" />
-            <span>Tanya Dokter</span>
+            <span>{isEn ? 'Dr. Checklist' : 'Tanya Dokter'}</span>
           </Link>
           {labResults.length === 0 && (
             <button
@@ -141,7 +142,7 @@ export const ResultsPage: React.FC = () => {
               className="btn btn-coral-soft"
             >
               <Sparkles className="w-4 h-4" />
-              Muat 2 Contoh Hasil Rendra
+              {isEn ? 'Load 2 Sample Rendra Results' : 'Muat 2 Contoh Hasil Rendra'}
             </button>
           )}
           <button
@@ -150,7 +151,15 @@ export const ResultsPage: React.FC = () => {
             className="btn btn-primary"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>{showAddForm ? 'Tutup Formulir' : 'Input Hasil Baru'}</span>
+            <span>
+              {showAddForm
+                ? isEn
+                  ? 'Close Form'
+                  : 'Tutup Formulir'
+                : isEn
+                ? 'Log New Lab Result'
+                : 'Input Hasil Baru'}
+            </span>
           </button>
         </div>
       </section>
@@ -159,7 +168,9 @@ export const ResultsPage: React.FC = () => {
       <div className="px-4 py-3.5 rounded-2xl bg-brand-teal-light/60 dark:bg-brand-teal/15 border border-brand-teal/25 flex items-start gap-3 text-xs leading-relaxed font-semibold text-brand-navy dark:text-white">
         <Info className="w-5 h-5 text-brand-teal shrink-0" />
         <span>
-          {semenReferenceConfig.disclaimer} Aplikasi ini tidak memberikan diagnosis medis maupun saran obat, dosis, atau suplemen.
+          {isEn
+            ? `${t.disclaimer.results} This app does not provide medical diagnoses or recommend medications, dosages, or supplements.`
+            : `${semenReferenceConfig.disclaimer} Aplikasi ini tidak memberikan diagnosis medis maupun saran obat, dosis, atau suplemen.`}
         </span>
       </div>
 
@@ -347,7 +358,9 @@ export const ResultsPage: React.FC = () => {
             “{t.emptyStates.results}”
           </h2>
           <p className="text-xs sm:text-sm text-brand-navy/70 dark:text-white/70 max-w-md mx-auto">
-            Jika Anda sudah pernah menjalani analisis semen, masukkan angkanya untuk membaca penjelasan bahasa awam sesuai acuan WHO 2021.
+            {isEn
+              ? 'If you have completed a semen analysis, enter your numbers to read plain-language explanations based on WHO 2021 reference limits.'
+              : 'Jika Anda sudah pernah menjalani analisis semen, masukkan angkanya untuk membaca penjelasan bahasa awam sesuai acuan WHO 2021.'}
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <button
@@ -355,14 +368,14 @@ export const ResultsPage: React.FC = () => {
               onClick={() => setShowAddForm(true)}
               className="btn btn-primary"
             >
-              Input Hasil Analisis Semen
+              {isEn ? 'Log Semen Analysis Result' : 'Input Hasil Analisis Semen'}
             </button>
             <button
               type="button"
               onClick={() => loadRendraDemoScenario()}
               className="btn btn-secondary"
             >
-              Lihat Contoh Hasil & Grafik Tren Rendra
+              {isEn ? 'View Rendra Sample Results & Trend' : 'Lihat Contoh Hasil & Grafik Tren Rendra'}
             </button>
           </div>
         </section>
@@ -374,21 +387,23 @@ export const ResultsPage: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="space-y-1">
                   <span className="eyebrow">
-                    Hasil Terbaru • Tanggal Tes: {latestResult.testDate}
+                    {isEn ? `Latest Result • Test Date: ${latestResult.testDate}` : `Hasil Terbaru • Tanggal Tes: ${latestResult.testDate}`}
                   </span>
                   <h2 className="section-title">
-                    Penjelasan Istilah dalam Bahasa Awam (Acuan WHO Edisi ke-6)
+                    {isEn
+                      ? 'Plain-Language Explanation (WHO 6th Edition Reference)'
+                      : 'Penjelasan Istilah dalam Bahasa Awam (Acuan WHO Edisi ke-6)'}
                   </h2>
                 </div>
 
                 {hasValueOutsideReference && (
                   <button
                     type="button"
-                    onClick={() => navigate('/layanan')}
+                    onClick={() => navigate(isEn ? '/facilities' : '/layanan')}
                     className="btn btn-coral"
                   >
                     <MapPin className="w-4 h-4" />
-                    Cari dokter spesialis
+                    {isEn ? 'Find specialist doctor' : 'Cari dokter spesialis'}
                   </button>
                 )}
               </div>
@@ -420,7 +435,7 @@ export const ResultsPage: React.FC = () => {
                                 : 'bg-status-warning-bg text-[#7A5600] dark:bg-status-warning/20 dark:text-[#F3C64D]'
                             }`}
                           >
-                            Rujukan WHO ≥ {param.lowerReferenceLimit} {param.unit}
+                            {isEn ? 'WHO Ref' : 'Rujukan WHO'} ≥ {param.lowerReferenceLimit} {param.unit}
                           </span>
                         </div>
                       </div>
@@ -430,8 +445,8 @@ export const ResultsPage: React.FC = () => {
                       </p>
 
                       {!isAtOrAboveRef && (
-                        <div className="p-3 rounded-xl bg-status-warning-bg text-brand-navy text-xs leading-relaxed flex items-start gap-2">
-                          <AlertCircle className="w-4 h-4 text-[#B07E00] shrink-0 mt-0.5" />
+                        <div className="p-3 rounded-xl bg-status-warning-bg dark:bg-status-warning/15 text-brand-navy dark:text-[#F3C64D] text-xs leading-relaxed flex items-start gap-2">
+                          <AlertCircle className="w-4 h-4 text-[#B07E00] dark:text-[#F3C64D] shrink-0 mt-0.5" />
                           <span>{param.belowRangeNote}</span>
                         </div>
                       )}
@@ -453,10 +468,16 @@ export const ResultsPage: React.FC = () => {
                 <div className="space-y-1">
                   <h2 className="section-title flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-brand-teal shrink-0" />
-                    <span>Grafik Tren Antar Pemeriksaan ({labResults.length} Riwayat Tes)</span>
+                    <span>
+                      {isEn
+                        ? `Trend Chart Across Tests (${labResults.length} Records)`
+                        : `Grafik Tren Antar Pemeriksaan (${labResults.length} Riwayat Tes)`}
+                    </span>
                   </h2>
                   <p className="text-xs text-brand-navy/70 dark:text-white/70">
-                    Perbandingan perubahan parameter analisis semen Anda dari waktu ke waktu.
+                    {isEn
+                      ? 'Compare changes across your semen analysis parameters over time.'
+                      : 'Perbandingan perubahan parameter analisis semen Anda dari waktu ke waktu.'}
                   </p>
                 </div>
               </div>
@@ -465,30 +486,38 @@ export const ResultsPage: React.FC = () => {
                 {[
                   {
                     key: 'concentration_m_per_ml' as const,
-                    label: 'Konsentrasi (juta/mL)',
+                    label: isEn ? 'Concentration (M/mL)' : 'Konsentrasi (juta/mL)',
                     ref: 16,
                     maxScale: 40,
                   },
                   {
                     key: 'total_motility_pct' as const,
-                    label: 'Motilitas Total (%)',
+                    label: isEn ? 'Total Motility (%)' : 'Motilitas Total (%)',
                     ref: 42,
                     maxScale: 80,
                   },
                   {
                     key: 'morphology_normal_pct' as const,
-                    label: 'Morfologi Normal (%)',
+                    label: isEn ? 'Normal Morphology (%)' : 'Morfologi Normal (%)',
                     ref: 4,
                     maxScale: 10,
                   },
-                ].map((metric) => (
+                ].map((metric) => {
+                  const effectiveMax = Math.max(
+                    metric.maxScale,
+                    metric.ref * 1.25,
+                    ...labResults.map((entry) => entry[metric.key] * 1.15)
+                  );
+                  return (
                   <div
                     key={metric.key}
                     className="well p-4 sm:p-5 space-y-3.5"
                   >
                     <div className="flex items-center justify-between gap-2 text-xs font-bold">
                       <span className="text-brand-navy dark:text-white">{metric.label}</span>
-                      <span className="badge badge-teal shrink-0">Batas WHO: ≥ {metric.ref}</span>
+                      <span className="badge badge-teal shrink-0">
+                        {isEn ? 'WHO Limit:' : 'Batas WHO:'} ≥ {metric.ref}
+                      </span>
                     </div>
 
                     {/* Visualisasi Grafik Garis SVG dengan Garis Rujukan Putus-Putus WHO */}
@@ -511,7 +540,7 @@ export const ResultsPage: React.FC = () => {
 
                         {/* Garis Batas Rujukan Bawah WHO */}
                         {(() => {
-                          const refY = 80 - Math.min(62, (metric.ref / metric.maxScale) * 62);
+                          const refY = 80 - Math.min(62, (metric.ref / effectiveMax) * 62);
                           return (
                             <line
                               x1={12}
@@ -534,7 +563,7 @@ export const ResultsPage: React.FC = () => {
                                 ? 110
                                 : 28 + (idx / (labResults.length - 1)) * 164;
                             const val = entry[metric.key];
-                            const y = 80 - Math.min(62, (val / metric.maxScale) * 62);
+                            const y = 80 - Math.min(62, (val / effectiveMax) * 62);
                             return { x, y, val, date: entry.testDate };
                           });
                           const polyPoints = pts.map((p) => `${p.x},${p.y}`).join(' ');
@@ -579,7 +608,7 @@ export const ResultsPage: React.FC = () => {
                                     fill="currentColor"
                                     fillOpacity="0.6"
                                   >
-                                    Tes #{i + 1}
+                                    {isEn ? `Test #${i + 1}` : `Tes #${i + 1}`}
                                   </text>
                                 </g>
                               ))}
@@ -592,14 +621,14 @@ export const ResultsPage: React.FC = () => {
                       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-1 text-3xs font-semibold text-brand-navy/65 dark:text-white/65">
                         <span className="inline-flex items-center gap-1.5">
                           <span className="w-4 h-0.5 rounded-full bg-brand-teal" aria-hidden="true" />
-                          Hasil Anda
+                          {isEn ? 'Your result' : 'Hasil Anda'}
                         </span>
                         <span className="inline-flex items-center gap-1.5">
                           <span
                             className="w-4 border-t-2 border-dashed border-brand-navy/45 dark:border-white/50"
                             aria-hidden="true"
                           />
-                          Rujukan WHO ({metric.ref})
+                          {isEn ? `WHO Limit (${metric.ref})` : `Rujukan WHO (${metric.ref})`}
                         </span>
                       </div>
                     </div>
@@ -607,13 +636,13 @@ export const ResultsPage: React.FC = () => {
                     <div className="space-y-2">
                       {labResults.map((entry, idx) => {
                         const val = entry[metric.key];
-                        const widthPct = Math.min(100, Math.round((val / metric.maxScale) * 100));
+                        const widthPct = Math.min(100, Math.round((val / effectiveMax) * 100));
                         const meetsRef = val >= metric.ref;
                         return (
                           <div key={entry.id} className="space-y-1">
                             <div className="tabular flex justify-between text-2xs font-semibold text-brand-navy/80 dark:text-white/80">
                               <span>
-                                Tes #{idx + 1} ({entry.testDate})
+                                {isEn ? `Test #${idx + 1}` : `Tes #${idx + 1}`} ({entry.testDate})
                               </span>
                               <span className={meetsRef ? 'text-[#1F7A50] dark:text-[#7BD9AC] font-bold' : 'text-[#946A00] dark:text-[#F3C64D] font-bold'}>
                                 {val}
@@ -632,7 +661,8 @@ export const ResultsPage: React.FC = () => {
                       })}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Daftar Riwayat Tabel Ringkas */}

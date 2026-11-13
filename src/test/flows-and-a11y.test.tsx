@@ -12,8 +12,11 @@ import { FacilitiesPage } from '../pages/FacilitiesPage';
 import { ResultsPage } from '../pages/ResultsPage';
 import { NakesDashboardPage } from '../pages/NakesDashboardPage';
 import { AccountPage } from '../pages/AccountPage';
+import { SemenSimulatorPage } from '../pages/SemenSimulatorPage';
+import { SpermatogenesisTrackerPage } from '../pages/SpermatogenesisTrackerPage';
+import { DoctorChecklistPage } from '../pages/DoctorChecklistPage';
 import { Layout } from '../components/Layout';
-import { encryptPayload, decryptPayload, wipeAllLocalData, setSecurityPin } from '../lib/crypto-storage';
+import { encryptPayload, decryptPayload, wipeAllLocalData, saveEncryptedItem } from '../lib/crypto-storage';
 import { designTokens } from '../styles/design-tokens';
 
 function renderWithProviders(ui: React.ReactElement, initialEntries = ['/']) {
@@ -206,5 +209,91 @@ describe('Uji Alur Utama, Privasi & Aksesibilitas Dasar (Side by Side)', () => {
     expect(screen.getByText('Rendra Pratama')).toBeInTheDocument();
     expect(screen.getByText('rendra@demo.id')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Keluar Akun/i })).toBeInTheDocument();
+  });
+
+  it('Alur 9: ShareNakes tidak menyisipkan faktor risiko Rendra palsu bila pengguna belum mengisi Cek Awal', async () => {
+    renderWithProviders(
+      <>
+        <ShareNakesPage />
+        <NakesDashboardPage />
+      </>,
+      ['/bagikan-nakes']
+    );
+
+    const createQrBtn = screen.getByRole('button', {
+      name: /Buat Kode QR & Tautan Berlaku 1 Jam/i,
+    });
+    fireEvent.click(createQrBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Kode Akses Ringkasan Pasien:/i)).toBeInTheDocument();
+    });
+
+    expect(screen.getAllByText(/Belum menyelesaikan Cek Awal/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText(/Kebiasaan merokok ringan\/vape/i)).not.toBeInTheDocument();
+  });
+
+  it('Alur 10: NakesDashboard & ShareNakes menyembunyikan ringkasan QR yang sudah kedaluwarsa', async () => {
+    await saveEncryptedItem('share_token', {
+      token_code: 'EXPIRED-99-1H',
+      scope: ['history', 'risk_factors'],
+      expires_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+      revoked: false,
+      accessed_log: [],
+      snapshot: {
+        patientAlias: 'Pasien Anonim',
+        programDuration: '6 sampai 12 bulan',
+        assessmentLevel: 'Sebaiknya periksa dalam 1 sampai 2 bulan',
+      },
+    });
+
+    renderWithProviders(<NakesDashboardPage />, ['/nakes']);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Templat Konseling Siap Salin/i)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(/Ringkasan Pasien Terverifikasi/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/EXPIRED-99-1H/)).not.toBeInTheDocument();
+  });
+
+  it('Alur 11: Simulator WHO, Pelacak Siklus 72 Hari, dan Checklist Dokter merender dan interaktif', async () => {
+    const { unmount } = renderWithProviders(<SemenSimulatorPage />, ['/simulator']);
+    expect(screen.getByText(/Simulator & Kalkulator Parameter Sperma/i)).toBeInTheDocument();
+    const volSlider = screen.getByLabelText(/Volume Ejakulat \(mL\)/i) as HTMLInputElement;
+    fireEvent.change(volSlider, { target: { value: '3.0' } });
+    expect(volSlider.value).toBe('3');
+    unmount();
+
+    const tracker = renderWithProviders(<SpermatogenesisTrackerPage />, ['/siklus-72-hari']);
+    const firstHabit = tracker.getAllByRole('checkbox')[0];
+    expect(firstHabit).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(firstHabit);
+    expect(firstHabit).toHaveAttribute('aria-checked', 'true');
+    tracker.unmount();
+
+    renderWithProviders(<DoctorChecklistPage />, ['/checklist-dokter']);
+    expect(screen.getByText(/Apakah dokter bisa melakukan pemeriksaan fisik skrotum/i)).toBeInTheDocument();
+  });
+
+  it('Alur 12: Layout mendukung toggle Bahasa EN/ID dan Mode Gelap di header', async () => {
+    document.documentElement.classList.remove('dark');
+    renderWithProviders(
+      <Layout>
+        <div>Konten Uji</div>
+      </Layout>,
+      ['/']
+    );
+
+    const enBtn = screen.getByRole('button', { name: 'en' });
+    fireEvent.click(enBtn);
+    await waitFor(() => {
+      expect(screen.getByText(/Your journey/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /Manage Data/i })).toBeInTheDocument();
+    });
+
+    const themeBtn = screen.getByRole('button', { name: /Switch to dark theme/i });
+    fireEvent.click(themeBtn);
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
   });
 });

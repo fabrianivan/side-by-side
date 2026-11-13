@@ -35,6 +35,15 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
+import { readLocalValue, writeLocalValue } from '../lib/crypto-storage';
+
+const AVATAR_THEMES = ['teal', 'coral', 'navy', 'emerald', 'purple'] as const;
+type AvatarTheme = (typeof AVATAR_THEMES)[number];
+
+function loadSavedAvatarTheme(): AvatarTheme {
+  const stored = readLocalValue('sbs_avatar_theme');
+  return AVATAR_THEMES.includes(stored as AvatarTheme) ? (stored as AvatarTheme) : 'teal';
+}
 
 export const AccountPage: React.FC = () => {
   const {
@@ -114,7 +123,11 @@ export const AccountPage: React.FC = () => {
   const [securityPasswordInput, setSecurityPasswordInput] = useState<string>('');
   const [profileMessage, setProfileMessage] = useState<string>('');
   const [profileSuccess, setProfileSuccess] = useState<boolean>(false);
-  const [avatarTheme, setAvatarTheme] = useState<'teal' | 'coral' | 'navy' | 'emerald' | 'purple'>('teal');
+  const [avatarTheme, setAvatarTheme] = useState<AvatarTheme>(loadSavedAvatarTheme);
+
+  useEffect(() => {
+    setEditName(displayName);
+  }, [displayName]);
 
   // Delete Account Confirmation
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
@@ -242,7 +255,8 @@ export const AccountPage: React.FC = () => {
         body: JSON.stringify(body),
       });
 
-      if (res.ok) {
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      if (res.ok && isJson) {
         const data = await res.json();
         await loginAccount(data.email, data.role, data.displayName);
         setAuthSuccess(
@@ -262,6 +276,11 @@ export const AccountPage: React.FC = () => {
         setShowSwitchModal(false);
         setActiveTab('profile');
         return;
+      } else if (res.status === 404 || res.status >= 500 || !isJson) {
+        await loginAccount(emailInput, roleInput, nameInput || emailInput.split('@')[0]);
+        setAuthSuccess(isEn ? 'Signed in (offline safe mode).' : 'Berhasil masuk (mode luring).');
+        setShowSwitchModal(false);
+        setActiveTab('profile');
       } else {
         const errData = await res.json();
         setAuthError(errData.error || (isEn ? 'Authentication failed.' : 'Gagal memproses autentikasi.'));
@@ -284,7 +303,7 @@ export const AccountPage: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: emailInput, role: roleInput }),
         });
-        if (res.ok) {
+        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
           const data = await res.json();
           await loginAccount(data.email, data.role, data.displayName);
         } else {
@@ -688,7 +707,10 @@ export const AccountPage: React.FC = () => {
                       <button
                         key={clr}
                         type="button"
-                        onClick={() => setAvatarTheme(clr)}
+                        onClick={() => {
+                          setAvatarTheme(clr);
+                          writeLocalValue('sbs_avatar_theme', clr);
+                        }}
                         className={`w-9 h-9 rounded-xl transition shadow-xs flex items-center justify-center ${
                           clr === 'teal'
                             ? 'bg-brand-teal'

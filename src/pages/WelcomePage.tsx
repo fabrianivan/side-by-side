@@ -24,9 +24,11 @@ export const WelcomePage: React.FC = () => {
   const [authError, setAuthError] = useState('');
   const [magicLinkSent, setMagicLinkSent] = useState(false);
 
+  const isEn = locale === 'en';
+
   const handleStartAnonymous = async () => {
     await startAnonymousMode();
-    navigate('/');
+    navigate(isEn ? '/home' : '/');
   };
 
   const handleAccountSubmit = async (e: React.FormEvent) => {
@@ -35,7 +37,11 @@ export const WelcomePage: React.FC = () => {
 
     if (authTab === 'magic') {
       if (!email.includes('@')) {
-        setAuthError('Masukkan alamat email yang valid untuk menerima Magic Link.');
+        setAuthError(
+          isEn
+            ? 'Please enter a valid email address to receive a Magic Link.'
+            : 'Masukkan alamat email yang valid untuk menerima Magic Link.'
+        );
         return;
       }
       setMagicLinkSent(true);
@@ -43,7 +49,11 @@ export const WelcomePage: React.FC = () => {
     }
 
     if (!email.includes('@') || password.length < 6) {
-      setAuthError('Masukkan email yang valid dan kata sandi minimal 6 karakter.');
+      setAuthError(
+        isEn
+          ? 'Please enter a valid email and a password of at least 6 characters.'
+          : 'Masukkan email yang valid dan kata sandi minimal 6 karakter.'
+      );
       return;
     }
 
@@ -54,10 +64,21 @@ export const WelcomePage: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role }),
       });
-      if (res.ok) {
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      if (res.ok && isJson) {
         const data = await res.json();
         await loginAccount(data.email, data.role, data.displayName);
-        navigate(data.role === 'nakes' ? '/nakes' : '/');
+        navigate(
+          data.role === 'nakes' ? (isEn ? '/provider' : '/nakes') : isEn ? '/home' : '/'
+        );
+        return;
+      }
+      if (res.status !== 404 && res.status < 500 && isJson) {
+        const errData = await res.json();
+        setAuthError(
+          errData.error ||
+            (isEn ? 'Authentication failed. Please check your details.' : 'Gagal memproses autentikasi.')
+        );
         return;
       }
     } catch {
@@ -65,12 +86,12 @@ export const WelcomePage: React.FC = () => {
     }
 
     await loginAccount(email, role);
-    navigate(role === 'nakes' ? '/nakes' : '/');
+    navigate(role === 'nakes' ? (isEn ? '/provider' : '/nakes') : isEn ? '/home' : '/');
   };
 
   const handleStartDemoRendra = async () => {
     await switchDemoPersona('rendra');
-    navigate('/');
+    navigate(isEn ? '/home' : '/');
   };
 
   return (
@@ -99,7 +120,9 @@ export const WelcomePage: React.FC = () => {
                 Side by Side
               </p>
               <p className="text-xs text-brand-navy/70 dark:text-white/70">
-                Kesehatan Reproduksi Pria • Privat & Tanpa Penghakiman
+                {isEn
+                  ? 'Men’s Reproductive Health • Private & Judgment-Free'
+                  : 'Kesehatan Reproduksi Pria • Privat & Tanpa Penghakiman'}
               </p>
             </div>
           </div>
@@ -110,7 +133,7 @@ export const WelcomePage: React.FC = () => {
             className="btn btn-coral-soft self-start sm:self-auto"
           >
             <Sparkles className="w-4 h-4" />
-            Muat Skenario Demo Rendra (Siap Pakai)
+            {isEn ? 'Load Rendra Demo Scenario (Ready to Explore)' : 'Muat Skenario Demo Rendra (Siap Pakai)'}
           </button>
         </div>
 
@@ -132,7 +155,7 @@ export const WelcomePage: React.FC = () => {
             className="btn btn-primary btn-lg flex-1"
           >
             <ShieldCheck className="w-5 h-5" />
-            Mulai tanpa akun
+            {t.cta.startAnonymous}
             <ArrowRight className="w-4 h-4" />
           </button>
 
@@ -142,7 +165,7 @@ export const WelcomePage: React.FC = () => {
             aria-expanded={showAuthForm}
             className="btn btn-secondary btn-lg flex-1"
           >
-            Buat akun
+            {isEn ? 'Create account' : 'Buat akun'}
           </button>
         </div>
 
@@ -152,9 +175,13 @@ export const WelcomePage: React.FC = () => {
             <div className="icon-tile w-10 h-10 rounded-xl bg-brand-teal/15 text-brand-teal">
               <Lock className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-sm text-brand-navy dark:text-white">1. Privasi Dulu</h3>
+            <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+              {isEn ? '1. Privacy First' : '1. Privasi Dulu'}
+            </h3>
             <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              Bisa dipakai tanpa akun. Jawaban Anda disimpan aman langsung di perangkat dan tidak dikirim ke server.
+              {isEn
+                ? 'Start without an account. Your answers are encrypted directly on this device and never sent raw to any server.'
+                : 'Bisa dipakai tanpa akun. Jawaban Anda disimpan aman langsung di perangkat dan tidak dikirim ke server.'}
             </p>
           </div>
 
@@ -162,9 +189,13 @@ export const WelcomePage: React.FC = () => {
             <div className="icon-tile w-10 h-10 rounded-xl bg-brand-coral/15 text-brand-coral-dark dark:text-brand-coral">
               <HeartHandshake className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-sm text-brand-navy dark:text-white">2. Berdua, Tanpa Penghakiman</h3>
+            <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+              {isEn ? '2. Together, No Blame' : '2. Berdua, Tanpa Penghakiman'}
+            </h3>
             <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              Dampingi pasangan lewat daftar langkah bersama tanpa harus membuka isi kuesioner atau hasil lab pribadi Anda.
+              {isEn
+                ? 'Walk side-by-side through a shared checklist without needing to reveal personal quiz answers or lab numbers.'
+                : 'Dampingi pasangan lewat daftar langkah bersama tanpa harus membuka isi kuesioner atau hasil lab pribadi Anda.'}
             </p>
           </div>
 
@@ -172,9 +203,13 @@ export const WelcomePage: React.FC = () => {
             <div className="icon-tile w-10 h-10 rounded-xl bg-status-success/15 text-status-success">
               <UserCheck className="w-5 h-5" />
             </div>
-            <h3 className="font-bold text-sm text-brand-navy dark:text-white">3. Batas Medis Jelas</h3>
+            <h3 className="font-bold text-sm text-brand-navy dark:text-white">
+              {isEn ? '3. Clear Medical Boundaries' : '3. Batas Medis Jelas'}
+            </h3>
             <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-              Panduan edukasi berbasis pedoman WHO dan navigasi layanan ramah pria—bukan klaim diagnosis atau saran obat.
+              {isEn
+                ? 'WHO-referenced educational guidance and men-friendly care navigation—not medical diagnosis or prescription advice.'
+                : 'Panduan edukasi berbasis pedoman WHO dan navigasi layanan ramah pria—bukan klaim diagnosis atau saran obat.'}
             </p>
           </div>
         </div>
@@ -231,22 +266,26 @@ export const WelcomePage: React.FC = () => {
             </div>
 
             {magicLinkSent ? (
-              <div className="p-4 rounded-card bg-status-success-bg border border-status-success/30 space-y-3 text-xs">
+              <div className="p-4 rounded-card bg-status-success-bg dark:bg-status-success/15 border border-status-success/30 space-y-3 text-xs">
                 <div className="font-bold text-status-success text-sm">
-                  Tautan Masuk Sekali Pakai (Magic Link) Terkirim ke {email}!
+                  {isEn
+                    ? `One-Time Sign-In Link (Magic Link) Sent to ${email}!`
+                    : `Tautan Masuk Sekali Pakai (Magic Link) Terkirim ke ${email}!`}
                 </div>
-                <p className="text-brand-navy/85 leading-relaxed">
-                  Periksa kotak masuk email Anda untuk masuk tanpa kata sandi. Untuk keperluan demo, klik tombol di bawah ini untuk langsung memverifikasi tautan:
+                <p className="text-brand-navy/85 dark:text-white/85 leading-relaxed">
+                  {isEn
+                    ? 'Check your inbox for passwordless sign-in. For demo purposes, click the button below to verify immediately:'
+                    : 'Periksa kotak masuk email Anda untuk masuk tanpa kata sandi. Untuk keperluan demo, klik tombol di bawah ini untuk langsung memverifikasi tautan:'}
                 </p>
                 <button
                   type="button"
                   onClick={async () => {
                     await loginAccount(email, role);
-                    navigate(role === 'nakes' ? '/nakes' : '/');
+                    navigate(role === 'nakes' ? (isEn ? '/provider' : '/nakes') : isEn ? '/home' : '/');
                   }}
                   className="btn btn-primary"
                 >
-                  Verifikasi Magic Link & Masuk Sekarang →
+                  {isEn ? 'Verify Magic Link & Enter App →' : 'Verifikasi Magic Link & Masuk Sekarang →'}
                 </button>
               </div>
             ) : (
@@ -328,10 +367,18 @@ export const WelcomePage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="section-title">
-              Data Anda & Persetujuan Granular
+              {isEn ? 'Your Data & Granular Consent' : 'Data Anda & Persetujuan Granular'}
             </h2>
             <p className="text-xs text-brand-navy/75 dark:text-white/75 mt-1 leading-relaxed">
-              Semua opsi di bawah ini bernilai <strong>NONAKTIF (OFF) secara default</strong>. Anda memegang kendali penuh kapan saja.
+              {isEn ? (
+                <>
+                  All options below are <strong>OFF by default</strong>. You stay in complete control anytime.
+                </>
+              ) : (
+                <>
+                  Semua opsi di bawah ini bernilai <strong>NONAKTIF (OFF) secara default</strong>. Anda memegang kendali penuh kapan saja.
+                </>
+              )}
             </p>
           </div>
         </div>

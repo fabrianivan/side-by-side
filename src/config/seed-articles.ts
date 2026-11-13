@@ -348,8 +348,8 @@ export const seedFaqs: SeedFaq[] = [
   },
   {
     id: 'faq-5',
-    category: 'Keamanan Aplikasi',
-    question: 'Bagaimana jika saya membuka aplikasi ini di tempat umum atau kantor?',
-    answer: 'Aplikasi ini menyediakan fitur Kunci PIN instan di bilah atas. Anda dapat langsung mengunci layar dalam 1 ketukan kapan pun Anda perlu meninggalkan perangkat atau berada di tempat umum, tanpa perlu khawatir data terlihat orang lain.'
+    category: 'Privasi & Keamanan',
+    question: 'Bagaimana jika saya membuka aplikasi ini di tempat umum atau perangkat bersama?',
+    answer: 'Anda dapat memakai Mode Anonim tanpa email, dan seluruh data di perangkat dienkripsi secara lokal menggunakan Web Crypto AES-GCM-256. Selain itu, seluruh persetujuan berbagi bersifat opt-in (mati secara default), dan Anda dapat menghapus seluruh data lokal dalam dua langkah kapan saja dari menu Pengaturan.'
   }
 ];

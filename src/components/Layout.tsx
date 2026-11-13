@@ -20,6 +20,8 @@ import {
   FileText,
   LayoutGrid,
   X,
+  Sun,
+  Moon,
   type LucideIcon,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
@@ -30,7 +32,6 @@ interface NavItem {
   aliases: string[];
   label: string;
   shortLabel: string;
-  discreetLabel: string;
   icon: LucideIcon;
 }
 
@@ -46,7 +47,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     activePersona,
     displayName,
     locale,
+    darkMode,
     setLocale,
+    setDarkMode,
     switchDemoPersona,
   } = useApp();
 
@@ -57,15 +60,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [demoPanelOpen, setDemoPanelOpen] = useState(true);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const handlePersonaClick = async (persona: 'rendra' | 'sari' | 'maya') => {
-    await switchDemoPersona(persona);
-    if (persona === 'rendra') navigate('/');
-    if (persona === 'sari') navigate('/berdua');
-    if (persona === 'maya') navigate('/nakes');
-  };
-
   const isEn = locale === 'en';
   const isSignedIn = authMode === 'account' || authMode === 'nakes';
+
+  const handlePersonaClick = async (persona: 'rendra' | 'sari' | 'maya') => {
+    await switchDemoPersona(persona);
+    if (persona === 'rendra') navigate(isEn ? '/home' : '/');
+    if (persona === 'sari') navigate(isEn ? '/couple' : '/berdua');
+    if (persona === 'maya') navigate(isEn ? '/provider' : '/nakes');
+  };
 
   const navGroups: NavGroup[] = [
     {
@@ -77,7 +80,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/', '/home', '/beranda'],
           label: t.nav.home,
           shortLabel: t.nav.home,
-          discreetLabel: isEn ? 'Overview' : 'Ringkasan',
           icon: Home,
         },
         {
@@ -85,7 +87,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/cek-awal', '/assessment', '/self-check'],
           label: t.nav.assessment,
           shortLabel: t.nav.assessment,
-          discreetLabel: isEn ? 'Questionnaire' : 'Kuesioner',
           icon: ClipboardCheck,
         },
         {
@@ -93,7 +94,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/layanan', '/facilities', '/clinics'],
           label: t.nav.facilities,
           shortLabel: isEn ? 'Care' : 'Layanan',
-          discreetLabel: isEn ? 'Directory' : 'Direktori',
           icon: MapPin,
         },
         {
@@ -101,7 +101,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/berdua', '/couple', '/our-plan'],
           label: t.nav.couple,
           shortLabel: isEn ? 'Our Plan' : 'Rencana',
-          discreetLabel: isEn ? 'Our Plan' : 'Rencana',
           icon: Users,
         },
         {
@@ -109,7 +108,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/hasil', '/results'],
           label: t.nav.results,
           shortLabel: isEn ? 'Results' : 'Hasil',
-          discreetLabel: isEn ? 'Records' : 'Catatan',
           icon: Activity,
         },
       ],
@@ -123,7 +121,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/simulator', '/kalkulator', '/semen-calculator'],
           label: isEn ? 'Simulator' : 'Simulator Lab',
           shortLabel: 'Simulator',
-          discreetLabel: isEn ? 'Simulator' : 'Simulator',
           icon: Sliders,
         },
         {
@@ -131,7 +128,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/siklus-72-hari', '/cycle-tracker', '/sperm-cycle'],
           label: isEn ? '72-Day Cycle' : 'Siklus 72 Hari',
           shortLabel: isEn ? '72-Day Cycle' : 'Siklus 72 Hari',
-          discreetLabel: isEn ? 'Tracker' : 'Pelacak',
           icon: Calendar,
         },
         {
@@ -139,7 +135,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/checklist-dokter', '/doctor-checklist', '/questions-doctor'],
           label: isEn ? 'Dr. Checklist' : 'Tanya Dokter',
           shortLabel: isEn ? 'Dr. Checklist' : 'Tanya Dokter',
-          discreetLabel: isEn ? 'Questions' : 'Pertanyaan',
           icon: FileText,
         },
         {
@@ -147,7 +142,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/pustaka', '/library', '/education'],
           label: t.nav.library,
           shortLabel: t.nav.library,
-          discreetLabel: isEn ? 'Articles' : 'Bacaan',
           icon: BookOpen,
         },
       ],
@@ -161,7 +155,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/bagikan-nakes', '/share', '/share-doctor'],
           label: t.nav.shareNakes,
           shortLabel: t.nav.shareNakes,
-          discreetLabel: isEn ? 'QR Code' : 'Kode QR',
           icon: QrCode,
         },
         {
@@ -169,7 +162,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/nakes', '/provider', '/doctor'],
           label: t.nav.nakesDashboard,
           shortLabel: t.nav.nakesDashboard,
-          discreetLabel: isEn ? 'Provider View' : 'Panel Mitra',
           icon: Stethoscope,
         },
       ],
@@ -183,7 +175,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/akun', '/account', '/profile'],
           label: t.nav.account,
           shortLabel: t.nav.account,
-          discreetLabel: isEn ? 'Account' : 'Akun',
           icon: User,
         },
         {
@@ -191,7 +182,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           aliases: ['/pengaturan', '/settings'],
           label: t.nav.settings,
           shortLabel: t.nav.settings,
-          discreetLabel: isEn ? 'Settings' : 'Pengaturan',
           icon: Settings,
         },
       ],
@@ -342,14 +332,41 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <span className="truncate text-brand-navy dark:text-white">{activeItem?.label ?? t.nav.home}</span>
             {authMode === 'anonymous' && (
               <span className="badge badge-teal ml-2">
-                <ShieldCheck className="w-3 h-3" /> Anonim Terenkripsi
+                <ShieldCheck className="w-3 h-3" />{' '}
+                {isEn ? 'Encrypted Anonymous' : 'Anonim Terenkripsi'}
               </span>
             )}
           </div>
 
-          {/* Tombol Cepat: Bahasa & Akun */}
+          {/* Tombol Cepat: Bahasa, Tema & Akun */}
           <div className="flex items-center gap-2 shrink-0">
             {languageSwitcher}
+
+            <button
+              type="button"
+              onClick={() => setDarkMode(!darkMode)}
+              aria-label={
+                isEn
+                  ? darkMode
+                    ? 'Switch to light theme'
+                    : 'Switch to dark theme'
+                  : darkMode
+                  ? 'Aktifkan mode terang'
+                  : 'Aktifkan mode gelap'
+              }
+              title={
+                isEn
+                  ? darkMode
+                    ? 'Light mode'
+                    : 'Dark mode'
+                  : darkMode
+                  ? 'Mode Terang'
+                  : 'Mode Gelap'
+              }
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-brand-navy/10 dark:border-white/15 bg-surface dark:bg-white/[0.06] text-brand-navy dark:text-white hover:border-brand-teal transition"
+            >
+              {darkMode ? <Sun className="w-4 h-4 text-[#FFA596]" /> : <Moon className="w-4 h-4" />}
+            </button>
 
             {/* Tombol Akun Saya & Status Sinkronisasi */}
             <NavLink
@@ -413,7 +430,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                 <Sparkles className="w-4 h-4 text-brand-coral" />
               </span>
               <span className="text-2xs sm:text-xs font-bold tracking-wide leading-snug">
-                PANEL DEMO HACKATHON — Peran Aktif: <span className="text-brand-coral">{displayName}</span>
+                {isEn ? 'HACKATHON DEMO PANEL — Active Role:' : 'PANEL DEMO HACKATHON — Peran Aktif:'}{' '}
+                <span className="text-brand-coral">{displayName}</span>
               </span>
             </div>
             <button
@@ -424,11 +442,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             >
               {demoPanelOpen ? (
                 <>
-                  Sembunyikan <ChevronDown className="w-3.5 h-3.5" />
+                  {isEn ? 'Hide' : 'Sembunyikan'} <ChevronDown className="w-3.5 h-3.5" />
                 </>
               ) : (
                 <>
-                  Tampilkan <ChevronUp className="w-3.5 h-3.5" />
+                  {isEn ? 'Show' : 'Tampilkan'} <ChevronUp className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
@@ -438,27 +456,32 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <div className="px-4 sm:px-5 pb-5 space-y-4">
               <div className="pt-4 border-t border-white/10 space-y-2.5">
                 <p className="text-2xs text-white/70">
-                  Klik persona untuk memuat skenario demo siap pakai secara instan:
+                  {isEn
+                    ? 'Click a persona to load a ready-to-explore demo scenario:'
+                    : 'Klik persona untuk memuat skenario demo siap pakai secara instan:'}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {(
                     [
                       {
                         key: 'rendra',
-                        label: '1. Rendra (32 thn, Suami)',
+                        label: isEn ? '1. Rendra (32 yo, Husband)' : '1. Rendra (32 thn, Suami)',
                         active: activePersona === 'rendra',
                         activeClass: 'bg-brand-teal text-white ring-2 ring-white/80',
                       },
                       {
                         key: 'sari',
-                        label: '2. Sari (30 thn, Istri)',
+                        label: isEn ? '2. Sari (30 yo, Partner)' : '2. Sari (30 thn, Istri)',
                         active: activePersona === 'sari',
                         activeClass: 'bg-brand-coral text-brand-navy-deep ring-2 ring-white/80',
                       },
                       {
                         key: 'maya',
-                        label: '3. dr. Maya (Nakes Puskesmas)',
-                        active: activePersona === 'maya' || location.pathname === '/nakes',
+                        label: isEn ? '3. Dr. Maya (Clinic Physician)' : '3. dr. Maya (Nakes Puskesmas)',
+                        active:
+                          activePersona === 'maya' ||
+                          location.pathname === '/nakes' ||
+                          location.pathname === '/provider',
                         activeClass: 'bg-status-success text-white ring-2 ring-white/80',
                       },
                     ] as const
@@ -480,15 +503,41 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
               {/* Alur Cerita Demo 6 Langkah Sesuai Spesifikasi #DATA DEMO */}
               <div className="pt-4 border-t border-white/10 space-y-2.5">
-                <p className="text-2xs text-white/70 font-semibold">Alur Demo Pitch:</p>
+                <p className="text-2xs text-white/70 font-semibold">
+                  {isEn ? 'Guided Demo Flow:' : 'Alur Demo Pitch:'}
+                </p>
                 <div className="flex flex-wrap items-center gap-1.5">
                   {[
-                    { label: '① Cek Awal (1–2 bln)', to: '/cek-awal' },
-                    { label: '② Ajak Sari (Templat)', to: '/berdua' },
-                    { label: '③ Klinik JKN & Ramah Pria', to: '/layanan' },
-                    { label: '④ Hasil & Tren WHO', to: '/hasil' },
-                    { label: '⑤ Buat QR 1 Jam', to: '/bagikan-nakes' },
-                    { label: '⑥ Dasbor dr. Maya', to: '/nakes' },
+                    {
+                      label: isEn ? '① Self Check (1–2 mo)' : '① Cek Awal (1–2 bln)',
+                      to: isEn ? '/assessment' : '/cek-awal',
+                      aliases: ['/cek-awal', '/assessment', '/self-check'],
+                    },
+                    {
+                      label: isEn ? '② Invite Partner' : '② Ajak Sari (Templat)',
+                      to: isEn ? '/couple' : '/berdua',
+                      aliases: ['/berdua', '/couple', '/our-plan'],
+                    },
+                    {
+                      label: isEn ? '③ Men-Friendly Care' : '③ Klinik JKN & Ramah Pria',
+                      to: isEn ? '/facilities' : '/layanan',
+                      aliases: ['/layanan', '/facilities', '/clinics'],
+                    },
+                    {
+                      label: isEn ? '④ Results & WHO Trend' : '④ Hasil & Tren WHO',
+                      to: isEn ? '/results' : '/hasil',
+                      aliases: ['/hasil', '/results'],
+                    },
+                    {
+                      label: isEn ? '⑤ 1-Hr Doctor QR' : '⑤ Buat QR 1 Jam',
+                      to: isEn ? '/share' : '/bagikan-nakes',
+                      aliases: ['/bagikan-nakes', '/share', '/share-doctor'],
+                    },
+                    {
+                      label: isEn ? '⑥ Dr. Maya Dashboard' : '⑥ Dasbor dr. Maya',
+                      to: isEn ? '/provider' : '/nakes',
+                      aliases: ['/nakes', '/provider', '/doctor'],
+                    },
                   ].map((step) => (
                     <button
                       key={step.to}
@@ -500,7 +549,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                         navigate(step.to);
                       }}
                       className={`px-3 py-2 rounded-full text-2xs transition ${
-                        location.pathname === step.to
+                        step.aliases.includes(location.pathname)
                           ? 'bg-brand-coral text-brand-navy-deep font-bold'
                           : 'bg-white/[0.06] hover:bg-white/[0.14] text-white/85 font-medium'
                       }`}
@@ -520,12 +569,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 xl:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
           <p className="leading-relaxed max-w-3xl">{t.disclaimer.footer}</p>
           <div className="no-print flex items-center gap-3 shrink-0 font-bold text-brand-teal dark:text-[#7FDADB]">
-            <NavLink to="/pengaturan" className="hover:underline underline-offset-4">
-              Kelola Data
+            <NavLink to={isEn ? '/settings' : '/pengaturan'} className="hover:underline underline-offset-4">
+              {isEn ? 'Manage Data' : 'Kelola Data'}
             </NavLink>
             <span aria-hidden="true">•</span>
             <NavLink to="/welcome" className="hover:underline underline-offset-4">
-              Layar Sambutan
+              {isEn ? 'Welcome Screen' : 'Layar Sambutan'}
             </NavLink>
           </div>
         </div>

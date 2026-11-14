@@ -26,9 +26,6 @@ npm test
 
 # 5. Bangun bundle produksi (TypeScript + Vite)
 npm run build
-
-# 5. Build produksi (TypeScript + Vite PWA bundle)
-npm run build
 ```
 
 ---

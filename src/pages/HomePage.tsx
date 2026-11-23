@@ -10,15 +10,17 @@ import {
   ArrowRight,
   ShieldCheck,
   Calendar,
-  Sparkles,
   CheckCircle2,
   Sliders,
   FileText,
   Clock,
+  LineChart,
+  Route as RouteIcon,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
 import { PageHeader } from '../components/ui';
+import { computePathwayStages, PATHWAY_STAGES } from '../lib/care-pathway';
 
 export const HomePage: React.FC = () => {
   const {
@@ -30,12 +32,24 @@ export const HomePage: React.FC = () => {
     reminders,
     pairing,
     startAnonymousMode,
-    switchDemoPersona,
+    userId,
+    healthJournal,
   } = useApp();
 
   const t = getTranslations(locale);
   const navigate = useNavigate();
   const isEn = locale === 'en';
+  const pathwayStages = computePathwayStages(healthJournal.carePathway, Boolean(assessmentResult));
+  const pathwayDone = pathwayStages.filter((st) => st.status === 'done').length;
+  const nextPathwayKey = pathwayStages.find((st) => st.status === 'current')?.key;
+  const nextPathwayStage = PATHWAY_STAGES.find((st) => st.key === nextPathwayKey);
+  const lastCheckInEntry = healthJournal.checkIns[healthJournal.checkIns.length - 1];
+  const lastCheckIn = lastCheckInEntry
+    ? new Date(`${lastCheckInEntry.date}T00:00:00`).toLocaleDateString(isEn ? 'en-GB' : 'id-ID', {
+        day: 'numeric',
+        month: 'short',
+      })
+    : '';
 
   // Tentukan "Satu Langkah Kecil Berikutnya" secara dinamis
   const getNextStepCard = () => {
@@ -121,14 +135,6 @@ export const HomePage: React.FC = () => {
                 {isEn ? 'Enable Anonymous Mode' : 'Aktifkan Mode Anonim'}
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => switchDemoPersona('rendra')}
-              className="btn btn-coral-soft"
-            >
-              <Sparkles className="w-4 h-4" />
-              {isEn ? 'Load Rendra Demo' : 'Isi Skenario Rendra'}
-            </button>
           </>
         }
       />
@@ -205,6 +211,76 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Jalur Perawatan Terhubung & Progres Privat */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="card p-5 sm:p-6 space-y-3" aria-labelledby="home-pathway-title">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="home-pathway-title" className="section-title flex items-center gap-2.5">
+              <RouteIcon className="w-5 h-5 text-brand-teal" />
+              {isEn ? 'My Care Pathway' : 'Jalur Perawatan Saya'}
+            </h2>
+            <span className="badge badge-teal tabular">
+              {pathwayDone}/6
+            </span>
+          </div>
+          <div
+            role="progressbar"
+            aria-valuenow={pathwayDone}
+            aria-valuemin={0}
+            aria-valuemax={6}
+            aria-label={isEn ? 'Care pathway progress' : 'Progres jalur perawatan'}
+            className="progress-track"
+          >
+            <div className="progress-fill" style={{ width: `${(pathwayDone / 6) * 100}%` }} />
+          </div>
+          <p className="text-xs text-brand-navy/75 dark:text-white/75">
+            {nextPathwayStage
+              ? isEn
+                ? `Next: ${nextPathwayStage.title.en} — ${nextPathwayStage.description.en}`
+                : `Berikutnya: ${nextPathwayStage.title.id} — ${nextPathwayStage.description.id}`
+              : isEn
+              ? 'All stages done. Keep following your after-care plan.'
+              : 'Semua tahap selesai. Tetap ikuti rencana perawatan lanjutan Anda.'}
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary w-full"
+            onClick={() => navigate(isEn ? '/care-pathway' : '/jalur-perawatan')}
+          >
+            {isEn ? 'Open my pathway' : 'Buka jalur saya'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </section>
+
+        <section className="card p-5 sm:p-6 space-y-3" aria-labelledby="home-progress-title">
+          <h2 id="home-progress-title" className="section-title flex items-center gap-2.5">
+            <LineChart className="w-5 h-5 text-brand-teal" />
+            {isEn ? 'My Progress (private)' : 'Progres Saya (privat)'}
+          </h2>
+          <p className="text-xs text-brand-navy/75 dark:text-white/75">
+            {healthJournal.checkIns.length + healthJournal.assessmentHistory.length > 0
+              ? isEn
+                ? `${healthJournal.assessmentHistory.length} self-check(s) and ${healthJournal.checkIns.length} check-in(s) saved, encrypted on your device.${
+                    lastCheckIn ? ` Last check-in: ${lastCheckIn}.` : ''
+                  }`
+                : `${healthJournal.assessmentHistory.length} Cek Awal dan ${healthJournal.checkIns.length} check-in tersimpan terenkripsi di perangkat Anda.${
+                    lastCheckIn ? ` Check-in terakhir: ${lastCheckIn}.` : ''
+                  }`
+              : isEn
+              ? 'Track sleep, stress, habits and results over months—privately. A 30-second check-in once a month is enough.'
+              : 'Pantau tidur, stres, kebiasaan, dan hasil dari bulan ke bulan—secara privat. Check-in 30 detik sebulan sekali sudah cukup.'}
+          </p>
+          <button
+            type="button"
+            className="btn btn-secondary w-full"
+            onClick={() => navigate(isEn ? '/progress' : '/progres')}
+          >
+            {isEn ? 'Log a check-in & see trends' : 'Isi check-in & lihat tren'}
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </section>
+      </div>
+
       {/* Progres Rencana Kita & Pengingat Mendatang */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Kartu Progres Rencana */}
@@ -240,7 +316,13 @@ export const HomePage: React.FC = () => {
             {pairing && pairing.status === 'active' ? (
               isEn ? (
                 <>
-                  Paired with <strong>{pairing.partner_b_alias}</strong> (Code:{' '}
+                  Paired with{' '}
+                  <strong>
+                    {pairing.user_b && userId === pairing.user_b
+                      ? pairing.partner_a_alias || 'Partner A'
+                      : pairing.partner_b_alias}
+                  </strong>{' '}
+                  (Code:{' '}
                   <span className="font-mono font-bold text-brand-teal bg-brand-teal/15 px-2 py-0.5 rounded-md border border-brand-teal/25 tracking-wide">
                     {pairing.invite_code}
                   </span>
@@ -248,7 +330,13 @@ export const HomePage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  Terhubung bersama <strong>{pairing.partner_b_alias}</strong> (Kode Tautan:{' '}
+                  Terhubung bersama{' '}
+                  <strong>
+                    {pairing.user_b && userId === pairing.user_b
+                      ? pairing.partner_a_alias || 'Pasangan A'
+                      : pairing.partner_b_alias}
+                  </strong>{' '}
+                  (Kode Tautan:{' '}
                   <span className="font-mono font-bold text-brand-teal bg-brand-teal/15 px-2 py-0.5 rounded-md border border-brand-teal/25 tracking-wide">
                     {pairing.invite_code}
                   </span>
@@ -262,12 +350,18 @@ export const HomePage: React.FC = () => {
             )}
           </p>
 
-          {pairing?.shared_items.noteFromB && (
+          {(pairing?.user_b && userId === pairing.user_b
+            ? pairing?.shared_items.noteFromA
+            : pairing?.shared_items.noteFromB) && (
             <div className="p-3.5 rounded-2xl bg-brand-teal-light/60 dark:bg-brand-teal/20 text-xs leading-relaxed text-brand-navy dark:text-white">
               <span className="font-bold text-brand-teal-dark dark:text-[#7FDADB]">
                 {isEn ? 'Partner Encouragement Note:' : 'Pesan Semangat Pasangan:'}{' '}
               </span>
-              “{pairing.shared_items.noteFromB}”
+              “
+              {pairing?.user_b && userId === pairing.user_b
+                ? pairing?.shared_items.noteFromA
+                : pairing?.shared_items.noteFromB}
+              ”
             </div>
           )}
         </section>
@@ -442,7 +536,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* Bagian Khusus: Alat Interaktif & Edukasi Klinis Lengkap */}
-      <section aria-label="Alat Interaktif Khusus" className="bg-gradient-to-br from-brand-teal/[0.07] via-surface/40 to-brand-coral/[0.07] dark:via-transparent p-5 sm:p-6 rounded-card border border-brand-teal/15 space-y-5">
+      <section aria-label={isEn ? 'Interactive Tools & Calculators' : 'Alat Interaktif Khusus'} className="bg-gradient-to-br from-brand-teal/[0.07] via-surface/40 to-brand-coral/[0.07] dark:via-transparent p-5 sm:p-6 rounded-card border border-brand-teal/15 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="eyebrow">

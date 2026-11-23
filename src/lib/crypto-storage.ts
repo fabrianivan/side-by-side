@@ -242,6 +242,33 @@ export async function loadEncryptedItem<T>(key: string): Promise<T | null> {
 }
 
 /**
+ * Hapus satu item terenkripsi dari IndexedDB dan cadangan lokal.
+ */
+export async function removeEncryptedItem(key: string): Promise<void> {
+  memoryStore.delete(key);
+  removeLocalValue(`sbs_enc_${key}`);
+  const db = await openIndexedDB();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    try {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).delete(key);
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onerror = () => {
+        db.close();
+        resolve();
+      };
+    } catch {
+      db.close();
+      resolve();
+    }
+  });
+}
+
+/**
  * Mengatur PIN keamanan menggunakan PBKDF2 + AES-GCM verifier.
  */
 export async function setSecurityPin(pin: string): Promise<void> {
@@ -289,6 +316,7 @@ export function inspectEncryptedVault(): EncryptedVaultInspectionItem[] {
     'tickets',
     'habit_log',
     'cycle_start_date',
+    'doctor_checklist',
     'prep_checklist',
   ];
   const results: EncryptedVaultInspectionItem[] = [];
@@ -312,6 +340,42 @@ export function inspectEncryptedVault(): EncryptedVaultInspectionItem[] {
     }
   }
   return results;
+}
+
+/**
+ * Kosongkan vault data kesehatan lokal tanpa menghapus preferensi tampilan (bahasa, tema, ukuran teks).
+ * Dipakai saat berganti akun atau keluar akun agar data antar-akun terisolasi sempurna.
+ */
+export async function clearEncryptedVault(): Promise<void> {
+  memoryStore.clear();
+  const ls = getSafeStorage('localStorage');
+  if (ls) {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < ls.length; i++) {
+      const k = ls.key(i);
+      if (k && k.startsWith('sbs_enc_')) keysToRemove.push(k);
+    }
+    for (const k of keysToRemove) ls.removeItem(k);
+  }
+  const db = await openIndexedDB();
+  if (!db) return;
+  await new Promise<void>((resolve) => {
+    try {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      tx.objectStore(STORE_NAME).clear();
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+      tx.onerror = () => {
+        db.close();
+        resolve();
+      };
+    } catch {
+      db.close();
+      resolve();
+    }
+  });
 }
 
 /**

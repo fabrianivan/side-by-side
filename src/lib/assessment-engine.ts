@@ -1,8 +1,10 @@
 import {
   assessmentRulesConfig,
+  getLocalizedAssessmentConfig,
   type AssessmentLevelCode,
   type AssessmentRulesConfig,
 } from '../config/schemas';
+import { ASSESSMENT_RULES_EN, EN_DISTRESS_KEYWORDS } from '../config/localization-en';
 
 export type AssessmentAnswers = Record<string, string>;
 
@@ -35,7 +37,10 @@ export function detectEmotionalDistress(
 ): boolean {
   if (!freeText || !freeText.trim()) return false;
   const normalized = freeText.toLowerCase();
-  return config.emotionalDistressKeywords.some((kw) => normalized.includes(kw.toLowerCase()));
+  return (
+    config.emotionalDistressKeywords.some((kw) => normalized.includes(kw.toLowerCase())) ||
+    EN_DISTRESS_KEYWORDS.some((kw) => normalized.includes(kw))
+  );
 }
 
 /**
@@ -49,15 +54,20 @@ export function detectEmotionalDistress(
 export function evaluateAssessment(
   answers: AssessmentAnswers,
   freeTextNotes?: string,
-  config: AssessmentRulesConfig = assessmentRulesConfig
+  config: AssessmentRulesConfig = assessmentRulesConfig,
+  locale: 'id' | 'en' = 'id',
 ): AssessmentEvaluationResult {
+  const effectiveConfig =
+    locale === 'en' && config === assessmentRulesConfig
+      ? getLocalizedAssessmentConfig('en')
+      : config;
   let totalWeight = 0;
   let hasImmediateTrigger = false;
   let hasMandatory1To2Months = false;
   const factors: ContributingFactor[] = [];
 
   // 1. Hitung bobot dan kumpulkan faktor yang relevan (TANPA mengungkap data pasangan `partner_context`)
-  for (const question of config.questions) {
+  for (const question of effectiveConfig.questions) {
     const selectedValue = answers[question.id];
     if (!selectedValue || selectedValue === 'unknown' || selectedValue === 'skipped') {
       continue;
@@ -85,7 +95,7 @@ export function evaluateAssessment(
   }
 
   // 2. Periksa Immediate Triggers (Red Flags Medis)
-  for (const trigger of config.rules.immediateTriggers) {
+  for (const trigger of effectiveConfig.rules.immediateTriggers) {
     const val = answers[trigger.questionId];
     if (val && trigger.optionValues.includes(val)) {
       hasImmediateTrigger = true;
@@ -96,7 +106,7 @@ export function evaluateAssessment(
   // 3. Periksa Aturan Wajib Minimal "Periksa dalam 1 sampai 2 bulan":
   //    - Lama program hamil > 12 bulan (12_to_24_months atau over_24_months)
   //    - ATAU lama program hamil > 6 bulan (6_to_12_months ke atas) bila usia pasangan perempuan >= 35 (over_35)
-  for (const rule of config.rules.within1To2MonthsMandatoryRules) {
+  for (const rule of effectiveConfig.rules.within1To2MonthsMandatoryRules) {
     const allConditionsMet = Object.entries(rule.conditions).every(([qId, allowedValues]) => {
       const userAnswer = answers[qId];
       return Boolean(userAnswer && allowedValues.includes(userAnswer));
@@ -108,13 +118,22 @@ export function evaluateAssessment(
         rule.id === 'ttc_over_6_months_partner_35' &&
         !factors.some((f) => f.questionId === 'ttc_duration')
       ) {
-        factors.unshift({
-          questionId: 'ttc_duration',
-          topic: 'Durasi Program Hamil',
-          factorTitle: 'Waktu evaluasi bersama yang optimal',
-          whyRelevant:
-            'Berdasarkan rentang waktu program hamil saat ini, evaluasi dasar lebih awal membantu Anda dan pasangan merencanakan langkah dengan lebih tenang.',
-        });
+        factors.unshift(
+          locale === 'en'
+            ? {
+                questionId: 'ttc_duration',
+                topic: ASSESSMENT_RULES_EN.ttc6MoFactor.topic,
+                factorTitle: ASSESSMENT_RULES_EN.ttc6MoFactor.factorTitle,
+                whyRelevant: ASSESSMENT_RULES_EN.ttc6MoFactor.whyRelevant,
+              }
+            : {
+                questionId: 'ttc_duration',
+                topic: 'Durasi Program Hamil',
+                factorTitle: 'Waktu evaluasi bersama yang optimal',
+                whyRelevant:
+                  'Berdasarkan rentang waktu program hamil saat ini, evaluasi dasar lebih awal membantu Anda dan pasangan merencanakan langkah dengan lebih tenang.',
+              },
+        );
       }
     }
   }
@@ -122,20 +141,20 @@ export function evaluateAssessment(
   // 4. Tentukan Tingkat Saran Akhir
   let levelCode: AssessmentLevelCode = 'routine';
 
-  if (hasImmediateTrigger || totalWeight >= config.rules.scoreThresholds.immediate) {
+  if (hasImmediateTrigger || totalWeight >= effectiveConfig.rules.scoreThresholds.immediate) {
     levelCode = 'immediate';
   } else if (
     hasMandatory1To2Months ||
-    totalWeight >= config.rules.scoreThresholds.within_1_2_months
+    totalWeight >= effectiveConfig.rules.scoreThresholds.within_1_2_months
   ) {
     levelCode = 'within_1_2_months';
   } else {
     levelCode = 'routine';
   }
 
-  const levelInfo = config.levels[levelCode];
+  const levelInfo = effectiveConfig.levels[levelCode];
   const showEmotionalSupport =
-    detectEmotionalDistress(freeTextNotes, config) ||
+    detectEmotionalDistress(freeTextNotes, effectiveConfig) ||
     answers.sleep_and_stress === 'high_stress_insomnia';
 
   return {
@@ -145,28 +164,9 @@ export function evaluateAssessment(
     summary: levelInfo.summary,
     nextSteps: levelInfo.nextSteps,
     factors,
-    disclaimer: config.disclaimer,
+    disclaimer: effectiveConfig.disclaimer,
     showEmotionalSupport,
-    emotionalSupportBanner: config.emotionalSupportBanner,
+    emotionalSupportBanner: effectiveConfig.emotionalSupportBanner,
     evaluatedAt: new Date().toISOString(),
   };
 }
-
-/**
- * Jawaban skenario demo untuk Persona 1: Rendra (32 thn, karyawan swasta, 8 bulan promil).
- * Menghasilkan tingkat saran: "Sebaiknya periksa dalam 1 sampai 2 bulan".
- */
-export const RENDRA_DEMO_ANSWERS: AssessmentAnswers = {
-  ttc_duration: '6_to_12_months', // 8 bulan program hamil (bobot 2)
-  partner_context: 'under_35', // Sari 30 tahun
-  prior_pregnancy: 'never', // Belum pernah (bobot 1)
-  reproductive_history: 'none', // Tidak ada riwayat operasi
-  physical_symptoms: 'none', // Tidak ada keluhan nyeri
-  smoking_habit: 'occasional_or_vape', // Kadang vape/rokok ringan (bobot 2)
-  alcohol_habit: 'none',
-  heat_exposure: 'moderate_laptop_sitting', // Karyawan swasta duduk lama & pangku laptop (bobot 2)
-  physical_activity: 'sedentary', // Jarang olahraga (bobot 1)
-  bmi_category: 'normal',
-  medications_supplements: 'none_or_vitamins',
-  sleep_and_stress: 'moderate_stress_lack_sleep', // Kadang tidur < 6 jam karena kerja (bobot 1)
-};

@@ -11,9 +11,11 @@ import {
   Sparkles,
   MapPin,
   ArrowRight,
+  Plus,
+  Trash2,
+  QrCode,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { getTranslations } from '../i18n';
 
 interface QuestionTopic {
   id: string;
@@ -23,37 +25,64 @@ interface QuestionTopic {
   questionEn: string;
   contextNoteId: string;
   contextNoteEn: string;
+  isCustom?: boolean;
 }
 
 export const DoctorChecklistPage: React.FC = () => {
-  const { locale, labResults } = useApp();
-  const t = getTranslations(locale);
+  const { locale, assessmentAnswers, labResults, doctorChecklist, saveDoctorChecklist } = useApp();
   const navigate = useNavigate();
   const isEn = locale === 'en';
 
-  // Context toggles
-  const [hasProlongedDuration, setHasProlongedDuration] = useState<boolean>(true);
-  const [hasHeatExposure, setHasHeatExposure] = useState<boolean>(true);
-  const [hasLabResult, setHasLabResult] = useState<boolean>(labResults.length > 0);
-  const [hasVaricoceleSuspicion, setHasVaricoceleSuspicion] = useState<boolean>(false);
-  const [hasPartnerChecked, setHasPartnerChecked] = useState<boolean>(true);
+  // Otomatis memetakan konteks awal dari Cek Awal bila pengguna belum menyetel toggle secara manual.
+  const hasAnyAssessment = Object.keys(assessmentAnswers).length > 0;
+  const inferredProlonged =
+    hasAnyAssessment
+      ? ['6_to_12_months', '12_to_24_months', 'over_24_months'].includes(assessmentAnswers.ttc_duration)
+      : true;
+  const inferredHeat =
+    hasAnyAssessment
+      ? ['moderate_laptop_sitting', 'high_occupational_sauna'].includes(assessmentAnswers.heat_exposure)
+      : true;
+  const inferredVaricocele =
+    hasAnyAssessment
+      ? assessmentAnswers.reproductive_history === 'varicocele_or_infection' ||
+        assessmentAnswers.physical_symptoms === 'frequent_pain_or_swelling'
+      : false;
+  const hasExternalHormone = assessmentAnswers.medications_supplements === 'testosterone_or_steroids';
 
-  // Checkbox selections
-  const [selectedQuestions, setSelectedQuestions] = useState<Record<string, boolean>>({});
+  const hasProlongedDuration = doctorChecklist.context.hasProlongedDuration ?? inferredProlonged;
+  const hasHeatExposure = doctorChecklist.context.hasHeatExposure ?? inferredHeat;
+  const hasLabResult = doctorChecklist.context.hasLabResult ?? labResults.length > 0;
+  const hasVaricoceleSuspicion = doctorChecklist.context.hasVaricoceleSuspicion ?? inferredVaricocele;
+  const hasPartnerChecked = doctorChecklist.context.hasPartnerChecked ?? true;
+  const selectedQuestions = doctorChecklist.selected;
+  const customQuestions = doctorChecklist.customQuestions || [];
+
+  const [newQuestionInput, setNewQuestionInput] = useState<string>('');
   const [copiedText, setCopiedText] = useState<boolean>(false);
+
+  const updateContext = (key: string, value: boolean) => {
+    void saveDoctorChecklist({
+      ...doctorChecklist,
+      context: { ...doctorChecklist.context, [key]: value },
+    });
+  };
 
   const getQuestions = (): QuestionTopic[] => {
     const list: QuestionTopic[] = [];
 
-    // Category 1: Physical Exam
     list.push({
       id: 'q-physical-exam',
       categoryId: 'Pemeriksaan Fisik Testis',
       categoryEn: 'Physical Examination',
-      questionId: 'Apakah dokter bisa melakukan pemeriksaan fisik skrotum untuk mendeteksi tanda varikokel atau ukuran testis?',
-      questionEn: 'Could you perform a physical testicular exam to check for clinical varicocele, asymmetry, or tenderness?',
-      contextNoteId: 'Varikokel adalah pelebaran pembuluh darah vena testis yang merupakan penyebab terbanyak infertilitas pria yang bisa diperbaiki.',
-      contextNoteEn: 'Varicoceles represent dilated scrotal veins and are the most common correctable cause of male subfertility.',
+      questionId:
+        'Apakah dokter bisa melakukan pemeriksaan fisik skrotum untuk mendeteksi tanda varikokel atau ukuran testis?',
+      questionEn:
+        'Could you perform a physical testicular exam to check for clinical varicocele, asymmetry, or tenderness?',
+      contextNoteId:
+        'Varikokel adalah pelebaran pembuluh darah vena testis yang merupakan penyebab terbanyak infertilitas pria yang bisa diperbaiki.',
+      contextNoteEn:
+        'Varicoceles represent dilated scrotal veins and are the most common correctable cause of male subfertility.',
     });
 
     if (hasVaricoceleSuspicion || hasProlongedDuration) {
@@ -61,78 +90,119 @@ export const DoctorChecklistPage: React.FC = () => {
         id: 'q-usg-doppler',
         categoryId: 'Pemeriksaan Fisik Testis',
         categoryEn: 'Physical Examination & Imaging',
-        questionId: 'Apakah saya memerlukan pemeriksaan USG Doppler skrotum untuk evaluasi aliran darah testis secara lebih akurat?',
-        questionEn: 'Would a scrotal Doppler ultrasound be indicated to accurately evaluate retrograde venous blood flow?',
-        contextNoteId: 'USG Doppler adalah standar baku emas untuk mengonfirmasi varikokel subklinis yang tidak teraba dengan tangan.',
-        contextNoteEn: 'Color Doppler ultrasound is the clinical gold standard for identifying subclinical varicoceles.',
+        questionId:
+          'Apakah saya memerlukan pemeriksaan USG Doppler skrotum untuk evaluasi aliran darah testis secara lebih akurat?',
+        questionEn:
+          'Would a scrotal Doppler ultrasound be indicated to accurately evaluate retrograde venous blood flow?',
+        contextNoteId:
+          'USG Doppler adalah standar baku emas untuk mengonfirmasi varikokel subklinis yang tidak teraba dengan tangan.',
+        contextNoteEn:
+          'Color Doppler ultrasound is the clinical gold standard for identifying subclinical varicoceles.',
       });
     }
 
-    // Category 2: Semen Analysis & Lab
     if (hasLabResult) {
       list.push({
         id: 'q-lab-repeat',
         categoryId: 'Analisis Semen & Laboratorium',
         categoryEn: 'Semen Analysis & Diagnostics',
-        questionId: 'Mengingat hasil analisis semen saya saat ini, apakah dokter menyarankan tes ulang 2–4 minggu lagi untuk konfirmasi variabilitas biologis?',
-        questionEn: 'Given my current lab result, would you recommend a repeat semen analysis in 2–4 weeks to account for biological variability?',
-        contextNoteId: 'Pedoman WHO menegaskan diagnosis infertilitas pria memerlukan minimal 2 kali uji sperma karena jumlah sel berfluktuasi.',
-        contextNoteEn: 'WHO guidelines advise at least two distinct semen analyses prior to making definitive clinical determinations.',
+        questionId:
+          'Mengingat hasil analisis semen saya saat ini, apakah dokter menyarankan tes ulang 2–4 minggu lagi untuk konfirmasi variabilitas biologis?',
+        questionEn:
+          'Given my current lab result, would you recommend a repeat semen analysis in 2–4 weeks to account for biological variability?',
+        contextNoteId:
+          'Pedoman WHO menegaskan diagnosis infertilitas pria memerlukan minimal 2 kali uji sperma karena jumlah sel berfluktuasi.',
+        contextNoteEn:
+          'WHO guidelines advise at least two distinct semen analyses prior to making definitive clinical determinations.',
       });
       list.push({
         id: 'q-dfi-hormone',
         categoryId: 'Analisis Semen & Laboratorium',
         categoryEn: 'Hormonal & Genetic Screening',
-        questionId: 'Apakah diperlukan pemeriksaan profil hormon (FSH, LH, Testosteron Total) atau tes fragmentasi DNA sperma (DFI)?',
-        questionEn: 'Are endocrine profile labs (Total Testosterone, FSH, LH, Prolactin) or a Sperm DNA Fragmentation Index (DFI) appropriate?',
-        contextNoteId: 'Pemeriksaan hormon membantu membedakan apakah masalah ada di produksi otak (hipofisis) atau di pabrik testis langsung.',
-        contextNoteEn: 'Hormonal assays distinguish primary testicular failure from hypothalamic-pituitary dysregulation.',
+        questionId:
+          'Apakah diperlukan pemeriksaan profil hormon (FSH, LH, Testosteron Total) atau tes fragmentasi DNA sperma (DFI)?',
+        questionEn:
+          'Are endocrine profile labs (Total Testosterone, FSH, LH, Prolactin) or a Sperm DNA Fragmentation Index (DFI) appropriate?',
+        contextNoteId:
+          'Pemeriksaan hormon membantu membedakan apakah masalah ada di produksi otak (hipofisis) atau di pabrik testis langsung.',
+        contextNoteEn:
+          'Hormonal assays distinguish primary testicular failure from hypothalamic-pituitary dysregulation.',
       });
     } else {
       list.push({
         id: 'q-how-to-prep',
         categoryId: 'Analisis Semen & Laboratorium',
         categoryEn: 'Semen Analysis & Diagnostics',
-        questionId: 'Berapa hari masa pantang ejakulasi (abstinensia) yang paling ideal untuk saya sebelum tes analisis semen di laboratorium?',
-        questionEn: 'What is the optimal sexual abstinence window (2–7 days) recommended for my semen analysis test?',
-        contextNoteId: 'Standar WHO merekomendasikan 2 hingga 7 hari pantang (ideal 3–4 hari) untuk hasil konsentrasi dan motilitas paling akurat.',
-        contextNoteEn: 'The WHO standardized abstinence window is strictly 2 to 7 days (optimally 3–4 days).',
+        questionId:
+          'Berapa hari masa pantang ejakulasi (abstinensia) yang paling ideal untuk saya sebelum tes analisis semen di laboratorium?',
+        questionEn:
+          'What is the optimal sexual abstinence window (2–7 days) recommended for my semen analysis test?',
+        contextNoteId:
+          'Standar WHO merekomendasikan 2 hingga 7 hari pantang (ideal 3–4 hari) untuk hasil konsentrasi dan motilitas paling akurat.',
+        contextNoteEn:
+          'The WHO standardized abstinence window is strictly 2 to 7 days (optimally 3–4 days).',
       });
     }
 
-    // Category 3: Lifestyle & Heat
     if (hasHeatExposure) {
       list.push({
         id: 'q-heat-mitigation',
         categoryId: 'Gaya Hidup & Suhu Skrotum',
         categoryEn: 'Lifestyle & Thermal Environment',
-        questionId: 'Saya memiliki kebiasaan memangku laptop / sering duduk lama. Berapa lama pemulihan kualitas sperma setelah saya memperbaiki kebiasaan ini?',
-        questionEn: 'I frequently work with a laptop or sit for long hours. When would we expect sperm parameters to recover after modifying these habits?',
-        contextNoteId: 'Siklus spermatogenesis membutuhkan ~72 hari. Perbaikan kebiasaan umumnya mulai terlihat pada tes 2–3 bulan kemudian.',
-        contextNoteEn: 'Spermatogenesis requires ~72 days; observable quality improvements typically manifest 2.5–3 months post-intervention.',
+        questionId:
+          'Saya memiliki kebiasaan memangku laptop / sering duduk lama. Berapa lama pemulihan kualitas sperma setelah saya memperbaiki kebiasaan ini?',
+        questionEn:
+          'I frequently work with a laptop or sit for long hours. When would we expect sperm parameters to recover after modifying these habits?',
+        contextNoteId:
+          'Siklus spermatogenesis membutuhkan ~72 hari. Perbaikan kebiasaan umumnya mulai terlihat pada tes 2–3 bulan kemudian.',
+        contextNoteEn:
+          'Spermatogenesis requires ~72 days; observable quality improvements typically manifest 2.5–3 months post-intervention.',
+      });
+    }
+
+    if (hasExternalHormone) {
+      list.push({
+        id: 'q-hormone-review',
+        categoryId: 'Riwayat Obat & Hormon',
+        categoryEn: 'Medication & Hormone Review',
+        questionId:
+          'Saya pernah/sedang menggunakan testosteron atau steroid dari luar. Bagaimana langkah aman di bawah pengawasan dokter agar produksi sperma alami bisa pulih?',
+        questionEn:
+          'I have used external testosterone or steroids. What is a safe, doctor-supervised plan to support recovery of natural sperm production?',
+        contextNoteId:
+          'Jangan menghentikan obat resep sendiri. Dokter andrologi dapat memantau hormon dan menyusun transisi yang aman.',
+        contextNoteEn:
+          'Never stop prescribed treatment on your own. An andrologist can monitor hormones and guide a safe transition.',
       });
     }
 
     list.push({
       id: 'q-supplements',
-      categoryId: 'Gaya Hidup & Suplemen',
-      categoryEn: 'Lifestyle & Evidence-Based Supplements',
-      questionId: 'Apakah ada suplemen mikronutrien antioksidan (seperti Zinc, Selenium, CoQ10, Likopen) yang dokter rekomendasikan secara spesifik untuk kondisi saya?',
-      questionEn: 'Are there specific evidence-based antioxidant supplements (CoQ10, Zinc, Selenium, L-Carnitine, Lycopene) indicated for me?',
-      contextNoteId: 'Dokter dapat meresepkan antioksidan yang sesuai dengan bukti klinis tanpa harus membeli suplemen mahal tanpa indikasi.',
-      contextNoteEn: 'Targeted physician guidance ensures evidence-backed antioxidant supplementation tailored to your specific oxidative profile.',
+      categoryId: 'Gaya Hidup & Nutrisi',
+      categoryEn: 'Lifestyle & Nutrition Guidance',
+      questionId:
+        'Perubahan pola makan, kebiasaan tidur, atau dukungan nutrisi apa yang menurut dokter paling tepat dan perlu (atau tidak perlu) untuk kondisi saya?',
+      questionEn:
+        'Which diet, sleep, or nutrition adjustments do you think are most helpful—or unnecessary—for my specific situation?',
+      contextNoteId:
+        'Bertanya langsung ke dokter membantu Anda fokus pada langkah yang terbukti relevan tanpa membeli produk bebas tanpa indikasi.',
+      contextNoteEn:
+        'Asking your physician directly helps focus on evidence-backed habits rather than unverified over-the-counter products.',
     });
 
-    // Category 4: Couple Coordination
     if (hasPartnerChecked) {
       list.push({
         id: 'q-couple-sync',
         categoryId: 'Rencana Bersama Pasangan',
         categoryEn: 'Couple Care Synchronization',
-        questionId: 'Bagaimana sinkronisasi rencana terapi saya dengan dokter kandungan istri saya agar waktu program hamil kami selaras?',
-        questionEn: 'How can we align my care plan with my partner’s gynecologist/fertility specialist to synchronize our conception window?',
-        contextNoteId: 'Penanganan bersama antara Androlog (suami) dan Obgyn (istri) melipatgandakan peluang keberhasilan program hamil.',
-        contextNoteEn: 'Dual-partner clinical synchronization significantly optimizes fertile-window timing and conception probability.',
+        questionId:
+          'Bagaimana sinkronisasi rencana terapi saya dengan dokter kandungan istri saya agar waktu program hamil kami selaras?',
+        questionEn:
+          'How can we align my care plan with my partner’s gynecologist/fertility specialist to synchronize our conception window?',
+        contextNoteId:
+          'Penanganan bersama antara Androlog (suami) dan Obgyn (istri) melipatgandakan peluang keberhasilan program hamil.',
+        contextNoteEn:
+          'Dual-partner clinical synchronization significantly optimizes fertile-window timing and conception probability.',
       });
     }
 
@@ -140,11 +210,28 @@ export const DoctorChecklistPage: React.FC = () => {
       id: 'q-timeline-target',
       categoryId: 'Rencana Tindak Lanjut',
       categoryEn: 'Next Action & Milestones',
-      questionId: 'Kapan jadwal kontrol berikutnya yang dokter targetkan untuk mengevaluasi respons tubuh saya terhadap rencana ini?',
-      questionEn: 'What is our designated follow-up milestone date to objectively reassess treatment response?',
-      contextNoteId: 'Memiliki jadwal tindak lanjut yang jelas mengurangi kecemasan menanti tanpa kepastian.',
-      contextNoteEn: 'Having established milestones relieves anxiety and maintains structured forward momentum.',
+      questionId:
+        'Kapan jadwal kontrol berikutnya yang dokter targetkan untuk mengevaluasi respons tubuh saya terhadap rencana ini?',
+      questionEn:
+        'What is our designated follow-up milestone date to objectively reassess treatment response?',
+      contextNoteId:
+        'Memiliki jadwal tindak lanjut yang jelas mengurangi kecemasan menanti tanpa kepastian.',
+      contextNoteEn:
+        'Having established milestones relieves anxiety and maintains structured forward momentum.',
     });
+
+    for (const cq of customQuestions) {
+      list.push({
+        id: cq.id,
+        categoryId: 'Pertanyaan Pribadi',
+        categoryEn: 'Personal Question',
+        questionId: cq.text,
+        questionEn: cq.text,
+        contextNoteId: 'Ditambahkan khusus oleh Anda untuk konsultasi dokter.',
+        contextNoteEn: 'Added personally by you for your consultation.',
+        isCustom: true,
+      });
+    }
 
     return list;
   };
@@ -152,37 +239,67 @@ export const DoctorChecklistPage: React.FC = () => {
   const questions = getQuestions();
 
   const toggleSelect = (id: string) => {
-    setSelectedQuestions((prev) => ({
-      ...prev,
-      [id]: prev[id] === undefined ? false : !prev[id],
-    }));
+    const nextSelected = {
+      ...selectedQuestions,
+      [id]: selectedQuestions[id] === undefined ? false : !selectedQuestions[id],
+    };
+    void saveDoctorChecklist({
+      ...doctorChecklist,
+      selected: nextSelected,
+    });
   };
 
-  const isChecked = (id: string) => selectedQuestions[id] !== false; // Default checked
+  const handleAddCustomQuestion = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = newQuestionInput.trim();
+    if (trimmed.length < 3) return;
+    const newItem = { id: 'custom-q-' + Date.now(), text: trimmed };
+    void saveDoctorChecklist({
+      ...doctorChecklist,
+      customQuestions: [...customQuestions, newItem],
+    });
+    setNewQuestionInput('');
+  };
+
+  const handleDeleteCustomQuestion = (id: string) => {
+    void saveDoctorChecklist({
+      ...doctorChecklist,
+      customQuestions: customQuestions.filter((q) => q.id !== id),
+    });
+  };
+
+  const isChecked = (id: string) => selectedQuestions[id] !== false;
 
   const handleCopy = async () => {
     const activeList = questions.filter((q) => isChecked(q.id));
+    const appOrigin = typeof window !== 'undefined' ? window.location.origin : 'Side by Side';
     const lines = isEn
       ? [
           'Doctor Consultation Checklist — Side by Side:',
           '------------------------------------------------',
           ...activeList.map(
-            (q, idx) => `${idx + 1}. [${q.categoryEn}] ${q.questionEn}\n   (Clinical Context: ${q.contextNoteEn})`
+            (q, idx) =>
+              `${idx + 1}. [${q.categoryEn}] ${q.questionEn}\n   (Clinical Context: ${q.contextNoteEn})`
           ),
           '',
-          'App: Side by Side (https://side-by-side-omega.vercel.app)',
+          `Generated by Side by Side (${appOrigin})`,
         ]
       : [
           'Daftar Pertanyaan Siap Bawa untuk Konsultasi Dokter (Side by Side):',
           '------------------------------------------------',
           ...activeList.map(
-            (q, idx) => `${idx + 1}. [${q.categoryId}] ${q.questionId}\n   (Catatan: ${q.contextNoteId})`
+            (q, idx) =>
+              `${idx + 1}. [${q.categoryId}] ${q.questionId}\n   (Catatan: ${q.contextNoteId})`
           ),
           '',
-          'Aplikasi: Side by Side (https://side-by-side-omega.vercel.app)',
+          `Dibuat dengan Side by Side (${appOrigin})`,
         ];
 
-    await navigator.clipboard.writeText(lines.join('\n'));
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+    } catch {
+      // Clipboard fallback
+    }
     setCopiedText(true);
     setTimeout(() => setCopiedText(false), 3000);
   };
@@ -212,21 +329,13 @@ export const DoctorChecklistPage: React.FC = () => {
           </div>
 
           <div className="no-print flex flex-wrap gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="btn btn-navy"
-            >
+            <button type="button" onClick={handlePrint} className="btn btn-navy">
               <Printer className="w-4 h-4" />
               <span>{isEn ? 'Print / PDF' : 'Cetak / PDF'}</span>
             </button>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="btn btn-primary"
-            >
+            <button type="button" onClick={handleCopy} className="btn btn-primary">
               {copiedText ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>{copiedText ? (isEn ? 'Copied!' : 'Tersalin!') : (isEn ? 'Copy to Phone' : 'Salin ke HP')}</span>
+              <span>{copiedText ? (isEn ? 'Copied!' : 'Tersalin!') : isEn ? 'Copy to Phone' : 'Salin ke HP'}</span>
             </button>
           </div>
         </div>
@@ -243,7 +352,7 @@ export const DoctorChecklistPage: React.FC = () => {
             <input
               type="checkbox"
               checked={hasProlongedDuration}
-              onChange={(e) => setHasProlongedDuration(e.target.checked)}
+              onChange={(e) => updateContext('hasProlongedDuration', e.target.checked)}
               className="check"
             />
             <span>{isEn ? 'Trying to Conceive > 8–12 Mos' : 'Program Hamil > 8–12 Bulan'}</span>
@@ -253,7 +362,7 @@ export const DoctorChecklistPage: React.FC = () => {
             <input
               type="checkbox"
               checked={hasHeatExposure}
-              onChange={(e) => setHasHeatExposure(e.target.checked)}
+              onChange={(e) => updateContext('hasHeatExposure', e.target.checked)}
               className="check"
             />
             <span>{isEn ? 'Heat Exposure / Prolonged Sitting' : 'Paparan Panas / Duduk Lama'}</span>
@@ -263,7 +372,7 @@ export const DoctorChecklistPage: React.FC = () => {
             <input
               type="checkbox"
               checked={hasLabResult}
-              onChange={(e) => setHasLabResult(e.target.checked)}
+              onChange={(e) => updateContext('hasLabResult', e.target.checked)}
               className="check"
             />
             <span>{isEn ? 'Already Have Lab Results' : 'Sudah Ada Hasil Tes Lab'}</span>
@@ -273,7 +382,7 @@ export const DoctorChecklistPage: React.FC = () => {
             <input
               type="checkbox"
               checked={hasVaricoceleSuspicion}
-              onChange={(e) => setHasVaricoceleSuspicion(e.target.checked)}
+              onChange={(e) => updateContext('hasVaricoceleSuspicion', e.target.checked)}
               className="check"
             />
             <span>{isEn ? 'Suspected Varicocele / Discomfort' : 'Dugaan Keluhan Varikokel'}</span>
@@ -283,7 +392,7 @@ export const DoctorChecklistPage: React.FC = () => {
             <input
               type="checkbox"
               checked={hasPartnerChecked}
-              onChange={(e) => setHasPartnerChecked(e.target.checked)}
+              onChange={(e) => updateContext('hasPartnerChecked', e.target.checked)}
               className="check"
             />
             <span>{isEn ? 'Partner Already Evaluated by OBGYN' : 'Pasangan Sudah Periksa Lebih Dulu'}</span>
@@ -306,6 +415,22 @@ export const DoctorChecklistPage: React.FC = () => {
             {isEn ? 'Click any card to select/deselect' : 'Klik kartu untuk memilih / batalkan'}
           </span>
         </div>
+
+        <form onSubmit={handleAddCustomQuestion} className="no-print flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            value={newQuestionInput}
+            onChange={(e) => setNewQuestionInput(e.target.value)}
+            placeholder={
+              isEn ? 'Add your own custom question for the doctor...' : 'Tambahkan pertanyaan pribadi Anda sendiri...'
+            }
+            className="field flex-1 text-xs"
+          />
+          <button type="submit" disabled={newQuestionInput.trim().length < 3} className="btn btn-secondary btn-sm shrink-0">
+            <Plus className="w-4 h-4" />
+            <span>{isEn ? 'Add Question' : 'Tambah Pertanyaan'}</span>
+          </button>
+        </form>
 
         <div className="space-y-3">
           {questions.map((q, idx) => {
@@ -330,15 +455,34 @@ export const DoctorChecklistPage: React.FC = () => {
                 }`}
               >
                 <div aria-hidden="true" className="pt-0.5 shrink-0 text-brand-teal">
-                  {checked ? <CheckSquare className="w-5 h-5" /> : <Square className="w-5 h-5 text-brand-navy/30 dark:text-white/35" />}
+                  {checked ? (
+                    <CheckSquare className="w-5 h-5" />
+                  ) : (
+                    <Square className="w-5 h-5 text-brand-navy/30 dark:text-white/35" />
+                  )}
                 </div>
 
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xs font-bold uppercase tracking-wider px-2 py-1 rounded-md leading-tight bg-brand-navy/[0.08] dark:bg-white/10 text-brand-navy dark:text-white">
-                      {isEn ? q.categoryEn : q.categoryId}
-                    </span>
-                    <span className="text-xs text-brand-navy/50 dark:text-white/50">#{idx + 1}</span>
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-3xs font-bold uppercase tracking-wider px-2 py-1 rounded-md leading-tight bg-brand-navy/[0.08] dark:bg-white/10 text-brand-navy dark:text-white">
+                        {isEn ? q.categoryEn : q.categoryId}
+                      </span>
+                      <span className="text-xs text-brand-navy/50 dark:text-white/50">#{idx + 1}</span>
+                    </div>
+                    {q.isCustom && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteCustomQuestion(q.id);
+                        }}
+                        aria-label={isEn ? 'Remove custom question' : 'Hapus pertanyaan pribadi'}
+                        className="no-print text-status-urgent hover:underline p-1"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
 
                   <p className="text-sm font-bold text-brand-navy dark:text-white leading-snug">
@@ -361,15 +505,25 @@ export const DoctorChecklistPage: React.FC = () => {
               ? 'Pair this with your temporary 1-hour QR Patient Summary for seamless clinical consultation.'
               : 'Bawa bersama Kode QR Ringkasan Pasien (1 Jam) untuk memudahkan dokter melihat data Anda.'}
           </p>
-          <button
-            type="button"
-            onClick={() => navigate(isEn ? '/facilities' : '/layanan')}
-            className="btn btn-navy shrink-0"
-          >
-            <MapPin className="w-4 h-4 shrink-0" />
-            <span>{isEn ? 'View Clinic & Doctor Directory' : 'Lihat Direktori Faskes & Dokter'}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => navigate(isEn ? '/share' : '/bagikan-nakes')}
+              className="btn btn-secondary"
+            >
+              <QrCode className="w-4 h-4 text-brand-teal shrink-0" />
+              <span>{isEn ? '1-Hour Doctor QR' : 'QR 1 Jam untuk Dokter'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(isEn ? '/facilities' : '/layanan')}
+              className="btn btn-navy"
+            >
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span>{isEn ? 'View Clinic & Doctor Directory' : 'Lihat Direktori Faskes & Dokter'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </section>
     </div>

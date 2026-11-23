@@ -455,12 +455,53 @@ html.dark *:focus-visible {
   }
 }
 
+.print-only {
+  display: none;
+}
+
 @media print {
+  @page {
+    margin: 14mm;
+  }
+
   .no-print {
     display: none !important;
   }
 
+  .print-only {
+    display: block !important;
+  }
+
+  html,
+  body,
   .app-canvas {
     background: #ffffff !important;
+    color: #0f172a !important;
+    min-height: auto !important;
+  }
+
+  main,
+  .max-w-5xl,
+  .max-w-4xl,
+  .max-w-3xl {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .card,
+  .well,
+  .panel {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a {
+    color: #0f172a !important;
+    text-decoration: underline;
   }
 }

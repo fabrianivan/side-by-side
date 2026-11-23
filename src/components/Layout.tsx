@@ -11,21 +11,23 @@ import {
   Stethoscope,
   Settings,
   ShieldCheck,
-  Sparkles,
-  ChevronUp,
-  ChevronDown,
   User,
   Sliders,
   Calendar,
   FileText,
   LayoutGrid,
+  LineChart,
+  Route as RouteIcon,
+  Sparkles,
   X,
   Sun,
   Moon,
+  WifiOff,
   type LucideIcon,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
+import { computePathwayStages } from '../lib/care-pathway';
 
 interface NavItem {
   to: string;
@@ -33,6 +35,7 @@ interface NavItem {
   label: string;
   shortLabel: string;
   icon: LucideIcon;
+  badge?: React.ReactNode;
 }
 
 interface NavGroup {
@@ -41,33 +44,79 @@ interface NavGroup {
   items: NavItem[];
 }
 
+const ROUTE_LOCALE_PAIRS: Array<{ id: string; en: string; aliases: string[] }> = [
+  { id: '/', en: '/home', aliases: ['/', '/home', '/beranda'] },
+  { id: '/sambutan', en: '/welcome', aliases: ['/welcome', '/sambutan'] },
+  { id: '/cek-awal', en: '/assessment', aliases: ['/cek-awal', '/assessment', '/self-check'] },
+  { id: '/jalur-perawatan', en: '/care-pathway', aliases: ['/jalur-perawatan', '/care-pathway', '/referral'] },
+  { id: '/progres', en: '/progress', aliases: ['/progres', '/progress'] },
+  { id: '/asisten', en: '/companion', aliases: ['/asisten', '/companion'] },
+  { id: '/layanan', en: '/facilities', aliases: ['/layanan', '/facilities', '/clinics'] },
+  { id: '/berdua', en: '/couple', aliases: ['/berdua', '/couple', '/our-plan'] },
+  { id: '/hasil', en: '/results', aliases: ['/hasil', '/results'] },
+  { id: '/simulator', en: '/semen-calculator', aliases: ['/simulator', '/kalkulator', '/semen-calculator'] },
+  { id: '/siklus-72-hari', en: '/cycle-tracker', aliases: ['/siklus-72-hari', '/cycle-tracker', '/sperm-cycle'] },
+  { id: '/checklist-dokter', en: '/doctor-checklist', aliases: ['/checklist-dokter', '/doctor-checklist', '/questions-doctor'] },
+  { id: '/pustaka', en: '/library', aliases: ['/pustaka', '/library', '/education'] },
+  { id: '/bagikan-nakes', en: '/share', aliases: ['/bagikan-nakes', '/share', '/share-doctor'] },
+  { id: '/nakes', en: '/provider', aliases: ['/nakes', '/provider', '/doctor'] },
+  { id: '/akun', en: '/account', aliases: ['/akun', '/account', '/profile'] },
+  { id: '/pengaturan', en: '/settings', aliases: ['/pengaturan', '/settings'] },
+];
+
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const {
     authMode,
-    activePersona,
     displayName,
     locale,
     darkMode,
+    assessmentResult,
+    labResults,
+    pairing,
+    shareToken,
+    healthJournal,
     setLocale,
     setDarkMode,
-    switchDemoPersona,
   } = useApp();
 
   const t = getTranslations(locale);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [demoPanelOpen, setDemoPanelOpen] = useState(true);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState<boolean>(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine === false : false
+  );
+
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true);
+    const goOnline = () => setIsOffline(false);
+    window.addEventListener('offline', goOffline);
+    window.addEventListener('online', goOnline);
+    return () => {
+      window.removeEventListener('offline', goOffline);
+      window.removeEventListener('online', goOnline);
+    };
+  }, []);
 
   const isEn = locale === 'en';
+  const pathwayDoneCount = computePathwayStages(healthJournal.carePathway, Boolean(assessmentResult)).filter(
+    (st) => st.status === 'done'
+  ).length;
   const isSignedIn = authMode === 'account' || authMode === 'nakes';
+  const hasActiveShareToken = Boolean(
+    shareToken && !shareToken.revoked && new Date(shareToken.expires_at).getTime() > Date.now()
+  );
 
-  const handlePersonaClick = async (persona: 'rendra' | 'sari' | 'maya') => {
-    await switchDemoPersona(persona);
-    if (persona === 'rendra') navigate(isEn ? '/home' : '/');
-    if (persona === 'sari') navigate(isEn ? '/couple' : '/berdua');
-    if (persona === 'maya') navigate(isEn ? '/provider' : '/nakes');
+  const handleLocaleSwitch = (nextLocale: 'id' | 'en') => {
+    setLocale(nextLocale);
+    const matchedRoute = ROUTE_LOCALE_PAIRS.find((r) => r.aliases.includes(location.pathname));
+    if (matchedRoute) {
+      const targetPath = nextLocale === 'en' ? matchedRoute.en : matchedRoute.id;
+      if (targetPath !== location.pathname) {
+        navigate(`${targetPath}${location.search}`, { replace: true });
+      }
+    }
   };
 
   const navGroups: NavGroup[] = [
@@ -88,6 +137,30 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           label: t.nav.assessment,
           shortLabel: t.nav.assessment,
           icon: ClipboardCheck,
+          badge: assessmentResult ? (
+            <span
+              title={isEn ? 'Self-Check Completed' : 'Cek Awal Selesai'}
+              className="ml-auto inline-flex items-center justify-center w-4 h-4 rounded-full bg-status-success/15 text-status-success text-3xs font-extrabold"
+            >
+              ✓
+            </span>
+          ) : undefined,
+        },
+        {
+          to: isEn ? '/care-pathway' : '/jalur-perawatan',
+          aliases: ['/jalur-perawatan', '/care-pathway', '/referral'],
+          label: isEn ? 'Care Pathway' : 'Jalur Perawatan',
+          shortLabel: isEn ? 'Pathway' : 'Jalur',
+          icon: RouteIcon,
+          badge:
+            pathwayDoneCount > 0 ? (
+              <span
+                title={isEn ? 'Pathway stages done' : 'Tahap jalur selesai'}
+                className="ml-auto tabular px-1.5 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal-dark dark:text-[#7FDADB] text-3xs font-bold"
+              >
+                {pathwayDoneCount}/6
+              </span>
+            ) : undefined,
         },
         {
           to: isEn ? '/facilities' : '/layanan',
@@ -102,6 +175,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           label: t.nav.couple,
           shortLabel: isEn ? 'Our Plan' : 'Rencana',
           icon: Users,
+          badge:
+            pairing && pairing.status === 'active' ? (
+              <span
+                title={isEn ? 'Partner Connected' : 'Pasangan Terhubung'}
+                className="ml-auto w-2 h-2 rounded-full bg-status-success shrink-0"
+              />
+            ) : undefined,
         },
         {
           to: isEn ? '/results' : '/hasil',
@@ -109,6 +189,26 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           label: t.nav.results,
           shortLabel: isEn ? 'Results' : 'Hasil',
           icon: Activity,
+          badge:
+            labResults.length > 0 ? (
+              <span className="ml-auto tabular px-1.5 py-0.5 rounded-full bg-brand-teal/15 text-brand-teal-dark dark:text-[#7FDADB] text-3xs font-bold">
+                {labResults.length}
+              </span>
+            ) : undefined,
+        },
+        {
+          to: isEn ? '/progress' : '/progres',
+          aliases: ['/progres', '/progress'],
+          label: isEn ? 'My Progress' : 'Progres Saya',
+          shortLabel: isEn ? 'Progress' : 'Progres',
+          icon: LineChart,
+        },
+        {
+          to: isEn ? '/companion' : '/asisten',
+          aliases: ['/asisten', '/companion'],
+          label: isEn ? 'AI Companion' : 'Asisten AI',
+          shortLabel: isEn ? 'AI' : 'Asisten',
+          icon: Sparkles,
         },
       ],
     },
@@ -156,6 +256,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           label: t.nav.shareNakes,
           shortLabel: t.nav.shareNakes,
           icon: QrCode,
+          badge: hasActiveShareToken ? (
+            <span
+              title={isEn ? '1-Hour QR Active' : 'QR 1 Jam Aktif'}
+              className="ml-auto w-2 h-2 rounded-full bg-brand-coral animate-pulse shrink-0"
+            />
+          ) : undefined,
         },
         {
           to: isEn ? '/provider' : '/nakes',
@@ -192,8 +298,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const isActive = (item: NavItem) => item.aliases.includes(location.pathname);
   const activeItem = navItems.find(isActive);
 
-  // Bilah bawah: 4 tujuan utama + "Lainnya" yang membuka seluruh menu.
-  const tabItems = navItems.slice(0, 4);
+  // Bilah bawah: 4 tujuan utama (Beranda, Cek Awal, Jalur Perawatan, Rencana Kita) + "Lainnya" untuk seluruh menu.
+  const TAB_ALIASES = ['/home', '/self-check', '/care-pathway', '/our-plan'];
+  const tabItems = TAB_ALIASES.map((alias) => navItems.find((item) => item.aliases.includes(alias))).filter(
+    (item): item is NavItem => Boolean(item)
+  );
   const activeIsInTabs = tabItems.some(isActive);
 
   // Saat berpindah halaman: tutup lembar "Lainnya" dan mulai dari bagian atas halaman baru.
@@ -226,7 +335,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <button
           key={code}
           type="button"
-          onClick={() => setLocale(code)}
+          onClick={() => handleLocaleSwitch(code)}
           aria-pressed={locale === code}
           title={code === 'id' ? 'Bahasa Indonesia' : 'English'}
           className={`px-2.5 py-1.5 rounded-full uppercase tracking-wide transition ${
@@ -293,6 +402,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                       >
                         <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.4 : 2} />
                         <span className="truncate">{item.label}</span>
+                        {item.badge}
                       </NavLink>
                     </li>
                   );
@@ -407,162 +517,30 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </div>
       </header>
 
+      {/* Status Koneksi Offline PWA */}
+      {isOffline && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="no-print bg-status-warning-bg dark:bg-status-warning/20 border-b border-status-warning/35 text-brand-navy dark:text-[#F3C64D] text-xs font-semibold"
+        >
+          <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 xl:px-8 py-2 flex items-center gap-2">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span>
+              {isEn
+                ? 'You are offline. Encrypted on-device features still work; account sync, QR sharing, and AI will resume when reconnected.'
+                : 'Anda sedang offline. Fitur terenkripsi di perangkat tetap berjalan; sinkronisasi akun, berbagi QR, dan AI akan aktif kembali saat terhubung.'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Konten Utama */}
       <main id="main-content" className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 xl:px-8 py-6 sm:py-8">
         <div key={location.pathname} className="animate-rise-in">
           {children}
         </div>
       </main>
-
-      {/* Panel Demo Hackathon (1-Klik Pindah Peran: Rendra, Sari, dr. Maya) */}
-      <aside
-        aria-label="Panel Skenario Demo Hackathon"
-        className="no-print max-w-6xl w-full mx-auto px-4 sm:px-6 xl:px-8 mb-6"
-      >
-        <div className="relative overflow-hidden bg-brand-navy-deep text-white rounded-card shadow-soft-lg ring-1 ring-white/10">
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-teal via-[#17A7A0] to-brand-coral"
-          />
-          <div className="flex items-center justify-between gap-3 px-4 sm:px-5 pt-4 pb-3.5">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-white/10 shrink-0">
-                <Sparkles className="w-4 h-4 text-brand-coral" />
-              </span>
-              <span className="text-2xs sm:text-xs font-bold tracking-wide leading-snug">
-                {isEn ? 'HACKATHON DEMO PANEL — Active Role:' : 'PANEL DEMO HACKATHON — Peran Aktif:'}{' '}
-                <span className="text-brand-coral">{displayName}</span>
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setDemoPanelOpen(!demoPanelOpen)}
-              aria-expanded={demoPanelOpen}
-              className="touch-target shrink-0 text-2xs font-semibold text-white/75 hover:text-white hover:bg-white/10 flex items-center gap-1 px-2.5 rounded-btn transition"
-            >
-              {demoPanelOpen ? (
-                <>
-                  {isEn ? 'Hide' : 'Sembunyikan'} <ChevronDown className="w-3.5 h-3.5" />
-                </>
-              ) : (
-                <>
-                  {isEn ? 'Show' : 'Tampilkan'} <ChevronUp className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
-          </div>
-
-          {demoPanelOpen && (
-            <div className="px-4 sm:px-5 pb-5 space-y-4">
-              <div className="pt-4 border-t border-white/10 space-y-2.5">
-                <p className="text-2xs text-white/70">
-                  {isEn
-                    ? 'Click a persona to load a ready-to-explore demo scenario:'
-                    : 'Klik persona untuk memuat skenario demo siap pakai secara instan:'}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {(
-                    [
-                      {
-                        key: 'rendra',
-                        label: isEn ? '1. Rendra (32 yo, Husband)' : '1. Rendra (32 thn, Suami)',
-                        active: activePersona === 'rendra',
-                        activeClass: 'bg-brand-teal text-white ring-2 ring-white/80',
-                      },
-                      {
-                        key: 'sari',
-                        label: isEn ? '2. Sari (30 yo, Partner)' : '2. Sari (30 thn, Istri)',
-                        active: activePersona === 'sari',
-                        activeClass: 'bg-brand-coral text-brand-navy-deep ring-2 ring-white/80',
-                      },
-                      {
-                        key: 'maya',
-                        label: isEn ? '3. Dr. Maya (Clinic Physician)' : '3. dr. Maya (Nakes Puskesmas)',
-                        active:
-                          activePersona === 'maya' ||
-                          location.pathname === '/nakes' ||
-                          location.pathname === '/provider',
-                        activeClass: 'bg-status-success text-white ring-2 ring-white/80',
-                      },
-                    ] as const
-                  ).map((persona) => (
-                    <button
-                      key={persona.key}
-                      type="button"
-                      onClick={() => handlePersonaClick(persona.key)}
-                      aria-pressed={persona.active}
-                      className={`touch-target px-3.5 py-2 rounded-btn text-xs font-bold text-left transition ${
-                        persona.active ? persona.activeClass : 'bg-white/[0.08] hover:bg-white/[0.16] text-white'
-                      }`}
-                    >
-                      {persona.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Alur Cerita Demo 6 Langkah Sesuai Spesifikasi #DATA DEMO */}
-              <div className="pt-4 border-t border-white/10 space-y-2.5">
-                <p className="text-2xs text-white/70 font-semibold">
-                  {isEn ? 'Guided Demo Flow:' : 'Alur Demo Pitch:'}
-                </p>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {[
-                    {
-                      label: isEn ? '① Self Check (1–2 mo)' : '① Cek Awal (1–2 bln)',
-                      to: isEn ? '/assessment' : '/cek-awal',
-                      aliases: ['/cek-awal', '/assessment', '/self-check'],
-                    },
-                    {
-                      label: isEn ? '② Invite Partner' : '② Ajak Sari (Templat)',
-                      to: isEn ? '/couple' : '/berdua',
-                      aliases: ['/berdua', '/couple', '/our-plan'],
-                    },
-                    {
-                      label: isEn ? '③ Men-Friendly Care' : '③ Klinik JKN & Ramah Pria',
-                      to: isEn ? '/facilities' : '/layanan',
-                      aliases: ['/layanan', '/facilities', '/clinics'],
-                    },
-                    {
-                      label: isEn ? '④ Results & WHO Trend' : '④ Hasil & Tren WHO',
-                      to: isEn ? '/results' : '/hasil',
-                      aliases: ['/hasil', '/results'],
-                    },
-                    {
-                      label: isEn ? '⑤ 1-Hr Doctor QR' : '⑤ Buat QR 1 Jam',
-                      to: isEn ? '/share' : '/bagikan-nakes',
-                      aliases: ['/bagikan-nakes', '/share', '/share-doctor'],
-                    },
-                    {
-                      label: isEn ? '⑥ Dr. Maya Dashboard' : '⑥ Dasbor dr. Maya',
-                      to: isEn ? '/provider' : '/nakes',
-                      aliases: ['/nakes', '/provider', '/doctor'],
-                    },
-                  ].map((step) => (
-                    <button
-                      key={step.to}
-                      type="button"
-                      onClick={async () => {
-                        if (activePersona === 'custom') {
-                          await switchDemoPersona('rendra');
-                        }
-                        navigate(step.to);
-                      }}
-                      className={`px-3 py-2 rounded-full text-2xs transition ${
-                        step.aliases.includes(location.pathname)
-                          ? 'bg-brand-coral text-brand-navy-deep font-bold'
-                          : 'bg-white/[0.06] hover:bg-white/[0.14] text-white/85 font-medium'
-                      }`}
-                    >
-                      {step.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </aside>
 
       {/* Footer Disclaimer Medis & Privasi (Wajib di setiap layar) */}
       <footer className="border-t border-brand-navy/[0.08] dark:border-white/[0.08] py-6 text-2xs text-brand-navy/65 dark:text-white/65">

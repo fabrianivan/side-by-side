@@ -5,15 +5,18 @@ WORKDIR /app
 # Install dependencies
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
-RUN npm install
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Generate Prisma Client & Build Frontend
+# Generate Prisma Client & Build Frontend Production Bundle
 RUN npx prisma generate && npm run build
 
-EXPOSE 3001 5173
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV HOST=0.0.0.0
+EXPOSE 3001
 
-# Jalankan setup database (SQLite/PostgreSQL) dan server
-CMD ["npm", "run", "dev"]
+# Initialize database, ensure reference clinical catalog is seeded, and run unified production server
+CMD ["sh", "-c", "npx prisma db push && npx tsx prisma/seed.ts && npm start"]

@@ -1,6 +1,6 @@
 // Prisma Schema — Side by Side ("Better together.")
-// Default menggunakan SQLite untuk kemudahan demo hackathon tanpa setup server DB eksternal.
-// Untuk produksi PostgreSQL: ubah provider menjadi "postgresql" dan gunakan DATABASE_URL postgresql://
+// Default menggunakan SQLite untuk kemudahan setup node tunggal tanpa server DB eksternal.
+// Untuk produksi multi-instance PostgreSQL: ubah provider menjadi "postgresql" dan gunakan DATABASE_URL postgresql://
 
 generator client {
   provider = "prisma-client-js"
@@ -21,13 +21,16 @@ model User {
   locale        String       @default("id")   // "id" | "en"
   created_at    DateTime     @default(now())
 
-  consents      Consent[]
-  assessments   Assessment[]
-  results       Result[]
-  reminders     Reminder[]
-  share_tokens  ShareToken[]
-  pairings_a    Pairing[]    @relation("PairingUserA")
-  pairings_b    Pairing[]    @relation("PairingUserB")
+  consents         Consent[]
+  assessments      Assessment[]
+  results          Result[]
+  reminders        Reminder[]
+  share_tokens     ShareToken[]
+  pairings_a       Pairing[]             @relation("PairingUserA")
+  pairings_b       Pairing[]             @relation("PairingUserB")
+  cycle_tracker    CycleTracker?
+  doctor_checklist DoctorChecklistState?
+  health_journal   HealthJournal?
 }
 
 model Consent {
@@ -45,9 +48,9 @@ model Consent {
 model Assessment {
   id                     String   @id @default(cuid())
   user_id                String
-  answers_json_encrypted String   // Terenkripsi AES-GCM; di Mode Anonim hanya disimpan di IndexedDB klien
+  answers_json_encrypted String   // AES-256-GCM at rest on server; di Mode Anonim hanya di IndexedDB klien
   level                  String   // "routine" | "within_1_2_months" | "immediate"
-  summary_factors_json   String?  // Faktor non-identitas yang dipilih untuk ringkasan
+  summary_factors_json   String?  // AES-256-GCM at rest on server
   created_at             DateTime @default(now())
 
   user                   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -57,10 +60,42 @@ model Result {
   id                    String   @id @default(cuid())
   user_id               String
   test_date             DateTime
-  values_json_encrypted String   // Terenkripsi (konsentrasi, motilitas, morfologi, volume)
+  values_json_encrypted String   // AES-256-GCM at rest on server (volume, concentration, motility, morphology)
   notes                 String?
   attachment_name       String?
   created_at            DateTime @default(now())
+
+  user                  User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model CycleTracker {
+  id                       String   @id @default(cuid())
+  user_id                  String   @unique
+  cycle_start_date         String
+  habit_log_json_encrypted String   // AES-256-GCM at rest on server
+  updated_at               DateTime @updatedAt
+
+  user                     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+// Jurnal kesehatan privat: riwayat Cek Awal, check-in berkala, dan Jalur Perawatan (rujukan → pasca-konsultasi).
+// Seluruh isi dienkripsi AES-256-GCM at rest; hanya pemilik sesi yang dapat membaca/menulis.
+model HealthJournal {
+  id                     String   @id @default(cuid())
+  user_id                String   @unique
+  journal_json_encrypted String   // AES-256-GCM at rest: { assessmentHistory, checkIns, carePathway, updatedAt }
+  updated_at             DateTime @updatedAt
+
+  user                   User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model DoctorChecklistState {
+  id                    String   @id @default(cuid())
+  user_id               String   @unique
+  context_json          String   @default("{}")
+  selected_json         String   @default("{}")
+  custom_questions_json String   @default("[]")
+  updated_at            DateTime @updatedAt
 
   user                  User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
@@ -80,25 +115,26 @@ model Facility {
   hours              String
   map_url            String
   friendliness_score Float    // Skor kurasi 1.0 - 5.0
-  friendliness_notes String   // Alasan kurasi ramah pria (mis. ruang sampel privat, konseling nyaman)
+  friendliness_notes String   // Alasan kurasi ramah pria
 }
 
 model Pairing {
-  id                String     @id @default(cuid())
-  invite_code       String     @unique
-  user_a            String
-  user_b            String?
-  partner_a_alias   String     @default("Suami")
-  partner_b_alias   String     @default("Istri")
-  status            String     @default("pending") // "pending" | "active" | "revoked"
-  shared_items_json String     @default("{}")      // Kontrol granular per item (default tidak bagikan kuesioner/lab)
-  expires_at        DateTime
-  created_at        DateTime   @default(now())
-  revoked_at        DateTime?
+  id                  String     @id @default(cuid())
+  invite_code         String     @unique
+  user_a              String
+  user_b              String?
+  partner_a_alias     String     @default("Suami")
+  partner_b_alias     String     @default("Istri")
+  status              String     @default("pending") // "pending" | "active" | "revoked"
+  shared_items_json   String     @default("{}")      // Kontrol granular per item (default tidak bagikan kuesioner/lab)
+  prep_checklist_json String     @default("[]")      // Daftar persiapan bersama tersinkronisasi
+  expires_at          DateTime
+  created_at          DateTime   @default(now())
+  revoked_at          DateTime?
 
-  userA             User       @relation("PairingUserA", fields: [user_a], references: [id], onDelete: Cascade)
-  userB             User?      @relation("PairingUserB", fields: [user_b], references: [id], onDelete: SetNull)
-  plan_steps        PlanStep[]
+  userA               User       @relation("PairingUserA", fields: [user_a], references: [id], onDelete: Cascade)
+  userB               User?      @relation("PairingUserB", fields: [user_b], references: [id], onDelete: SetNull)
+  plan_steps          PlanStep[]
 }
 
 model PlanStep {
@@ -155,15 +191,17 @@ model QuestionTicket {
 }
 
 model ShareToken {
-  id                String   @id @default(cuid())
-  token_code        String   @unique
-  user_id           String
-  scope_json        String   // JSON array: ["history", "risk_factors", "lab_results"]
-  snapshot_json     String   // Ringkasan yang diizinkan pengguna saat token dibuat (tanpa bocor data di luar scope)
-  expires_at        DateTime // Berlaku 1 jam
-  revoked           Boolean  @default(false)
-  accessed_log_json String   @default("[]") // Array log akses: [{ accessed_at, viewer_role, viewer_name, action }]
-  created_at        DateTime @default(now())
+  id                       String    @id @default(cuid())
+  token_code               String    @unique
+  user_id                  String
+  scope_json               String    // JSON array: ["history", "risk_factors", "lab_results", "care_pathway", "progress"]
+  snapshot_json            String    // AES-256-GCM at rest on server
+  expires_at               DateTime  // Berlaku 1 jam
+  revoked                  Boolean   @default(false)
+  accessed_log_json        String    @default("[]") // Array log akses: [{ accessed_at, viewer_role, viewer_name, action }]
+  care_plan_json_encrypted String?   // Rencana pasca-konsultasi yang ditulis dokter (AES-256-GCM at rest)
+  care_plan_at             DateTime? // Waktu rencana ditulis (maks. 24 jam setelah token dibuat)
+  created_at               DateTime  @default(now())
 
-  user              User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user                     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }

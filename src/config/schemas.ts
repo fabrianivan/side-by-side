@@ -2,6 +2,11 @@ import { z } from 'zod';
 import assessmentRulesRaw from './assessment-rules.json';
 import semenReferenceRaw from './semen-reference.json';
 import templatesRaw from './templates.json';
+import {
+  ASSESSMENT_RULES_EN,
+  SEMEN_REFERENCE_EN,
+  TEMPLATES_EN,
+} from './localization-en';
 
 export const QuestionOptionSchema = z.object({
   value: z.string(),
@@ -115,3 +120,74 @@ export const semenReferenceConfig: SemenReferenceConfig =
   SemenReferenceConfigSchema.parse(semenReferenceRaw);
 
 export const templatesConfig = templatesRaw;
+
+export function getLocalizedAssessmentConfig(
+  locale: 'id' | 'en' = 'id',
+): AssessmentRulesConfig {
+  if (locale !== 'en') return assessmentRulesConfig;
+  return {
+    ...assessmentRulesConfig,
+    medicalReviewer: ASSESSMENT_RULES_EN.medicalReviewer,
+    disclaimer: ASSESSMENT_RULES_EN.disclaimer,
+    emotionalSupportBanner: ASSESSMENT_RULES_EN.emotionalSupportBanner,
+    levels: {
+      routine: {
+        ...assessmentRulesConfig.levels.routine,
+        ...ASSESSMENT_RULES_EN.levels.routine,
+      },
+      within_1_2_months: {
+        ...assessmentRulesConfig.levels.within_1_2_months,
+        ...ASSESSMENT_RULES_EN.levels.within_1_2_months,
+      },
+      immediate: {
+        ...assessmentRulesConfig.levels.immediate,
+        ...ASSESSMENT_RULES_EN.levels.immediate,
+      },
+    },
+    questions: assessmentRulesConfig.questions.map((q) => {
+      const qEn = ASSESSMENT_RULES_EN.questions[q.id];
+      if (!qEn) return q;
+      return {
+        ...q,
+        topic: qEn.topic,
+        question: qEn.question,
+        helperText: qEn.helperText,
+        options: q.options.map((opt) => {
+          const optEn = qEn.options[opt.value];
+          if (!optEn) return opt;
+          return {
+            ...opt,
+            label: optEn.label,
+            factorTitle: optEn.factorTitle ?? opt.factorTitle,
+            whyRelevant: optEn.whyRelevant ?? opt.whyRelevant,
+          };
+        }),
+      };
+    }),
+  };
+}
+
+export function getLocalizedSemenReference(
+  locale: 'id' | 'en' = 'id',
+): SemenReferenceConfig {
+  if (locale !== 'en') return semenReferenceConfig;
+  return {
+    ...semenReferenceConfig,
+    source: SEMEN_REFERENCE_EN.source,
+    disclaimer: SEMEN_REFERENCE_EN.disclaimer,
+    parameters: semenReferenceConfig.parameters.map((param) => {
+      const pEn = SEMEN_REFERENCE_EN.parameters[param.key];
+      return pEn ? { ...param, ...pEn } : param;
+    }),
+    lifestyleRecommendations: semenReferenceConfig.lifestyleRecommendations.map((rec) => {
+      const recEn = SEMEN_REFERENCE_EN.lifestyleRecommendations[rec.id];
+      return recEn ? { ...rec, ...recEn } : rec;
+    }),
+  };
+}
+
+export function getLocalizedTemplates(
+  locale: 'id' | 'en' = 'id',
+): typeof templatesConfig {
+  return locale === 'en' ? TEMPLATES_EN : templatesConfig;
+}

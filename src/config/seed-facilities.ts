@@ -1,3 +1,5 @@
+import { FACILITIES_EN } from './localization-en';
+
 export interface SeedFacility {
   id: string;
   name: string;
@@ -144,7 +146,7 @@ export const seedFacilities: SeedFacility[] = [
     name: 'RSIA Limijati Bandung (Pusat Kesehatan Reproduksi Pasangan)',
     type: 'RS',
     city: 'Bandung',
-    address: 'Jl. LLRE Martadinata No.39,itarum, Kec. Bandung Wetan, Kota Bandung',
+    address: 'Jl. LLRE Martadinata No.39, Citarum, Kec. Bandung Wetan, Kota Bandung',
     latitude: -6.9056,
     longitude: 107.6143,
     services: ['Andrologi', 'Urologi', 'Laboratorium'],
@@ -216,7 +218,7 @@ export const seedFacilities: SeedFacility[] = [
     city: 'Surabaya',
     address: 'Jl. Mayjen Prof. Dr. Moestopo No.6-8, Airlangga, Kec. Gubeng, Surabaya',
     latitude: -7.2682,
-    longitude: 102.7581,
+    longitude: 112.7581,
     services: ['Andrologi', 'Urologi', 'Laboratorium'],
     price_min: 250000,
     price_max: 750000,
@@ -282,7 +284,7 @@ export const seedFacilities: SeedFacility[] = [
     name: 'RS Premier Surabaya (Klinik Urologi, Andrologi & Lab Diagnostik)',
     type: 'RS',
     city: 'Surabaya',
-    address: 'Jl. Nginden Intan Barat No.Blok B, Ngenden Jangkungan, Sukolilo, Surabaya',
+    address: 'Jl. Nginden Intan Barat Blok B, Nginden Jangkungan, Sukolilo, Surabaya',
     latitude: -7.3046,
     longitude: 112.7654,
     services: ['Andrologi', 'Urologi', 'Laboratorium'],
@@ -295,3 +297,26 @@ export const seedFacilities: SeedFacility[] = [
     friendliness_notes: 'Layanan privat dengan hasil analisis semen yang dilengkapi penjelasan visual dan sesi tanya-jawab dokter yang tidak terburu-buru.'
   }
 ];
+
+export interface LocalizedSeedFacility extends SeedFacility {
+  displayType: string;
+}
+
+export function getLocalizedFacilities(
+  locale: 'id' | 'en' = 'id',
+): LocalizedSeedFacility[] {
+  if (locale !== 'en') {
+    return seedFacilities.map((f) => ({ ...f, displayType: f.type }));
+  }
+  return seedFacilities.map((f) => {
+    const en = FACILITIES_EN[f.id];
+    return en
+      ? {
+          ...f,
+          hours: en.hours,
+          friendliness_notes: en.friendliness_notes,
+          displayType: en.typeLabel,
+        }
+      : { ...f, displayType: f.type };
+  });
+}

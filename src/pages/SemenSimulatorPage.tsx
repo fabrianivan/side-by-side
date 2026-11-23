@@ -6,15 +6,15 @@ import {
   Info,
   CheckCircle2,
   AlertCircle,
-  TrendingUp,
   MapPin,
   Save,
   Copy,
   Check,
   ArrowRight,
+  History,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { getTranslations } from '../i18n';
+import { localDateString } from '../lib/care-pathway';
 
 interface Preset {
   name: string;
@@ -27,10 +27,10 @@ interface Preset {
 }
 
 export const SemenSimulatorPage: React.FC = () => {
-  const { locale, addLabResult } = useApp();
-  const t = getTranslations(locale);
+  const { locale, labResults, addLabResult } = useApp();
   const navigate = useNavigate();
   const isEn = locale === 'en';
+  const latestLab = labResults.length > 0 ? labResults[labResults.length - 1] : null;
 
   // State parameter
   const [volume, setVolume] = useState<number>(2.4);
@@ -62,8 +62,15 @@ export const SemenSimulatorPage: React.FC = () => {
   const isProgMotOk = progMotility >= WHO_LIMITS.progMotility;
   const isMorphOk = morphology >= WHO_LIMITS.morphology;
 
-  // Plain clinical classifications
+  // Plain clinical classifications (educational WHO terminology, never a diagnosis)
   const classifications: string[] = [];
+  if (!isVolumeOk) {
+    classifications.push(
+      isEn
+        ? 'Hypospermia (Ejaculate volume below 1.4 mL reference)'
+        : 'Hipospermia (Volume ejakulat di bawah rujukan 1,4 mL)'
+    );
+  }
   if (!isConcOk) {
     classifications.push(
       isEn
@@ -71,11 +78,11 @@ export const SemenSimulatorPage: React.FC = () => {
         : 'Oligozoospermia (Konsentrasi di bawah rujukan)'
     );
   }
-  if (!isProgMotOk) {
+  if (!isProgMotOk || !isTotalMotOk) {
     classifications.push(
       isEn
-        ? 'Asthenozoospermia (Progressive motility below benchmark)'
-        : 'Asthenozoospermia (Motilitas progresif di bawah rujukan)'
+        ? 'Asthenozoospermia (Motility below benchmark)'
+        : 'Astenozoospermia (Motilitas di bawah rujukan)'
     );
   }
   if (!isMorphOk) {
@@ -85,7 +92,14 @@ export const SemenSimulatorPage: React.FC = () => {
         : 'Teratozoospermia (Morfologi normal di bawah rujukan)'
     );
   }
-  const isAllNormal = classifications.length === 0 && isVolumeOk;
+  if (classifications.length === 0 && totalCount < WHO_LIMITS.totalCount) {
+    classifications.push(
+      isEn
+        ? 'Total sperm per ejaculate below 39 M benchmark'
+        : 'Total sperma per ejakulat di bawah rujukan 39 juta'
+    );
+  }
+  const isAllNormal = classifications.length === 0;
 
   const presets: Preset[] = [
     {
@@ -111,7 +125,7 @@ export const SemenSimulatorPage: React.FC = () => {
         : 'Sering terjadi saat kurang tidur, stres kerja, atau paparan panas beberapa minggu terakhir.',
     },
     {
-      name: isEn ? 'Physician Review Scenario' : 'Skenario Evaluasi Dokter',
+      name: isEn ? 'Physician Review Profile' : 'Profil Evaluasi Dokter',
       volume: 1.2,
       concentration: 9.0,
       totalMotility: 25.0,
@@ -131,9 +145,20 @@ export const SemenSimulatorPage: React.FC = () => {
     setMorphology(p.morphology);
   };
 
+  const handleLoadLatestLab = () => {
+    if (!latestLab) return;
+    setVolume(Math.min(6, Math.max(0.5, Number(latestLab.volume_ml) || 0.5)));
+    setConcentration(Math.min(100, Math.max(1, Number(latestLab.concentration_m_per_ml) || 1)));
+    const nextTotal = Math.min(95, Math.max(0, Number(latestLab.total_motility_pct) || 0));
+    const nextProg = Math.min(nextTotal, Math.min(90, Math.max(0, Number(latestLab.progressive_motility_pct) || 0)));
+    setTotalMotility(nextTotal);
+    setProgMotility(nextProg);
+    setMorphology(Math.min(15, Math.max(0.5, Number(latestLab.morphology_normal_pct) || 0.5)));
+  };
+
   const handleSaveToMyResults = async () => {
     await addLabResult({
-      testDate: new Date().toISOString().slice(0, 10),
+      testDate: localDateString(),
       volume_ml: volume,
       concentration_m_per_ml: concentration,
       total_motility_pct: totalMotility,
@@ -157,7 +182,7 @@ export const SemenSimulatorPage: React.FC = () => {
 - Total Motility: ${totalMotility}% (Benchmark ≥ 42%) [${isTotalMotOk ? 'Normal' : 'Requires Review'}]
 - Normal Morphology: ${morphology}% (Benchmark ≥ 4%) [${isMorphOk ? 'Normal' : 'Requires Review'}]
 - Total Motile Sperm Count (TMSC): ${tmsc} M
-- Clinical Interpretation: ${isAllNormal ? 'Normozoospermia (All values within reference)' : classifications.join(', ')}
+- Reference Terminology (Educational, not a diagnosis): ${isAllNormal ? 'Normozoospermia (All values within reference)' : classifications.join(', ')}
 
 Note: A single test result varies naturally due to biological fluctuations. Always consult an andrologist or urologist.`
       : `Ringkasan Simulasi Analisis Semen (Acuan WHO Edisi ke-6):
@@ -168,11 +193,15 @@ Note: A single test result varies naturally due to biological fluctuations. Alwa
 - Motilitas Total: ${totalMotility}% (Rujukan ≥ 42%) [${isTotalMotOk ? 'Normal' : 'Perlu Evaluasi'}]
 - Morfologi Normal: ${morphology}% (Rujukan ≥ 4%) [${isMorphOk ? 'Normal' : 'Perlu Evaluasi'}]
 - Total Motile Sperm Count (TMSC): ${tmsc} juta
-- Kesimpulan Awam: ${isAllNormal ? 'Normozoospermia (Semua parameter dalam rentang rujukan)' : classifications.join(', ')}
+- Istilah Rujukan (Edukasi, bukan diagnosis): ${isAllNormal ? 'Normozoospermia (Semua parameter dalam rentang rujukan)' : classifications.join(', ')}
 
 Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu diskusikan dengan dokter spesialis andrologi/urologi.`;
 
-    await navigator.clipboard.writeText(text);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Clipboard fallback
+    }
     setCopiedSummary(true);
     setTimeout(() => setCopiedSummary(false), 3000);
   };
@@ -198,6 +227,18 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
           </div>
 
           <div className="flex flex-wrap gap-2 shrink-0">
+            {latestLab && (
+              <button
+                type="button"
+                onClick={handleLoadLatestLab}
+                className="btn btn-soft"
+              >
+                <History className="w-4 h-4 text-brand-teal" />
+                <span>
+                  {isEn ? `Load Latest Lab (${latestLab.testDate})` : `Muat Lab Terakhir (${latestLab.testDate})`}
+                </span>
+              </button>
+            )}
             <button
               type="button"
               onClick={handleSaveToMyResults}
@@ -227,7 +268,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
       <section className="card p-5 space-y-3.5">
         <h2 className="eyebrow !text-brand-navy/60 dark:!text-white/60 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-brand-coral" />
-          <span>{isEn ? 'Choose an Example Scenario:' : 'Pilih Skenario Contoh:'}</span>
+          <span>{isEn ? 'Reference Sample Presets:' : 'Contoh Prasetel Referensi:'}</span>
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {presets.map((p) => (
@@ -495,12 +536,12 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
               </p>
             </div>
 
-            {/* Clinical Classification */}
+            {/* Reference Terminology (Educational Only) */}
             <div className="relative space-y-2 pt-3 border-t border-white/10">
               <p className="text-xs font-semibold text-white/80">
-                {isEn ? 'Diagnostic Terminology:' : 'Interpretasi Istilah Medis:'}
+                {isEn ? 'WHO Reference Terminology (Educational, Not a Diagnosis):' : 'Istilah Rujukan WHO (Edukasi, Bukan Diagnosis):'}
               </p>
-              <div className="p-3.5 rounded-xl bg-black/20 text-xs">
+              <div className="p-3.5 rounded-xl bg-black/20 text-xs" data-testid="simulator-classification">
                 {isAllNormal ? (
                   <div className="text-brand-teal-light font-bold flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-[#4FC6C8] shrink-0" />
@@ -509,7 +550,7 @@ Catatan: Hasil satu kali tes bisa bervariasi karena fluktuasi biologis. Selalu d
                 ) : (
                   <div className="space-y-1">
                     <div className="text-brand-coral font-bold flex items-center gap-1.5">
-                      <AlertCircle className="w-4 h-4" />
+                      <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{classifications.join(' + ')}</span>
                     </div>
                   </div>

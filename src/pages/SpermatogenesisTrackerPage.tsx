@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
 import {
   Calendar,
   Clock,
@@ -8,9 +7,13 @@ import {
   Bell,
   Check,
   CheckCircle2,
+  Download,
+  Flame,
+  RotateCcw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { getTranslations } from '../i18n';
+import { localDateString } from '../lib/care-pathway';
+import { downloadIcsEvent } from '../lib/ics';
 
 interface HabitItem {
   key: string;
@@ -85,19 +88,52 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
     setCycleStartDate,
     addReminder,
   } = useApp();
-  const t = getTranslations(locale);
-  const navigate = useNavigate();
   const isEn = locale === 'en';
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = localDateString();
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [reminderAdded, setReminderAdded] = useState<boolean>(false);
 
-  // Cycle day calculations
-  const startMs = new Date(cycleStartDate).getTime();
-  const currentMs = new Date(selectedDate).getTime();
-  const diffDays = Math.max(1, Math.min(74, Math.floor((currentMs - startMs) / (1000 * 60 * 60 * 24)) + 1));
+  // Cycle day calculations (calendar-day safe, no UTC drift)
+  const startMs = new Date(`${cycleStartDate.slice(0, 10)}T00:00:00Z`).getTime();
+  const currentMs = new Date(`${selectedDate.slice(0, 10)}T00:00:00Z`).getTime();
+  const rawDay = Math.floor((currentMs - startMs) / (1000 * 60 * 60 * 24)) + 1;
+  const diffDays = Math.max(1, Math.min(74, Number.isFinite(rawDay) ? rawDay : 1));
   const progressPct = Math.min(100, Math.round((diffDays / 74) * 100));
+  const day74DateStr = new Date((Number.isFinite(startMs) ? startMs : Date.now()) + 73 * 86400_000)
+    .toISOString()
+    .slice(0, 10);
+
+  // 7-day rolling window, current streak, and active days in cycle from encrypted habitLog
+  const { last7Days, currentStreak, totalActiveDays } = useMemo(() => {
+    const todayBase = new Date(`${todayStr}T00:00:00Z`).getTime();
+    const days: Array<{ date: string; shortLabel: string; count: number }> = [];
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const dt = new Date(todayBase - offset * 86400_000);
+      const iso = dt.toISOString().slice(0, 10);
+      const shortLabel = new Date(`${iso}T12:00:00`).toLocaleDateString(isEn ? 'en-GB' : 'id-ID', {
+        weekday: 'short',
+      });
+      days.push({ date: iso, shortLabel, count: (habitLog[iso] || []).length });
+    }
+
+    let streak = 0;
+    const todayHasAny = (habitLog[todayStr] || []).length > 0;
+    for (let offset = todayHasAny ? 0 : 1; offset < 74; offset += 1) {
+      const iso = new Date(todayBase - offset * 86400_000).toISOString().slice(0, 10);
+      if ((habitLog[iso] || []).length > 0) {
+        streak += 1;
+      } else {
+        break;
+      }
+    }
+
+    const activeDays = Object.entries(habitLog).filter(
+      ([d, items]) => d >= cycleStartDate && items.length > 0,
+    ).length;
+
+    return { last7Days: days, currentStreak: streak, totalActiveDays: activeDays };
+  }, [cycleStartDate, habitLog, isEn, todayStr]);
 
   const getCurrentPhase = (day: number) => {
     if (day <= 18) {
@@ -122,8 +158,8 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
           ? 'Chromosomes divide precisely in half. Antioxidants are critical in this phase to prevent single and double-strand DNA breaks.'
           : 'Materi genetik (kromosom) dibagi dua secara presisi. Antioksidan sangat krusial di tahap ini untuk mencegah kerusakan rantai DNA sperma.',
         focus: isEn
-          ? 'Priority: Zinc, Selenium, Lycopene, and Vitamins C & E.'
-          : 'Prioritas: Asupan Zinc, Selenium, Likopen, dan Vitamin C & E.',
+          ? 'Priority: Whole foods rich in antioxidants—tomatoes, nuts, leafy greens, and water.'
+          : 'Prioritas: Pangan utuh kaya antioksidan—tomat, kacang-kacangan, sayuran hijau, dan air putih.',
       };
     }
     if (day <= 64) {
@@ -160,7 +196,7 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
   };
 
   const handleScheduleTestReminder = async () => {
-    const testDate = new Date(startMs + 74 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
+    const testDate = `${day74DateStr}T09:00`;
     await addReminder({
       type: 'semen_analysis',
       title: isEn
@@ -174,6 +210,24 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
     });
     setReminderAdded(true);
     setTimeout(() => setReminderAdded(false), 3000);
+  };
+
+  const handleExportDay74Calendar = () => {
+    downloadIcsEvent(
+      {
+        uid: `sbs-cycle-day74-${cycleStartDate}@side-by-side.app`,
+        title: isEn
+          ? 'Day 74 Spermatogenesis Evaluation & Semen Analysis'
+          : 'Evaluasi Siklus Spermatogenesis Hari ke-74',
+        start: `${day74DateStr}T09:00`,
+        durationMinutes: 60,
+        description: isEn
+          ? 'Target end of your 74-day habit cycle from Side by Side. Plan 2–7 days of abstinence before a semen analysis.'
+          : 'Target akhir siklus kebiasaan 74 hari dari Side by Side. Atur masa pantang 2–7 hari sebelum analisis semen.',
+        alarmMinutesBefore: 48 * 60,
+      },
+      `side-by-side-day74-${day74DateStr}.ics`,
+    );
   };
 
   return (
@@ -199,6 +253,14 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
           <div className="flex flex-wrap gap-2 shrink-0">
             <button
               type="button"
+              onClick={handleExportDay74Calendar}
+              className="btn btn-secondary"
+            >
+              <Download className="w-4 h-4 text-brand-teal" />
+              <span>{isEn ? 'Day 74 (.ics)' : 'Kalender Hari-74 (.ics)'}</span>
+            </button>
+            <button
+              type="button"
               onClick={handleScheduleTestReminder}
               disabled={reminderAdded}
               className="btn btn-navy"
@@ -210,6 +272,16 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
                   : (isEn ? 'Schedule Day 74 Test' : 'Jadwalkan Tes Hari ke-74')}
               </span>
             </button>
+            {diffDays >= 74 && (
+              <button
+                type="button"
+                onClick={() => void setCycleStartDate(todayStr)}
+                className="btn btn-primary"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>{isEn ? 'Start New 74-Day Cycle' : 'Mulai Siklus 74 Hari Baru'}</span>
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -236,6 +308,7 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
             <span className="text-white/80">{isEn ? 'Cycle Started:' : 'Mulai Siklus:'}</span>
             <input
               type="date"
+              max={todayStr}
               value={cycleStartDate}
               onChange={(e) => setCycleStartDate(e.target.value)}
               aria-label={isEn ? 'Cycle start date' : 'Tanggal mulai siklus'}
@@ -379,18 +452,54 @@ export const SpermatogenesisTrackerPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Adherence Score */}
-        <div className="well px-4 py-3.5 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-brand-navy dark:text-white">
-            {isEn
-              ? `Habits Completed (${selectedDate === todayStr ? 'Today' : selectedDate}):`
-              : `Progress Kebiasaan (${selectedDate === todayStr ? 'Hari Ini' : selectedDate}):`}
-          </span>
-          <span className="tabular badge bg-brand-teal-strong text-white whitespace-nowrap">
-            {isEn
-              ? `${todayCheckedList.length} of ${HABIT_ITEMS.length} Complete`
-              : `${todayCheckedList.length} dari ${HABIT_ITEMS.length} Selesai`}
-          </span>
+        {/* 7-Day Habit Consistency Strip & Cycle Summary */}
+        <div
+          className="well p-4 space-y-3"
+          data-testid="habit-7day-strip"
+          aria-label={isEn ? 'Last 7 days habit consistency' : 'Konsistensi kebiasaan 7 hari terakhir'}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 font-bold text-brand-navy dark:text-white">
+              <Flame className="w-4 h-4 text-brand-coral shrink-0" />
+              <span>
+                {isEn
+                  ? `Active streak: ${currentStreak} day(s) · ${totalActiveDays} active day(s) this cycle`
+                  : `Runtutan aktif: ${currentStreak} hari · ${totalActiveDays} hari aktif di siklus ini`}
+              </span>
+            </div>
+            <span className="tabular badge bg-brand-teal-strong text-white whitespace-nowrap">
+              {isEn
+                ? `${todayCheckedList.length} of ${HABIT_ITEMS.length} Complete (${selectedDate === todayStr ? 'Today' : selectedDate})`
+                : `${todayCheckedList.length} dari ${HABIT_ITEMS.length} Selesai (${selectedDate === todayStr ? 'Hari Ini' : selectedDate})`}
+            </span>
+          </div>
+          <div className="grid grid-cols-7 gap-1.5">
+            {last7Days.map((day) => {
+              const isSelected = day.date === selectedDate;
+              const levelClass =
+                day.count >= 4
+                  ? 'bg-brand-teal-strong text-white border-brand-teal-strong'
+                  : day.count >= 1
+                  ? 'bg-brand-teal-light text-brand-teal-dark dark:bg-brand-teal/25 dark:text-[#7FDADB] border-brand-teal/40'
+                  : 'bg-surface dark:bg-surface-dark text-brand-navy/60 dark:text-white/60 border-brand-navy/10 dark:border-white/10';
+              return (
+                <button
+                  key={day.date}
+                  type="button"
+                  onClick={() => setSelectedDate(day.date)}
+                  aria-pressed={isSelected}
+                  className={`rounded-xl border px-1.5 py-2 text-center transition ${levelClass} ${
+                    isSelected ? 'ring-2 ring-brand-navy dark:ring-white ring-offset-1 dark:ring-offset-surface-dark-card' : ''
+                  }`}
+                >
+                  <div className="text-3xs font-bold uppercase opacity-80">{day.shortLabel}</div>
+                  <div className="text-xs font-extrabold tabular mt-0.5">
+                    {day.count}/{HABIT_ITEMS.length}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Habit List */}

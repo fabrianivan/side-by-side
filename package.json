@@ -9,12 +9,15 @@
     "dev:client": "vite --port 5173",
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:setup": "prisma generate && prisma db push && tsx prisma/seed.ts"
+    "db:setup": "prisma generate && prisma db push && tsx prisma/seed.ts",
+    "db:deploy": "prisma generate && prisma db push",
+    "create:nakes": "tsx server/create-provider.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

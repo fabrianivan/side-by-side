@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   MapPin,
   Star,
@@ -18,9 +18,17 @@ import {
   CalendarPlus,
   ShieldCheck,
   Eye,
+  Search,
+  RotateCcw,
+  Route,
 } from 'lucide-react';
-import { seedFacilities, type SeedFacility } from '../config/seed-facilities';
-import { templatesConfig } from '../config/schemas';
+import {
+  getLocalizedFacilities,
+  type LocalizedSeedFacility,
+} from '../config/seed-facilities';
+import { getLocalizedTemplates } from '../config/schemas';
+import { SERVICE_LABELS_EN } from '../config/localization-en';
+import { downloadIcsEvent } from '../lib/ics';
 import { useApp } from '../context/AppContext';
 
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -38,13 +46,42 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
 }
 
 export const FacilitiesPage: React.FC = () => {
-  const { assessmentResult, addReminder, updatePlanStep } = useApp();
+  const { locale, assessmentResult, addReminder, updatePlanStep, updateHealthJournal, healthJournal } = useApp();
+  const isEn = locale === 'en';
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const fromPathway = searchParams.get('from') === 'pathway';
+  const presetService = searchParams.get('service');
+  const pathwayFacilityId = healthJournal.carePathway.facility?.id;
+  const [localizedFacilities, setLocalizedFacilities] = useState<LocalizedSeedFacility[]>(() =>
+    getLocalizedFacilities(locale)
+  );
+  const localizedTemplates = useMemo(() => getLocalizedTemplates(locale), [locale]);
+
+  useEffect(() => {
+    setLocalizedFacilities(getLocalizedFacilities(locale));
+    const controller = new AbortController();
+    fetch(`/api/facilities?locale=${locale}`, { signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) return;
+        const rows = (await res.json()) as LocalizedSeedFacility[];
+        if (Array.isArray(rows) && rows.length > 0) {
+          setLocalizedFacilities(rows);
+        }
+      })
+      .catch(() => {
+        // Offline cache already initialized from curated directory
+      });
+    return () => controller.abort();
+  }, [locale]);
 
   // Filter & Sort State
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('Semua');
   const [onlyJkn, setOnlyJkn] = useState<boolean>(false);
-  const [selectedService, setSelectedService] = useState<string>('Semua');
+  const [selectedService, setSelectedService] = useState<string>(() =>
+    presetService && ['Andrologi', 'Urologi', 'Laboratorium'].includes(presetService) ? presetService : 'Semua'
+  );
   const [maxBudget, setMaxBudget] = useState<number>(1500000);
   const [sortBy, setSortBy] = useState<'friendliness' | 'price' | 'distance'>('friendliness');
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -52,7 +89,7 @@ export const FacilitiesPage: React.FC = () => {
   const [showCompactMap, setShowCompactMap] = useState<boolean>(true);
 
   // Detail Layanan Modal
-  const [detailTarget, setDetailTarget] = useState<SeedFacility | null>(null);
+  const [detailTarget, setDetailTarget] = useState<LocalizedSeedFacility | null>(null);
 
   // Modal Daftar Pertanyaan untuk Dokter
   const [showQuestionsModal, setShowQuestionsModal] = useState<boolean>(false);
@@ -61,43 +98,77 @@ export const FacilitiesPage: React.FC = () => {
   // Pertanyaan yang dipersonalisasi dari hasil Cek Awal pengguna
   const personalizedQuestions = useMemo(() => {
     if (!assessmentResult || assessmentResult.factors.length === 0) return [];
-    return assessmentResult.factors.map(
-      (f) =>
-        `Terkait faktor "${f.factorTitle}" yang saya alami, langkah pemeriksaan atau perbaikan gaya hidup apa yang Dokter sarankan?`
+    return assessmentResult.factors.map((f) =>
+      isEn
+        ? `Regarding "${f.factorTitle}" from my self-check, what diagnostic steps or lifestyle changes do you recommend?`
+        : `Terkait faktor "${f.factorTitle}" yang saya alami, langkah pemeriksaan atau perbaikan gaya hidup apa yang Dokter sarankan?`
     );
-  }, [assessmentResult]);
+  }, [assessmentResult, isEn]);
 
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>(() =>
-    templatesConfig.doctorQuestionsList.flatMap((cat) => cat.questions)
+    localizedTemplates.doctorQuestionsList.flatMap((cat) => cat.questions)
   );
 
+  useEffect(() => {
+    setSelectedQuestions(localizedTemplates.doctorQuestionsList.flatMap((cat) => cat.questions));
+  }, [localizedTemplates]);
+
   // Modal Pengingat Pemeriksaan
-  const [reminderTarget, setReminderTarget] = useState<SeedFacility | null>(null);
+  const [reminderTarget, setReminderTarget] = useState<LocalizedSeedFacility | null>(null);
   const [remindDate, setRemindDate] = useState<string>(() =>
     new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
   );
   const [reminderSavedBanner, setReminderSavedBanner] = useState<string>('');
 
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    selectedCity !== 'Semua' ||
+    onlyJkn ||
+    selectedService !== 'Semua' ||
+    maxBudget < 1500000;
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedCity('Semua');
+    setOnlyJkn(false);
+    setSelectedService('Semua');
+    setMaxBudget(1500000);
+    setSortBy('friendliness');
+  };
+
   const handleRequestGeolocation = () => {
     if (!navigator.geolocation) {
-      setGeoStatus('Lokasi otomatis tidak didukung di perangkat ini. Silakan pilih kota secara manual.');
+      setGeoStatus(
+        isEn
+          ? 'Automatic location is not supported on this device. Please select a city manually.'
+          : 'Lokasi otomatis tidak didukung di perangkat ini. Silakan pilih kota secara manual.'
+      );
       return;
     }
-    setGeoStatus('Mencari lokasi...');
+    setGeoStatus(isEn ? 'Locating...' : 'Mencari lokasi...');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setSortBy('distance');
-        setGeoStatus('Mengurutkan berdasarkan jarak terdekat dari lokasi Anda.');
+        setGeoStatus(
+          isEn
+            ? 'Sorting by nearest distance from your current location.'
+            : 'Mengurutkan berdasarkan jarak terdekat dari lokasi Anda.'
+        );
       },
       () => {
-        setGeoStatus('Izin lokasi tidak diberikan. Anda tetap dapat memilih kota secara manual.');
+        setGeoStatus(
+          isEn
+            ? 'Location permission declined. You can still filter by city manually.'
+            : 'Izin lokasi tidak diberikan. Anda tetap dapat memilih kota secara manual.'
+        );
       }
     );
   };
 
   const filteredFacilities = useMemo(() => {
-    return seedFacilities
+    const q = searchQuery.trim().toLowerCase();
+    return localizedFacilities
       .filter((f) => {
         if (selectedCity !== 'Semua' && f.city !== selectedCity) return false;
         if (onlyJkn && !f.accepts_jkn) return false;
@@ -105,6 +176,15 @@ export const FacilitiesPage: React.FC = () => {
           return false;
         }
         if (f.price_min > maxBudget) return false;
+        if (
+          q &&
+          !f.name.toLowerCase().includes(q) &&
+          !f.address.toLowerCase().includes(q) &&
+          !f.city.toLowerCase().includes(q) &&
+          !f.friendliness_notes.toLowerCase().includes(q)
+        ) {
+          return false;
+        }
         return true;
       })
       .map((f) => ({
@@ -120,7 +200,7 @@ export const FacilitiesPage: React.FC = () => {
         }
         return b.friendliness_score - a.friendliness_score;
       });
-  }, [selectedCity, onlyJkn, selectedService, maxBudget, sortBy, userCoords]);
+  }, [localizedFacilities, searchQuery, selectedCity, onlyJkn, selectedService, maxBudget, sortBy, userCoords]);
 
   const toggleDoctorQuestion = (q: string) => {
     setSelectedQuestions((prev) =>
@@ -131,11 +211,15 @@ export const FacilitiesPage: React.FC = () => {
   const handleCopyDoctorQuestions = async () => {
     const allChosen = [...personalizedQuestions, ...selectedQuestions];
     const text = [
-      'DAFTAR PERTANYAAN UNTUK DOKTER — SIDE BY SIDE',
+      isEn
+        ? 'DOCTOR CONSULTATION QUESTIONS — SIDE BY SIDE'
+        : 'DAFTAR PERTANYAAN UNTUK DOKTER — SIDE BY SIDE',
       '------------------------------------------------',
       ...allChosen.map((q, idx) => `${idx + 1}. ${q}`),
       '',
-      'Catatan: Dibuat dari aplikasi Side by Side (Panduan Kesehatan Reproduksi Pria).',
+      isEn
+        ? 'Note: Generated from Side by Side (Men’s Reproductive Health Companion).'
+        : 'Catatan: Dibuat dari aplikasi Side by Side (Panduan Kesehatan Reproduksi Pria).',
     ].join('\n');
     try {
       await navigator.clipboard.writeText(text);
@@ -150,33 +234,34 @@ export const FacilitiesPage: React.FC = () => {
     window.print();
   };
 
-  const handleDownloadIcs = (fac: SeedFacility, dateIso: string) => {
-    const dt = new Date(dateIso);
-    const startStr = dt.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    const endDt = new Date(dt.getTime() + 60 * 60 * 1000);
-    const endStr = endDt.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const handleDownloadIcs = (fac: LocalizedSeedFacility, dateIso: string) => {
+    downloadIcsEvent(
+      {
+        uid: `sbs-fac-${fac.id}-${Date.parse(dateIso) || Date.now()}@side-by-side.app`,
+        title: `${isEn ? 'Reproductive Check-Up' : 'Pemeriksaan Kesehatan'} — ${fac.name}`,
+        start: dateIso,
+        durationMinutes: 60,
+        location: fac.address,
+        description: isEn
+          ? 'Maintain a 2-7 day abstinence window prior to semen analysis. Bring your doctor questions from Side by Side.'
+          : 'Persiapan masa pantang (abstinensia) 2-7 hari sebelum tes analisis semen. Bawa daftar pertanyaan dokter dari Side by Side.',
+        alarmMinutesBefore: 24 * 60,
+      },
+      `jadwal-periksa-${fac.id}.ics`,
+    );
+  };
 
-    const icsContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Side by Side//Better Together//ID',
-      'BEGIN:VEVENT',
-      `DTSTART:${startStr}`,
-      `DTEND:${endStr}`,
-      `SUMMARY:Pemeriksaan Kesehatan — ${fac.name}`,
-      `LOCATION:${fac.address}`,
-      'DESCRIPTION:Persiapan masa pantang (abstinensia) 2-7 hari sebelum tes analisis semen. Bawa daftar pertanyaan dokter dari Side by Side.',
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\r\n');
-
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `jadwal-periksa-${fac.id}.ics`;
-    a.click();
-    URL.revokeObjectURL(url);
+  // Menghubungkan pilihan fasilitas ke Jalur Perawatan (rujukan terhubung)
+  const handleChooseForPathway = async (fac: LocalizedSeedFacility) => {
+    await updateHealthJournal((j) => ({
+      ...j,
+      carePathway: {
+        ...j.carePathway,
+        facility: { id: fac.id, name: fac.name, city: fac.city, type: fac.displayType, acceptsJkn: fac.accepts_jkn },
+      },
+    }));
+    await updatePlanStep('pilih_layanan', 'a', 'done');
+    navigate(isEn ? '/care-pathway#stage-book_prepare' : '/jalur-perawatan#stage-book_prepare');
   };
 
   const handleSaveReminder = async (e: React.FormEvent) => {
@@ -184,39 +269,82 @@ export const FacilitiesPage: React.FC = () => {
     if (!reminderTarget) return;
     await addReminder({
       type: 'semen_analysis',
-      title: `Jadwal Pemeriksaan & Persiapan Masa Pantang (2–7 Hari)`,
+      title: isEn
+        ? 'Check-Up Schedule & Abstinence Prep (2–7 Days)'
+        : 'Jadwal Pemeriksaan & Persiapan Masa Pantang (2–7 Hari)',
       facilityName: reminderTarget.name,
       remindAt: remindDate,
-      notes: `Lokasi: ${reminderTarget.address}. Ingat masa pantang 2–7 hari sebelum pengambilan sampel.`,
+      notes: isEn
+        ? `Location: ${reminderTarget.address}. Remember 2–7 days abstinence before sample collection.`
+        : `Lokasi: ${reminderTarget.address}. Ingat masa pantang 2–7 hari sebelum pengambilan sampel.`,
     });
     await updatePlanStep('pilih_layanan', 'a', 'done');
     await updatePlanStep('jadwalkan', 'a', 'in_progress');
-    setReminderSavedBanner(`Pengingat untuk ${reminderTarget.name} berhasil dijadwalkan!`);
+    setReminderSavedBanner(
+      isEn
+        ? `Reminder for ${reminderTarget.name} has been scheduled!`
+        : `Pengingat untuk ${reminderTarget.name} berhasil dijadwalkan!`
+    );
     setReminderTarget(null);
     setTimeout(() => setReminderSavedBanner(''), 4000);
   };
 
   return (
     <div className="space-y-6">
+      {fromPathway && (
+        <div
+          role="status"
+          className="p-4 rounded-2xl bg-brand-teal-light/60 dark:bg-brand-teal/15 border border-brand-teal/30 text-xs text-brand-navy dark:text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        >
+          <span className="flex items-start gap-2">
+            <Route className="w-4 h-4 text-brand-teal shrink-0 mt-0.5" />
+            {isEn
+              ? 'You are choosing a facility for your Care Pathway. Filters are pre-set to the specialist you picked; tap “Choose for my care pathway” on any facility.'
+              : 'Anda sedang memilih fasilitas untuk Jalur Perawatan. Filter sudah disesuaikan dengan spesialis pilihan Anda; ketuk “Pilih untuk jalur perawatan saya” pada fasilitas mana pun.'}
+          </span>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm shrink-0"
+            onClick={() => navigate(isEn ? '/care-pathway' : '/jalur-perawatan')}
+          >
+            {isEn ? 'Back to pathway' : 'Kembali ke jalur'}
+          </button>
+        </div>
+      )}
+
       {/* Header & Tombol Buat Daftar Pertanyaan Dokter */}
       <section className="page-header flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <div className="space-y-2.5">
+          <div className="badge badge-teal">
+            <MapPin className="w-3.5 h-3.5" />
+            <span>
+              {isEn
+                ? '16 Curated Men-Friendly Facilities • JKN & Cost Transparency'
+                : '16 Fasilitas Terkurasi Ramah Pria • Transparansi Biaya & JKN'}
+            </span>
+          </div>
           <h1 className="page-title">
-            Navigasi Pemeriksaan & Direktori Layanan Ramah Pria
+            {isEn
+              ? 'Care Navigation & Men-Friendly Clinic Directory'
+              : 'Navigasi Pemeriksaan & Direktori Layanan Ramah Pria'}
           </h1>
           <p className="page-lead">
-            Pahami alur pemeriksaan langkah demi langkah, jelajahi peta ringkas, dan pilih fasilitas yang nyaman.
+            {isEn
+              ? 'Understand the examination workflow step-by-step, explore the compact coverage map, and choose a comfortable clinic.'
+              : 'Pahami alur pemeriksaan langkah demi langkah, jelajahi peta ringkas, dan pilih fasilitas yang nyaman.'}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2 shrink-0">
           <button
             type="button"
-            onClick={() => navigate('/checklist-dokter')}
+            onClick={() => navigate(isEn ? '/doctor-checklist' : '/checklist-dokter')}
             className="btn btn-coral"
           >
             <FileText className="w-4 h-4" />
-            Checklist Pertanyaan Dokter (Lengkap)
+            {isEn
+              ? 'Doctor Question Checklist (Full Builder)'
+              : 'Checklist Pertanyaan Dokter (Lengkap)'}
           </button>
         </div>
       </section>
@@ -224,7 +352,7 @@ export const FacilitiesPage: React.FC = () => {
       {reminderSavedBanner && (
         <div
           role="status"
-          className="p-4 rounded-card bg-status-success-bg text-status-success border border-status-success/30 text-xs font-bold flex items-center gap-2"
+          className="p-4 rounded-card bg-status-success-bg dark:bg-status-success/15 text-[#1F7A50] dark:text-[#7BD9AC] border border-status-success/30 text-xs font-bold flex items-center gap-2"
         >
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{reminderSavedBanner}</span>
@@ -234,10 +362,12 @@ export const FacilitiesPage: React.FC = () => {
       {/* Panduan Langkah Demi Langkah (5 Tahap Analisis Semen) */}
       <section className="card p-5 sm:p-6 space-y-5">
         <h2 className="section-title">
-          Panduan Langkah demi Langkah: Pemeriksaan Analisis Semen
+          {isEn
+            ? 'Step-by-Step Guide: Semen Analysis Examination'
+            : 'Panduan Langkah demi Langkah: Pemeriksaan Analisis Semen'}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {templatesConfig.examinationGuide.steps.map((step) => (
+          {localizedTemplates.examinationGuide.steps.map((step) => (
             <div
               key={step.stepNumber}
               className="well p-4 sm:p-5 space-y-2.5"
@@ -247,7 +377,7 @@ export const FacilitiesPage: React.FC = () => {
                   {step.stepNumber}
                 </span>
                 <span className="eyebrow">
-                  Langkah {step.stepNumber}
+                  {isEn ? `Step ${step.stepNumber}` : `Langkah ${step.stepNumber}`}
                 </span>
               </div>
               <h3 className="font-bold text-base text-brand-navy dark:text-white leading-snug">
@@ -266,16 +396,18 @@ export const FacilitiesPage: React.FC = () => {
           <div className="p-4 sm:p-5 rounded-2xl bg-brand-teal-light/60 dark:bg-brand-teal/15 border border-brand-teal/25 space-y-2.5">
             <h3 className="font-bold text-base text-brand-navy dark:text-white flex items-center gap-2 leading-snug">
               <Info className="w-4 h-4 text-brand-teal shrink-0" />
-              Estimasi Biaya & Cakupan JKN / Asuransi
+              {isEn
+                ? 'Estimated Cost & JKN / Insurance Coverage'
+                : 'Estimasi Biaya & Cakupan JKN / Asuransi'}
             </h3>
             <p className="text-xs font-bold text-brand-teal-dark dark:text-[#7FDADB] leading-relaxed">
-              {templatesConfig.examinationGuide.costAndInsuranceInfo.rangeSummary}
+              {localizedTemplates.examinationGuide.costAndInsuranceInfo.rangeSummary}
             </p>
             <p className="text-xs text-brand-navy/85 dark:text-white/85 leading-relaxed">
-              {templatesConfig.examinationGuide.costAndInsuranceInfo.jknSummary}
+              {localizedTemplates.examinationGuide.costAndInsuranceInfo.jknSummary}
             </p>
             <p className="text-2xs italic text-brand-navy/70 dark:text-white/70 leading-relaxed">
-              Catatan: {templatesConfig.examinationGuide.costAndInsuranceInfo.disclaimer}
+              {isEn ? 'Note:' : 'Catatan:'} {localizedTemplates.examinationGuide.costAndInsuranceInfo.disclaimer}
             </p>
           </div>
         </div>
@@ -286,10 +418,14 @@ export const FacilitiesPage: React.FC = () => {
         <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
           <div className="space-y-1">
             <h2 className="section-title">
-              Direktori Layanan Terkurasi ({filteredFacilities.length} Fasilitas)
+              {isEn
+                ? `Curated Care Directory (${filteredFacilities.length} Facilities)`
+                : `Direktori Layanan Terkurasi (${filteredFacilities.length} Fasilitas)`}
             </h2>
             <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed max-w-2xl">
-              Skor “Ramah Pria” diisi melalui kurasi privasi ruang sampel, keramahan konseling, dan kejelasan alur (bukan ulasan bebas).
+              {isEn
+                ? 'The “Men-Friendly” score is curated based on private sample collection rooms, non-judgmental counseling, and clear registration workflows.'
+                : 'Skor “Ramah Pria” diisi melalui kurasi privasi ruang sampel, keramahan konseling, dan kejelasan alur (bukan ulasan bebas).'}
             </p>
           </div>
 
@@ -301,7 +437,15 @@ export const FacilitiesPage: React.FC = () => {
               className="btn btn-soft"
             >
               <MapIcon className="w-4 h-4" />
-              <span>{showCompactMap ? 'Sembunyikan Peta Ringkas' : 'Tampilkan Peta Ringkas'}</span>
+              <span>
+                {showCompactMap
+                  ? isEn
+                    ? 'Hide Compact Map'
+                    : 'Sembunyikan Peta Ringkas'
+                  : isEn
+                  ? 'Show Compact Map'
+                  : 'Tampilkan Peta Ringkas'}
+              </span>
             </button>
 
             <button
@@ -310,8 +454,19 @@ export const FacilitiesPage: React.FC = () => {
               className="btn btn-secondary"
             >
               <Compass className="w-4 h-4 text-brand-teal" />
-              Urutkan Jarak Terdekat
+              {isEn ? 'Sort by Nearest' : 'Urutkan Jarak Terdekat'}
             </button>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="btn btn-ghost"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>{isEn ? 'Reset Filters' : 'Reset Filter'}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -322,10 +477,32 @@ export const FacilitiesPage: React.FC = () => {
         )}
 
         <div className="well p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3.5">
+          {/* Pencarian Nama Klinik / Alamat */}
+          <div className="sm:col-span-2 lg:col-span-3">
+            <label htmlFor="filter-search" className="field-label">
+              {isEn ? 'Search Facility Name or Area' : 'Cari Nama Fasilitas atau Area'}
+            </label>
+            <div className="relative">
+              <Search className="w-4 h-4 text-brand-navy/45 dark:text-white/45 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="filter-search"
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={
+                  isEn
+                    ? 'Search hospital, clinic, lab, Tebet, Cipto, Hasan Sadikin, Airlangga...'
+                    : 'Cari RS, klinik, lab, Tebet, Cipto, Hasan Sadikin, Airlangga...'
+                }
+                className="field w-full pl-10 pr-4"
+              />
+            </div>
+          </div>
+
           {/* Filter Kota */}
           <div>
             <label htmlFor="filter-city" className="field-label">
-              Pilih Kota
+              {isEn ? 'Select City' : 'Pilih Kota'}
             </label>
             <select
               id="filter-city"
@@ -333,17 +510,21 @@ export const FacilitiesPage: React.FC = () => {
               onChange={(e) => setSelectedCity(e.target.value)}
               className="field w-full font-semibold"
             >
-              <option value="Semua">Semua Kota (Jakarta, Bandung, Surabaya)</option>
-              <option value="Jakarta">Jakarta (6 Lokasi)</option>
-              <option value="Bandung">Bandung (5 Lokasi)</option>
-              <option value="Surabaya">Surabaya (5 Lokasi)</option>
+              <option value="Semua">
+                {isEn
+                  ? 'All Cities (Jakarta, Bandung, Surabaya)'
+                  : 'Semua Kota (Jakarta, Bandung, Surabaya)'}
+              </option>
+              <option value="Jakarta">{isEn ? 'Jakarta (6 Locations)' : 'Jakarta (6 Lokasi)'}</option>
+              <option value="Bandung">{isEn ? 'Bandung (5 Locations)' : 'Bandung (5 Lokasi)'}</option>
+              <option value="Surabaya">{isEn ? 'Surabaya (5 Locations)' : 'Surabaya (5 Lokasi)'}</option>
             </select>
           </div>
 
           {/* Filter Layanan */}
           <div>
             <label htmlFor="filter-service" className="field-label">
-              Jenis Layanan
+              {isEn ? 'Service Type' : 'Jenis Layanan'}
             </label>
             <select
               id="filter-service"
@@ -351,17 +532,23 @@ export const FacilitiesPage: React.FC = () => {
               onChange={(e) => setSelectedService(e.target.value)}
               className="field w-full font-semibold"
             >
-              <option value="Semua">Semua Layanan</option>
-              <option value="Andrologi">Spesialis Andrologi (Sp.And)</option>
-              <option value="Urologi">Spesialis Urologi (Sp.U)</option>
-              <option value="Laboratorium">Laboratorium Analisis Semen</option>
+              <option value="Semua">{isEn ? 'All Services' : 'Semua Layanan'}</option>
+              <option value="Andrologi">
+                {isEn ? 'Andrology Specialist (Sp.And)' : 'Spesialis Andrologi (Sp.And)'}
+              </option>
+              <option value="Urologi">
+                {isEn ? 'Urology Specialist (Sp.U)' : 'Spesialis Urologi (Sp.U)'}
+              </option>
+              <option value="Laboratorium">
+                {isEn ? 'Semen Analysis Laboratory' : 'Laboratorium Analisis Semen'}
+              </option>
             </select>
           </div>
 
           {/* Sortir */}
           <div>
             <label htmlFor="sort-by" className="field-label">
-              Urutkan Berdasarkan
+              {isEn ? 'Sort By' : 'Urutkan Berdasarkan'}
             </label>
             <select
               id="sort-by"
@@ -369,16 +556,20 @@ export const FacilitiesPage: React.FC = () => {
               onChange={(e) => setSortBy(e.target.value as 'friendliness' | 'price' | 'distance')}
               className="field w-full font-semibold"
             >
-              <option value="friendliness">Skor Ramah Pria Tertinggi</option>
-              <option value="price">Estimasi Biaya Terendah</option>
-              <option value="distance">Jarak Terdekat</option>
+              <option value="friendliness">
+                {isEn ? 'Highest Men-Friendly Score' : 'Skor Ramah Pria Tertinggi'}
+              </option>
+              <option value="price">
+                {isEn ? 'Lowest Estimated Cost' : 'Estimasi Biaya Terendah'}
+              </option>
+              <option value="distance">{isEn ? 'Nearest Distance' : 'Jarak Terdekat'}</option>
             </select>
           </div>
 
           {/* Filter Biaya Maksimal */}
           <div className="lg:col-span-2">
             <label htmlFor="filter-budget" className="field-label flex flex-wrap items-baseline justify-between gap-x-3">
-              <span>Rentang Biaya Awal Maks</span>
+              <span>{isEn ? 'Max Initial Budget' : 'Rentang Biaya Awal Maks'}</span>
               <span className="tabular font-bold text-brand-teal-dark dark:text-[#7FDADB]">
                 Rp {maxBudget.toLocaleString('id-ID')}
               </span>
@@ -404,7 +595,7 @@ export const FacilitiesPage: React.FC = () => {
                 onChange={(e) => setOnlyJkn(e.target.checked)}
                 className="check"
               />
-              <span>Hanya yang Menerima JKN</span>
+              <span>{isEn ? 'JKN Accepted Only' : 'Hanya yang Menerima JKN'}</span>
             </label>
           </div>
         </div>
@@ -416,11 +607,14 @@ export const FacilitiesPage: React.FC = () => {
               <div className="flex items-center gap-2 text-xs font-bold">
                 <MapPin className="w-4 h-4 text-brand-coral" />
                 <span>
-                  Peta Ringkas Sebaran Layanan ({selectedCity === 'Semua' ? 'Jakarta • Bandung • Surabaya' : selectedCity})
+                  {isEn ? 'Compact Care Coverage Map' : 'Peta Ringkas Sebaran Layanan'} (
+                  {selectedCity === 'Semua' ? 'Jakarta • Bandung • Surabaya' : selectedCity})
                 </span>
               </div>
               <span className="text-2xs text-white/75">
-                Klik titik fasilitas untuk melihat Detail Layanan & Skor Ramah Pria
+                {isEn
+                  ? 'Click any facility pin to view Service Details & Men-Friendly Score'
+                  : 'Klik titik fasilitas untuk melihat Detail Layanan & Skor Ramah Pria'}
               </span>
             </div>
 
@@ -436,7 +630,9 @@ export const FacilitiesPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between text-xs font-bold">
                         <span className="text-[#FFA596]">{cityGroup}</span>
-                        <span className="text-2xs text-white/80">{cityFacs.length} lokasi</span>
+                        <span className="text-2xs text-white/80">
+                          {cityFacs.length} {isEn ? 'locations' : 'lokasi'}
+                        </span>
                       </div>
                       <div className="space-y-1.5">
                         {cityFacs.map((cf) => (
@@ -460,121 +656,166 @@ export const FacilitiesPage: React.FC = () => {
           </div>
         )}
 
-        {/* Daftar Kartu Fasilitas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredFacilities.map((fac) => (
-            <article
-              key={fac.id}
-              className="well p-5 flex flex-col justify-between space-y-4 transition duration-200 hover:border-brand-teal/40 hover:shadow-soft"
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                      <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-navy text-white dark:bg-white/15">
-                        {fac.type}
-                      </span>
-                      <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-teal/15 text-brand-teal-dark dark:text-[#7FDADB]">
-                        {fac.city}
-                      </span>
-                      {fac.accepts_jkn ? (
-                        <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-status-success-bg text-[#1F7A50] dark:bg-status-success/20 dark:text-[#7BD9AC]">
-                          Menerima JKN
+        {/* Daftar Kartu Fasilitas atau Empty State */}
+        {filteredFacilities.length === 0 ? (
+          <div className="well px-6 py-10 text-center space-y-3">
+            <MapPin className="w-10 h-10 text-brand-teal mx-auto opacity-60" />
+            <h3 className="font-bold text-base text-brand-navy dark:text-white">
+              {isEn
+                ? 'No facilities match your current filter criteria'
+                : 'Tidak ada fasilitas yang sesuai dengan filter saat ini'}
+            </h3>
+            <p className="text-xs text-brand-navy/70 dark:text-white/70 max-w-md mx-auto">
+              {isEn
+                ? 'Try increasing the maximum budget range, clearing the search term, or resetting filters.'
+                : 'Coba naikkan batas biaya maksimal, ubah kata kunci pencarian, atau atur ulang filter.'}
+            </p>
+            <button type="button" onClick={handleResetFilters} className="btn btn-primary">
+              <RotateCcw className="w-4 h-4" />
+              <span>{isEn ? 'Reset All Filters' : 'Atur Ulang Semua Filter'}</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredFacilities.map((fac) => (
+              <article
+                key={fac.id}
+                className="well p-5 flex flex-col justify-between space-y-4 transition duration-200 hover:border-brand-teal/40 hover:shadow-soft"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                        <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-navy text-white dark:bg-white/15">
+                          {fac.displayType}
                         </span>
-                      ) : (
-                        <span className="text-2xs font-medium px-2 py-1 rounded-md leading-none bg-brand-navy/10 text-brand-navy/70 dark:text-white/70">
-                          Layanan Mandiri/Umum
+                        <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-teal/15 text-brand-teal-dark dark:text-[#7FDADB]">
+                          {fac.city}
                         </span>
-                      )}
-                      {fac.distanceKm !== null && (
-                        <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-coral/20 text-[#B93E2B] dark:text-[#FFA596]">
-                          ~{fac.distanceKm} km
-                        </span>
-                      )}
+                        {fac.accepts_jkn ? (
+                          <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-status-success-bg text-[#1F7A50] dark:bg-status-success/20 dark:text-[#7BD9AC]">
+                            {isEn ? 'JKN Accepted' : 'Menerima JKN'}
+                          </span>
+                        ) : (
+                          <span className="text-2xs font-medium px-2 py-1 rounded-md leading-none bg-brand-navy/10 text-brand-navy/70 dark:bg-white/10 dark:text-white/70">
+                            {isEn ? 'Self-Pay / General' : 'Layanan Mandiri/Umum'}
+                          </span>
+                        )}
+                        {fac.distanceKm !== null && (
+                          <span className="text-2xs font-bold px-2 py-1 rounded-md leading-none bg-brand-coral/20 text-[#B93E2B] dark:text-[#FFA596]">
+                            ~{fac.distanceKm} km
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-base text-brand-navy dark:text-white leading-snug">
+                        {fac.name}
+                      </h3>
                     </div>
-                    <h3 className="font-bold text-base text-brand-navy dark:text-white leading-snug">
-                      {fac.name}
-                    </h3>
-                  </div>
 
-                  {/* Skor Kurasi Ramah Pria */}
-                  <div
-                    title="Skor kurasi keramahan & privasi layanan bagi pria"
-                    className="px-3 py-2 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-teal/30 text-center shrink-0"
-                  >
-                    <div className="flex items-center gap-1 text-brand-teal font-bold text-sm">
-                      <Star className="w-4 h-4 fill-brand-teal" />
-                      <span>{fac.friendliness_score.toFixed(1)}</span>
-                    </div>
-                    <div className="text-3xs font-semibold text-brand-navy/70 dark:text-white/70">
-                      Ramah Pria
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-xs text-brand-navy/75 dark:text-white/75 flex items-start gap-1.5">
-                  <MapPin className="w-4 h-4 text-brand-teal shrink-0 mt-0.5" />
-                  <span>{fac.address}</span>
-                </p>
-
-                <p className="text-xs text-brand-navy/75 dark:text-white/75 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-brand-teal shrink-0" />
-                  <span>{fac.hours}</span>
-                </p>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {fac.services.map((srv) => (
-                    <span
-                      key={srv}
-                      className="text-2xs font-semibold px-2.5 py-0.5 rounded-full bg-surface dark:bg-surface-dark-card border border-brand-navy/10"
+                    {/* Skor Kurasi Ramah Pria */}
+                    <div
+                      title={
+                        isEn
+                          ? 'Curated score for male privacy & non-judgmental care'
+                          : 'Skor kurasi keramahan & privasi layanan bagi pria'
+                      }
+                      className="px-3 py-2 rounded-xl bg-surface dark:bg-surface-dark-card border border-brand-teal/30 text-center shrink-0"
                     >
-                      {srv}
+                      <div className="flex items-center gap-1 text-brand-teal font-bold text-sm">
+                        <Star className="w-4 h-4 fill-brand-teal" />
+                        <span>{fac.friendliness_score.toFixed(1)}</span>
+                      </div>
+                      <div className="text-3xs font-semibold text-brand-navy/70 dark:text-white/70">
+                        {isEn ? 'Men-Friendly' : 'Ramah Pria'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-brand-navy/75 dark:text-white/75 flex items-start gap-1.5">
+                    <MapPin className="w-4 h-4 text-brand-teal shrink-0 mt-0.5" />
+                    <span>{fac.address}</span>
+                  </p>
+
+                  <p className="text-xs text-brand-navy/75 dark:text-white/75 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-brand-teal shrink-0" />
+                    <span>{fac.hours}</span>
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {fac.services.map((srv) => (
+                      <span
+                        key={srv}
+                        className="text-2xs font-semibold px-2.5 py-0.5 rounded-full bg-surface dark:bg-surface-dark-card border border-brand-navy/10 dark:border-white/10"
+                      >
+                        {isEn ? SERVICE_LABELS_EN[srv] || srv : srv}
+                      </span>
+                    ))}
+                    <span className="text-xs font-bold text-brand-teal dark:text-[#7FDADB] ml-auto">
+                      Rp {fac.price_min.toLocaleString('id-ID')} – Rp{' '}
+                      {fac.price_max.toLocaleString('id-ID')}
                     </span>
-                  ))}
-                  <span className="text-xs font-bold text-brand-teal ml-auto">
-                    Rp {fac.price_min.toLocaleString('id-ID')} – Rp{' '}
-                    {fac.price_max.toLocaleString('id-ID')}
-                  </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card text-xs leading-relaxed text-brand-navy/85 dark:text-white/85 border-l-4 border-brand-teal">
+                    <strong>
+                      {isEn ? 'Men-Friendly Curation Note:' : 'Catatan Kurasi Ramah Pria:'}
+                    </strong>{' '}
+                    {fac.friendliness_notes}
+                  </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-surface dark:bg-surface-dark-card text-xs leading-relaxed text-brand-navy/85 dark:text-white/85 border-l-4 border-brand-teal">
-                  <strong>Catatan Kurasi Ramah Pria:</strong> {fac.friendliness_notes}
+                <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-brand-navy/10 dark:border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setDetailTarget(fac)}
+                    className="btn btn-secondary"
+                  >
+                    <Eye className="w-4 h-4 text-brand-teal" />
+                    <span>Detail</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setReminderTarget(fac)}
+                    className="btn btn-primary flex-1"
+                  >
+                    <BellPlus className="w-4 h-4" />
+                    {isEn ? 'Remind me' : 'Ingatkan saya'}
+                  </button>
+
+                  {(fromPathway || pathwayFacilityId === fac.id) && (
+                    <button
+                      type="button"
+                      onClick={() => handleChooseForPathway(fac)}
+                      disabled={pathwayFacilityId === fac.id}
+                      className="btn btn-navy w-full"
+                    >
+                      <Route className="w-4 h-4" />
+                      {pathwayFacilityId === fac.id
+                        ? isEn
+                          ? 'In my care pathway'
+                          : 'Ada di jalur perawatan saya'
+                        : isEn
+                        ? 'Choose for my care pathway'
+                        : 'Pilih untuk jalur perawatan saya'}
+                    </button>
+                  )}
+
+                  <a
+                    href={fac.map_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-secondary flex"
+                  >
+                    <Building2 className="w-4 h-4 text-brand-teal" />
+                    <span>{isEn ? 'Map' : 'Peta'}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-brand-navy/10 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setDetailTarget(fac)}
-                  className="btn btn-secondary"
-                >
-                  <Eye className="w-4 h-4 text-brand-teal" />
-                  <span>Detail</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setReminderTarget(fac)}
-                  className="btn btn-primary flex-1"
-                >
-                  <BellPlus className="w-4 h-4" />
-                  Ingatkan saya
-                </button>
-
-                <a
-                  href={fac.map_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-secondary flex"
-                >
-                  <Building2 className="w-4 h-4 text-brand-teal" />
-                  <span>Peta</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Modal Detail Layanan Lengkap (Arsitektur Layar #5: Detail Layanan) */}
@@ -586,15 +827,15 @@ export const FacilitiesPage: React.FC = () => {
           aria-labelledby="facility-detail-title"
         >
           <div className="card max-w-xl w-full p-6 shadow-soft-lg space-y-4 my-8">
-            <div className="flex items-start justify-between gap-3 border-b border-brand-navy/10 pb-3">
+            <div className="flex items-start justify-between gap-3 border-b border-brand-navy/10 dark:border-white/10 pb-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-brand-navy text-white">
-                    {detailTarget.type} • {detailTarget.city}
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-brand-navy text-white dark:bg-white/15">
+                    {detailTarget.displayType} • {detailTarget.city}
                   </span>
                   {detailTarget.accepts_jkn && (
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-status-success-bg text-status-success">
-                      Menerima JKN / BPJS
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-status-success-bg text-[#1F7A50] dark:bg-status-success/20 dark:text-[#7BD9AC]">
+                      {isEn ? 'JKN / BPJS Accepted' : 'Menerima JKN / BPJS'}
                     </span>
                   )}
                 </div>
@@ -607,18 +848,20 @@ export const FacilitiesPage: React.FC = () => {
                 onClick={() => setDetailTarget(null)}
                 className="btn btn-secondary btn-sm shrink-0"
               >
-                Tutup
+                {isEn ? 'Close' : 'Tutup'}
               </button>
             </div>
 
             {/* Rincian Indikator Kurasi Ramah Pria */}
             <div className="p-4 rounded-card bg-brand-teal-light/50 dark:bg-brand-teal/15 border border-brand-teal/30 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-brand-teal flex items-center gap-1.5">
+                <span className="text-xs font-bold text-brand-teal dark:text-[#7FDADB] flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4" />
-                  Rincian Skor Kurasi “Ramah Pria”
+                  {isEn
+                    ? 'Curated “Men-Friendly” Score Breakdown'
+                    : 'Rincian Skor Kurasi “Ramah Pria”'}
                 </span>
-                <span className="text-sm font-bold text-brand-teal">
+                <span className="text-sm font-bold text-brand-teal dark:text-[#7FDADB]">
                   ★ {detailTarget.friendliness_score.toFixed(1)} / 5.0
                 </span>
               </div>
@@ -627,50 +870,75 @@ export const FacilitiesPage: React.FC = () => {
               </p>
               <div className="grid grid-cols-3 gap-2 pt-1 text-2xs">
                 <div className="p-2 rounded bg-surface dark:bg-surface-dark text-center">
-                  <div className="font-bold text-brand-teal">Privasi Ruang Sampel</div>
-                  <div>Tertutup & Terkunci</div>
+                  <div className="font-bold text-brand-teal dark:text-[#7FDADB]">
+                    {isEn ? 'Sample Room Privacy' : 'Privasi Ruang Sampel'}
+                  </div>
+                  <div>{isEn ? 'Private & Locked' : 'Tertutup & Terkunci'}</div>
                 </div>
                 <div className="p-2 rounded bg-surface dark:bg-surface-dark text-center">
-                  <div className="font-bold text-brand-teal">Alur Pendaftaran</div>
-                  <div>Diskret & Cepat</div>
+                  <div className="font-bold text-brand-teal dark:text-[#7FDADB]">
+                    {isEn ? 'Registration Flow' : 'Alur Pendaftaran'}
+                  </div>
+                  <div>{isEn ? 'Discreet & Fast' : 'Diskret & Cepat'}</div>
                 </div>
                 <div className="p-2 rounded bg-surface dark:bg-surface-dark text-center">
-                  <div className="font-bold text-brand-teal">Sikap Konseling</div>
-                  <div>Tanpa Penghakiman</div>
+                  <div className="font-bold text-brand-teal dark:text-[#7FDADB]">
+                    {isEn ? 'Counseling Attitude' : 'Sikap Konseling'}
+                  </div>
+                  <div>{isEn ? 'Judgment-Free' : 'Tanpa Penghakiman'}</div>
                 </div>
               </div>
             </div>
 
             <div className="space-y-2 text-xs">
               <div>
-                <strong>Alamat Lengkap:</strong> {detailTarget.address}
+                <strong>{isEn ? 'Full Address:' : 'Alamat Lengkap:'}</strong> {detailTarget.address}
               </div>
               <div>
-                <strong>Jam Operasional:</strong> {detailTarget.hours}
+                <strong>{isEn ? 'Operating Hours:' : 'Jam Operasional:'}</strong> {detailTarget.hours}
               </div>
               <div>
-                <strong>Layanan Tersedia:</strong> {detailTarget.services.join(', ')}
+                <strong>{isEn ? 'Available Services:' : 'Layanan Tersedia:'}</strong>{' '}
+                {detailTarget.services
+                  .map((s) => (isEn ? SERVICE_LABELS_EN[s] || s : s))
+                  .join(', ')}
               </div>
               <div>
-                <strong>Estimasi Rentang Biaya:</strong> Rp{' '}
+                <strong>{isEn ? 'Estimated Cost Range:' : 'Estimasi Rentang Biaya:'}</strong> Rp{' '}
                 {detailTarget.price_min.toLocaleString('id-ID')} – Rp{' '}
                 {detailTarget.price_max.toLocaleString('id-ID')}{' '}
-                <span className="italic opacity-75">(dapat berbeda per fasilitas)</span>
+                <span className="italic opacity-75">
+                  {isEn ? '(may vary by facility)' : '(dapat berbeda per fasilitas)'}
+                </span>
               </div>
             </div>
 
             <div className="p-3.5 rounded-btn bg-surface-muted dark:bg-surface-dark text-xs space-y-1">
               <div className="font-bold text-brand-navy dark:text-white">
-                Checklist Persiapan Sebelum Kunjungan:
+                {isEn
+                  ? 'Pre-Visit Preparation Checklist:'
+                  : 'Checklist Persiapan Sebelum Kunjungan:'}
               </div>
               <ul className="list-disc pl-4 space-y-1 text-brand-navy/80 dark:text-white/80">
-                <li>Lakukan masa pantang (abstinensia) selama 2 hingga 7 hari bila berencana tes analisis semen.</li>
-                <li>Bawa KTP dan kartu JKN/asuransi (beserta surat rujukan FKTP bila menggunakan jalur JKN).</li>
-                <li>Siapkan daftar pertanyaan dokter dari tombol “Buat daftar pertanyaan untuk dokter”.</li>
+                <li>
+                  {isEn
+                    ? 'Maintain a 2 to 7 day sexual abstinence window if planning a semen analysis test.'
+                    : 'Lakukan masa pantang (abstinensia) selama 2 hingga 7 hari bila berencana tes analisis semen.'}
+                </li>
+                <li>
+                  {isEn
+                    ? 'Bring your ID card and JKN/insurance card (plus primary care referral if using JKN).'
+                    : 'Bawa KTP dan kartu JKN/asuransi (beserta surat rujukan FKTP bila menggunakan jalur JKN).'}
+                </li>
+                <li>
+                  {isEn
+                    ? 'Prepare your doctor questions list using the “Doctor Question Checklist” button.'
+                    : 'Siapkan daftar pertanyaan dokter dari tombol “Buat daftar pertanyaan untuk dokter”.'}
+                </li>
               </ul>
             </div>
 
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-navy/10">
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-brand-navy/10 dark:border-white/10">
               <button
                 type="button"
                 onClick={() => {
@@ -681,7 +949,7 @@ export const FacilitiesPage: React.FC = () => {
                 className="btn btn-primary flex-1"
               >
                 <BellPlus className="w-4 h-4" />
-                Jadwalkan Pengingat di Sini
+                {isEn ? 'Schedule Reminder Here' : 'Jadwalkan Pengingat di Sini'}
               </button>
 
               <button
@@ -690,7 +958,7 @@ export const FacilitiesPage: React.FC = () => {
                 className="btn btn-navy"
               >
                 <CalendarPlus className="w-4 h-4" />
-                Simpan ke Kalender (.ics)
+                {isEn ? 'Save to Calendar (.ics)' : 'Simpan ke Kalender (.ics)'}
               </button>
             </div>
           </div>
@@ -706,13 +974,17 @@ export const FacilitiesPage: React.FC = () => {
           aria-labelledby="doctor-questions-title"
         >
           <div className="card max-w-2xl w-full p-6 shadow-soft-lg space-y-4 my-8">
-            <div className="flex items-center justify-between border-b border-brand-navy/10 pb-3">
+            <div className="flex items-center justify-between border-b border-brand-navy/10 dark:border-white/10 pb-3">
               <div>
                 <h2 id="doctor-questions-title" className="section-title">
-                  Daftar Pertanyaan Siap Bawa untuk Dokter
+                  {isEn
+                    ? 'Ready-to-Bring Doctor Questions List'
+                    : 'Daftar Pertanyaan Siap Bawa untuk Dokter'}
                 </h2>
                 <p className="text-xs text-brand-navy/70 dark:text-white/70">
-                  Pilih pertanyaan yang relevan bagi Anda, lalu salin atau cetak/unduh sebagai PDF.
+                  {isEn
+                    ? 'Select the questions relevant to you, then copy or print/download as PDF.'
+                    : 'Pilih pertanyaan yang relevan bagi Anda, lalu salin atau cetak/unduh sebagai PDF.'}
                 </p>
               </div>
               <button
@@ -720,18 +992,20 @@ export const FacilitiesPage: React.FC = () => {
                 onClick={() => setShowQuestionsModal(false)}
                 className="btn btn-secondary btn-sm shrink-0"
               >
-                Tutup
+                {isEn ? 'Close' : 'Tutup'}
               </button>
             </div>
 
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
               {personalizedQuestions.length > 0 && (
-                <div className="space-y-2 p-3.5 rounded-card bg-brand-teal-light/50 border border-brand-teal/30">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal">
-                    Pertanyaan Khusus Berdasarkan Hasil Cek Awal Anda
+                <div className="space-y-2 p-3.5 rounded-card bg-brand-teal-light/50 dark:bg-brand-teal/15 border border-brand-teal/30">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal dark:text-[#7FDADB]">
+                    {isEn
+                      ? 'Personalized Questions Based on Your Self-Check'
+                      : 'Pertanyaan Khusus Berdasarkan Hasil Cek Awal Anda'}
                   </h3>
                   {personalizedQuestions.map((pq, i) => (
-                    <div key={i} className="text-xs font-semibold text-brand-navy flex items-start gap-2">
+                    <div key={i} className="text-xs font-semibold text-brand-navy dark:text-white flex items-start gap-2">
                       <CheckCircle2 className="w-4 h-4 text-brand-teal shrink-0 mt-0.5" />
                       <span>{pq}</span>
                     </div>
@@ -739,9 +1013,9 @@ export const FacilitiesPage: React.FC = () => {
                 </div>
               )}
 
-              {templatesConfig.doctorQuestionsList.map((group) => (
+              {localizedTemplates.doctorQuestionsList.map((group) => (
                 <div key={group.category} className="space-y-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand-teal dark:text-[#7FDADB]">
                     {group.category}
                   </h3>
                   {group.questions.map((q) => (
@@ -762,14 +1036,22 @@ export const FacilitiesPage: React.FC = () => {
               ))}
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-brand-navy/10">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-brand-navy/10 dark:border-white/10">
               <button
                 type="button"
                 onClick={handleCopyDoctorQuestions}
                 className="btn btn-primary"
               >
                 {copiedQuestions ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedQuestions ? 'Berhasil Disalin!' : 'Salin Daftar Pertanyaan'}</span>
+                <span>
+                  {copiedQuestions
+                    ? isEn
+                      ? 'Copied!'
+                      : 'Berhasil Disalin!'
+                    : isEn
+                    ? 'Copy Questions List'
+                    : 'Salin Daftar Pertanyaan'}
+                </span>
               </button>
 
               <button
@@ -778,7 +1060,7 @@ export const FacilitiesPage: React.FC = () => {
                 className="btn btn-navy"
               >
                 <Printer className="w-4 h-4" />
-                <span>Unduh / Cetak PDF</span>
+                <span>{isEn ? 'Download / Print PDF' : 'Unduh / Cetak PDF'}</span>
               </button>
             </div>
           </div>
@@ -795,15 +1077,18 @@ export const FacilitiesPage: React.FC = () => {
         >
           <div className="card max-w-md w-full p-6 shadow-soft-lg space-y-4">
             <h2 id="reminder-modal-title" className="section-title">
-              Jadwalkan Pengingat Pemeriksaan
+              {isEn ? 'Schedule Check-Up Reminder' : 'Jadwalkan Pengingat Pemeriksaan'}
             </h2>
             <p className="text-xs text-brand-navy/75 dark:text-white/75">
-              Fasilitas pilihan: <strong>{reminderTarget.name}</strong>
+              {isEn ? 'Selected facility:' : 'Fasilitas pilihan:'}{' '}
+              <strong>{reminderTarget.name}</strong>
             </p>
             <form onSubmit={handleSaveReminder} className="space-y-4">
               <div>
                 <label htmlFor="remind-datetime" className="field-label">
-                  Pilih Tanggal & Waktu Rencana Kunjungan
+                  {isEn
+                    ? 'Select Planned Visit Date & Time'
+                    : 'Pilih Tanggal & Waktu Rencana Kunjungan'}
                 </label>
                 <input
                   id="remind-datetime"
@@ -814,8 +1099,19 @@ export const FacilitiesPage: React.FC = () => {
                   className="field w-full"
                 />
               </div>
-              <div className="p-3 rounded-btn bg-brand-teal-light/50 text-xs text-brand-navy">
-                <strong>Tips Persiapan:</strong> Bila berencana melakukan analisis semen, jadwalkan masa pantang (tidak mengeluarkan sperma) selama <strong>2 hingga 7 hari</strong> sebelum tanggal kunjungan ini.
+              <div className="p-3 rounded-btn bg-brand-teal-light/50 dark:bg-brand-teal/15 text-xs text-brand-navy dark:text-white">
+                <strong>{isEn ? 'Preparation Tip:' : 'Tips Persiapan:'}</strong>{' '}
+                {isEn ? (
+                  <>
+                    If planning a semen analysis, schedule a sexual abstinence window of{' '}
+                    <strong>2 to 7 days</strong> prior to this visit date.
+                  </>
+                ) : (
+                  <>
+                    Bila berencana melakukan analisis semen, jadwalkan masa pantang (tidak mengeluarkan sperma) selama{' '}
+                    <strong>2 hingga 7 hari</strong> sebelum tanggal kunjungan ini.
+                  </>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -823,7 +1119,7 @@ export const FacilitiesPage: React.FC = () => {
                   onClick={() => setReminderTarget(null)}
                   className="btn btn-secondary"
                 >
-                  Batal
+                  {isEn ? 'Cancel' : 'Batal'}
                 </button>
                 <button
                   type="button"
@@ -836,7 +1132,7 @@ export const FacilitiesPage: React.FC = () => {
                   type="submit"
                   className="btn btn-primary flex-1"
                 >
-                  Simpan Pengingat
+                  {isEn ? 'Save Reminder' : 'Simpan Pengingat'}
                 </button>
               </div>
             </form>

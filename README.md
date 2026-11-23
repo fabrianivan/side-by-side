@@ -4,15 +4,13 @@
 
 # Side by Side — *"Better together."*
 
-**Privacy-first male reproductive health companion built for the Future Health Digital Innovation Challenge.**
+**Privacy-first, full-stack male reproductive health companion with local Web Crypto encryption, encrypted server sync, partner planning, and verified clinician handoff.**
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-side--by--side--omega.vercel.app-0F8B8D?style=for-the-badge)](https://side-by-side-omega.vercel.app)
 [![Languages](https://img.shields.io/badge/Bilingual-English_%7C_Bahasa_Indonesia-1B365D?style=for-the-badge)](#english)
 [![WHO Standard](https://img.shields.io/badge/Reference-WHO_6th_Ed._2021-2A9D8F?style=for-the-badge)](#architecture--tech-stack)
-[![Encryption](https://img.shields.io/badge/Client_Vault-AES--GCM_256--bit-4A5568?style=for-the-badge)](#privacy-guarantees--medical-boundaries)
-[![Tests](https://img.shields.io/badge/Vitest-31%2F31_Passing-2E7D32?style=for-the-badge)](#running-locally)
+[![Encryption](https://img.shields.io/badge/Encryption-AES--256--GCM_Client_%26_Server-4A5568?style=for-the-badge)](#privacy-guarantees--medical-boundaries)
 
-[**English**](#english) · [**Bahasa Indonesia**](#bahasa-indonesia) · [**Live Prototype ↗**](https://side-by-side-omega.vercel.app)
+[**English**](#english) · [**Bahasa Indonesia**](#bahasa-indonesia)
 
 </div>
 
@@ -22,10 +20,9 @@
 
 ## English
 
-> **Challenge Theme:** `[Fertility] Men’s Reproductive Health`  
 > **Mission:** Help men understand, check, and follow up on their reproductive health earlier—privately, without judgment, alongside their partner, and connected to trusted medical care.
 
-Globally, **1 in 6 adults** experiences infertility in their lifetime (WHO, 2023), and male factors contribute to roughly half of cases—yet men frequently delay initial screening due to stigma, unclear clinical steps, and anxiety around testing. **Side by Side** closes that gap with a mobile-first, bilingual (`EN`/`ID`), PWA-ready workflow spanning initial self-check to lab interpretation, partner support, and consented clinician handoff.
+Globally, **1 in 6 adults** experiences infertility in their lifetime (WHO, 2023), and male factors contribute to roughly half of cases—yet men frequently delay initial screening due to stigma, unclear clinical steps, and anxiety around testing. **Side by Side** closes that gap with a mobile-first, bilingual (`EN`/`ID`), PWA-ready workflow spanning initial self-check to lab interpretation, real-time partner collaboration, and verified clinician handoff.
 
 ### Feature Map & Bilingual Routes
 
@@ -33,19 +30,21 @@ Every screen adapts seamlessly across desktop, mobile, Light/Dark Mode, and `EN`
 
 | Module | EN Route | ID Route | Key Capability |
 | :--- | :--- | :--- | :--- |
-| **Welcome & Onboarding** | `/welcome` | `/sambutan` | Account-free Anonymous Mode onboarding & explicit opt-in consent toggles |
-| **Home Overview** | `/home` | `/beranda` | Next-step summary card & quick navigation into active clinical tools |
-| **Private Self Check** | `/assessment` | `/cek-awal` | Under-3-minute check with plain-language factors & non-diagnostic guidance |
+| **Welcome & Onboarding** | `/welcome` | `/sambutan` | Account-free Anonymous Mode onboarding, real account registration/sign-in & opt-in consents |
+| **Home Overview** | `/home` | `/beranda` | Next-step summary card, plan progress, & upcoming checkup reminders |
+| **Private Self Check** | `/assessment` | `/cek-awal` | Under-3-minute check with an **explainable, plain-language risk breakdown** (no numeric score): why this result, influence per area, factor-by-factor “what you can do”, what is already working, and what could change the result |
+| **Care Pathway (Referral)** | `/care-pathway` | `/jalur-perawatan` | **Connected specialist referral pathway**: self-check → matched specialist (GP/FKTP, Sp.And, Sp.U, lab, fertility clinic, counsellor) with reasons → JKN tiered or private route → matching facility → booking & prep → printable Referral Summary → consultation log or **doctor-written post-visit plan** → after-care tasks with reminders |
 | **WHO 2021 Semen Simulator** | `/semen-calculator` | `/simulator` | Interactive *Total Motile Sperm Count* (**TMSC**) & parameter comparison vs. WHO 6th Ed. |
-| **72–74 Day Cycle Tracker** | `/cycle-tracker` | `/siklus-72-hari` | Tracks lifestyle habits across the ~74-day spermatogenesis maturation window |
-| **Doctor Question Checklist** | `/doctor-checklist` | `/checklist-dokter` | Builds personalized consultation questions ready to copy or print as PDF |
-| **Find Care** | `/facilities` | `/layanan` | Filters clinics/hospitals by **JKN Accepted** & **Men-Friendly Score**, plus abstinence reminders |
-| **My Results & WHO Trend** | `/results` | `/hasil` | Longitudinal semen trends (e.g., concentration & motility) against WHO 2021 thresholds |
-| **Couple Mode (Our Plan)** | `/couple` | `/berdua` | Shared 6-step milestone tracker & **"Invite Gently"** templates without exposing answers/labs |
-| **Library & Anonymous Q&A** | `/library` | `/pustaka` | Evidence-informed guides, myth-busting, & moderated Q&A queue |
-| **Share to Doctor (1-Hr QR)** | `/share` | `/bagikan-nakes` | Granular per-item consent scopes generating a 1-hour expiring token (`MAYA-RENDRA-1H`) |
-| **Provider Dashboard** | `/provider` | `/nakes` | Consented clinical summary, structured counseling templates, & access audit logging |
-| **Account & Vault Settings** | `/account` · `/settings` | `/akun` · `/pengaturan` | Encrypted storage inspector (*On-Device Encrypted Storage Proof*) & 2-step **Delete all my data** |
+| **72–74 Day Cycle Tracker** | `/cycle-tracker` | `/siklus-72-hari` | Tracks daily lifestyle habits across the ~74-day spermatogenesis maturation window (synced for accounts) |
+| **Doctor Question Checklist** | `/doctor-checklist` | `/checklist-dokter` | Persistent consultation question builder with custom questions, copy, & PDF print |
+| **Find Care** | `/facilities` | `/layanan` | Database-backed clinics/hospitals filtered by **JKN Accepted** & **Men-Friendly Score**, plus `.ics` calendar export |
+| **My Results & WHO Trend** | `/results` | `/hasil` | Longitudinal semen trends vs. WHO 2021 thresholds, record editing, CSV export, & encrypted lab sheet attachments |
+| **My Progress (Private)** | `/progress` | `/progres` | **Private longitudinal tracking** (consent-gated, default OFF): self-check history with what changed, 30-second monthly check-ins (sleep, stress, activity, smoking/vaping, alcohol, weight, heat, discomfort, sexual health), trend charts with plain-language summaries, TMSC over time, unified timeline, CSV export & delete |
+| **Couple Mode (Our Plan)** | `/couple` | `/berdua` | Live-synced 6-step milestone tracker, shared prep checklist, & *"Invite Gently"* templates without exposing private records |
+| **Library & Anonymous Q&A** | `/library` | `/pustaka` | Database-backed guides, myth-busting, & authenticated session-isolated anonymous Q&A tickets |
+| **Share to Doctor (1-Hr QR)** | `/share` | `/bagikan-nakes` | Granular per-item consent scopes (incl. new *Referral Summary* and *My Progress* scopes) generating a 1-hour expiring server-signed token & live access audit log |
+| **Provider Dashboard** | `/provider` | `/nakes` | Invite-gated clinician portal for verified QR summary review (incl. the patient’s plain-language breakdown, referral request & trends), **post-visit care plan sent back to the patient**, counseling templates, & answering patient tickets |
+| **Account & Vault Settings** | `/account` · `/settings` | `/akun` · `/pengaturan` | Password management, encrypted vault inspector (*On-Device Encrypted Storage Proof*), JSON export & **backup restore**, & 2-step **Delete all my data** |
 
 ### System Architecture & Privacy Data Flow
 
@@ -53,69 +52,87 @@ Every screen adapts seamlessly across desktop, mobile, Light/Dark Mode, and `EN`
 flowchart LR
   User["User / Partner Browser (React 19 PWA)"] -->|"Anonymous Mode"| Vault["Web Crypto AES-GCM 256 + IndexedDB Vault"]
   User -->|"UI / Language / Dark Mode"| Rules["Zod-Validated JSON Rules (WHO 6th Ed. 2021)"]
-  User -->|"Opt-In Partner Scope & 1-Hr QR"| API["Fastify 5 REST API (/api/*)"]
-  API --> DB["Prisma ORM (SQLite Default / PostgreSQL)"]
-  Clinician["Clinician View (/provider)"] -->|"1-Hr Scoped QR + Access Log"| API
+  User -->|"HttpOnly Session Cookie"| API["Fastify 5 REST API + SPA Server"]
+  API -->|"AES-256-GCM At-Rest"| DB["Prisma ORM (SQLite Default / PostgreSQL)"]
+  Clinician["Verified Clinician (/provider)"] -->|"Role-Gated 1-Hr QR + Audit Log"| API
 ```
+
+### Final-Round Improvements (Reviewer Feedback)
+
+| Reviewer feedback | What changed | Where |
+| :--- | :--- | :--- |
+| *Explainable plain-language risk breakdowns rather than a simple numeric score* | The rule engine is unchanged and auditable; a new explainer ([`risk-explainer.ts`](./src/lib/risk-explainer.ts)) turns answers into **reasons for the result** (red flag, time rule, or factors adding up), a **3-level influence meter in words** per area (medical / time / habits), **factor cards** (your answer, why it matters, what you can do, safety notes, “you can change this” vs “needs a doctor”), **what is already working**, and a **“what could change your result”** counterfactual. Partner age is never surfaced. | `/assessment` · [`RiskBreakdown.tsx`](./src/components/RiskBreakdown.tsx) · [`risk-explanations.ts`](./src/config/risk-explanations.ts) |
+| *Connected specialist referral pathway from self-assessment through post-consultation care* | A 6-stage pathway ([`care-pathway.ts`](./src/lib/care-pathway.ts)) matches the right specialist from the answers with reasons, explains the **JKN tiered referral** (FKTP → referral → hospital) vs private route, suggests men-friendly facilities, books the visit with reminders, produces a **printable Referral Summary**, and closes the loop: the clinician opening the 1-hour QR can **send a post-visit care plan** (tests, lifestyle focus, onward referral, follow-up date) that lands in the patient’s pathway as dated tasks. Couple Mode steps update automatically. | `/care-pathway` · `/provider` · `POST /api/share-tokens/:code/care-plan` · `GET /api/care-plans` |
+| *Private longitudinal tracking of reproductive health metrics over time* | A consent-gated, encrypted **health journal** ([`health-journal.ts`](./src/lib/health-journal.ts)) stores every self-check (partner data stripped) and quick monthly check-ins; the Progress page shows plain-language trends, charts with healthy ranges, what changed between self-checks, TMSC over time, and a unified timeline. Stored AES-GCM on device; in Account Mode synced as one AES-256-GCM blob (`HealthJournal` table). Never shared with a partner; a doctor sees only a trend summary if the patient adds the *My Progress* scope. | `/progress` · `HealthJournal` model · `POST /api/sync` (`journal`) |
+
+> **Upgrading an existing install:** this release adds the `HealthJournal` table and two nullable columns on `ShareToken`. Run `npm run db:push` (or `npm run db:setup`) once after pulling. The Docker image already runs `prisma db push` on start.
+
+### AI Assistant Features (Opt-In)
+
+Four AI features sit on top of the rule engine. They never replace it: the risk level still comes from the auditable rules, and AI only explains, reads, drafts, and suggests.
+
+| Feature | What it does | Where |
+| :--- | :--- | :--- |
+| **AI Health Companion (agent)** | Answers questions in plain words using the user's own result, pathway stage and trends. It can call tools: search the clinical library, look up WHO 2021 semen reference values, and find men-friendly facilities. It can also *suggest* a care-plan task, a reminder, or a page to open; each suggestion appears as a button and nothing changes until the user taps it. Library sources are cited. | `/companion` · `/asisten` · `POST /api/ai/companion` |
+| **Lab Report Reader** | Reads a photo or PDF of a semen analysis report and fills the result form. Values outside plausible ranges are dropped and listed as “not found”; the user checks every number before saving. The file is not stored by the server. | `/results` · `POST /api/ai/lab-report` |
+| **Visit Brief & Plan Explainer** | For the clinician: a one-screen pre-visit brief drafted from only the scopes the patient shared, and only if the patient ticked *Allow an AI visit brief*. Logged in the patient's access log. For the patient: “Explain this plan in plain words” on a doctor's care plan, with questions to ask next time. | `/provider` · `/care-pathway` · `POST /api/ai/visit-brief` · `POST /api/ai/explain-plan` |
+| **Smarter Distress Detection** | Free-text notes (check-ins, self-check notes) are screened by keywords **and**, if AI is on, a small fast model that catches indirect phrasing. If AI fails, the keyword check still runs. A concern shows the SEJIWA `119 ext 8` support banner. | `/progress` · `/assessment` · `POST /api/ai/distress-check` |
+
+**Setup:** add `ANTHROPIC_API_KEY` to `.env` and restart. Defaults: `AI_MODEL="claude-sonnet-5-5"` (companion, lab reader, explainer, visit brief) and `AI_FAST_MODEL="claude-haiku-5-5"` (distress check). Any OpenAI-compatible endpoint (e.g. Azure OpenAI in an Indonesian region) also works with `AI_PROVIDER="openai-compatible"`, `AI_BASE_URL`, `AI_API_KEY` and `AI_MODEL`; see [`.env.example`](./.env.example). Without a key, or with `AI_DISABLED="true"`, every AI control hides itself and the app works exactly as before. `GET /api/ai/status` reports whether AI is on.
+
+**Guardrails:** AI is **off by default** behind a separate `ai_assist` consent (Settings → *AI Assistant Features*). Requests carry no name, email, account ID or partner age; free-text notes are not sent to the companion; the lab reader asks users to cover their name and ID first. Every prompt carries a medical boundary: no diagnosis, no medication, supplement or dosage advice, and emergencies are pointed to IGD / `119`. Agent actions are allow-listed and user-confirmed. Routes are rate-limited, provider errors are never passed through, and chats are kept in memory only. Code: [`server/ai.ts`](./server/ai.ts) (providers, prompts, tools) and [`server/ai-routes.ts`](./server/ai-routes.ts).
 
 <a id="running-locally"></a>
 
-### Running Locally & Docker
+### Running in Development & Production
 
-**Prerequisites:** Node.js `20+` (Docker image uses `node:22-alpine`) and `npm`.
+**Prerequisites:** Node.js `20+` (Docker uses `node:22-alpine`) and `npm`.
 
 ```bash
-git clone https://github.com/fabrianivan/side-by-side.git
-cd side-by-side
-
 # 1. Install dependencies
 npm install
 
-# 2. Configure environment (optional — defaults work out of the box via SQLite)
+# 2. Configure environment
 cp .env.example .env
+# Edit SESSION_SECRET, ENCRYPTION_KEY, and NAKES_INVITE_CODE in .env for production
 
-# 3. Initialize SQLite database (file:./dev.db) & seed demo facilities, articles & personas
+# 3. Initialize database & seed curated care facilities and clinical articles
 npm run db:setup
 
-# 4. Start Fastify API (port 3001) + Vite frontend (port 5173)
+# 4. Run development mode (Fastify API on :3001 + Vite HMR on :5173)
 npm run dev
 
-# 5. Run all automated tests (31 unit, flow, privacy & accessibility tests)
-npm test
-
-# 6. Build the production PWA bundle (TypeScript + Vite)
+# 5. Build and run unified production server (Fastify serves both /api/* and built dist/ SPA on :3001)
 npm run build
+npm start
+
+# 6. Optional: Provision a verified Healthcare Provider account via CLI
+npx tsx server/create-provider.ts doctor@clinic.id "StrongPass123!" "Dr. Hendra, Sp.And"
+
+# 7. Run all automated unit, integration, security, and accessibility tests
+npm test
 ```
 
 <details>
-<summary><strong>Environment variables (<code>.env.example</code>) & Docker quick run</strong></summary>
+<summary><strong>Environment variables (<code>.env.example</code>) & Production Docker</strong></summary>
 
-- `DATABASE_URL`: Defaults to `"file:./dev.db"` (SQLite) for zero-setup hackathon demos; change `provider` in [`prisma/schema.prisma`](./prisma/schema.prisma) and supply a `postgresql://...` URL for production.
+- `DATABASE_URL`: Defaults to `"file:./dev.db"` (SQLite) for single-node setups; switch `provider` in [`prisma/schema.prisma`](./prisma/schema.prisma) to `"postgresql"` and supply `postgresql://...` for multi-instance production.
+- `SESSION_SECRET` / `ENCRYPTION_KEY`: Required secrets for signing `httpOnly` session cookies and encrypting sensitive database payloads at rest (`AES-256-GCM`).
+- `NAKES_INVITE_CODE`: Access code required when registering a Healthcare Provider (`nakes`) account via `/provider` or `/account`.
 - `PORT` / `HOST` / `CORS_ORIGIN`: Backend defaults to `3001`, `0.0.0.0`, and `http://localhost:5173`.
-- `VITE_API_URL`: Frontend API proxy base (`"http://localhost:3001/api"` locally; [`vercel.json`](./vercel.json) handles SPA + `/sw.js` cache headers in deployment).
+- `ANTHROPIC_API_KEY` (optional): turns on the opt-in AI features. `AI_MODEL` / `AI_FAST_MODEL` override the models; `AI_PROVIDER="openai-compatible"` with `AI_BASE_URL` / `AI_API_KEY` uses another provider; `AI_DISABLED="true"` switches AI off.
 
 ```bash
-# Run containerized demo
+# Build and run unified production container
 docker build -t side-by-side .
-docker run -p 3001:3001 -p 5173:5173 side-by-side
+docker run -p 3001:3001 \
+  -e SESSION_SECRET="your-32-char-session-secret" \
+  -e ENCRYPTION_KEY="your-32-char-encryption-key" \
+  -e NAKES_INVITE_CODE="your-clinic-invite-code" \
+  side-by-side
 ```
 
 </details>
-
-### Interactive Hackathon Demo Guide (1-Click Personas)
-
-Use the persistent **Hackathon Demo Panel** at the bottom of the app (both locally and at [side-by-side-omega.vercel.app](https://side-by-side-omega.vercel.app)) to inspect all three journeys in one click:
-
-1. **Rendra (32 yo, Husband — Patient Journey):**
-   - Select **`1. Rendra (32 yo, Husband)`** in the Demo Panel or open `/assessment` and click **`Fill Rendra Demo (Instant Finish)`**.
-   - Generates a `within_1_2_months` recommendation with plain-language contributing factors (6–12 months trying, laptop heat exposure on lap, light smoking/vaping, short sleep) without revealing partner age.
-   - Filter JKN-accepted men-friendly clinics (`/facilities`), build questions (`/doctor-checklist`), explore **WHO Simulator (TMSC)** (`/semen-calculator`) & **72–74 Day Cycle Tracker** (`/cycle-tracker`), review semen trend recovery (`14.5 → 18.5 M/mL` concentration, `39% → 45%` motility) on `/results`, and generate QR `MAYA-RENDRA-1H` on `/share`.
-2. **Sari (30 yo, Partner — Shared Support Without Oversharing):**
-   - Select **`2. Sari (30 yo, Partner)`** to open `/couple`.
-   - Displays their 6-step milestone plan, encouragement notes, and *"Invite Gently"* message templates (*Warm*, *Casual*, *Practical*)—while keeping Rendra’s questionnaire answers and lab numbers hidden unless explicitly opted in.
-3. **Dr. Maya (Clinic Physician — Scoped Care Handoff):**
-   - Select **`3. Dr. Maya (Clinic Physician)`** or click **`Simulate Dr. Maya Opening This QR`** to inspect `/provider`.
-   - Shows strictly Rendra’s consented summary scope, ready-to-copy clinical counseling templates, and automatically logs every QR access event back to Rendra’s audit trail.
 
 <a id="architecture--tech-stack"></a>
 
@@ -124,44 +141,24 @@ Use the persistent **Hackathon Demo Panel** at the bottom of the app (both local
 | Layer | Implementation Details |
 | :--- | :--- |
 | **Frontend & UI** | `React 19`, `TypeScript 5.7`, `Vite 6`, `React Router 7`, `TanStack Query 5`, `Tailwind CSS 3`, `Lucide React`, `qrcode.react` |
-| **Backend API & Auth** | `Fastify 5` (`@fastify/cookie`, `@fastify/cors`, `@fastify/helmet`, `@fastify/rate-limit`) exposing 24 routes in [`server/index.ts`](./server/index.ts) |
+| **Backend API & Auth** | `Fastify 5` (`@fastify/cookie`, `@fastify/cors`, `@fastify/helmet`, `@fastify/rate-limit`) with `scrypt` password hashing, signed `httpOnly` sessions, and production SPA hosting in [`server/index.ts`](./server/index.ts) |
+| **Encryption** | Client-side Web Crypto `AES-GCM` 256-bit (`IndexedDB`) + Server-side `AES-256-GCM` at-rest encryption ([`server/crypto-auth.ts`](./server/crypto-auth.ts)) |
 | **Database & ORM** | `Prisma 6` targeting SQLite (`file:./dev.db`) by default, portable to PostgreSQL via `DATABASE_URL` |
-| **Client-Side Encryption** | Web Crypto `AES-GCM` 256-bit via [`src/lib/crypto-storage.ts`](./src/lib/crypto-storage.ts) stored in IndexedDB (`sbs_encrypted_vault`) with on-device key `sbs_device_aes_key_v1` |
 | **Clinical Rules Engine** | Declarative configs ([`assessment-rules.json`](./src/config/assessment-rules.json), [`semen-reference.json`](./src/config/semen-reference.json)) validated by Zod schemas ([`schemas.ts`](./src/config/schemas.ts)) |
-| **Testing** | `Vitest 3` + `Testing Library` + `jsdom` (`31` tests across [`assessment-engine.test.ts`](./src/test/assessment-engine.test.ts) and [`flows-and-a11y.test.tsx`](./src/test/flows-and-a11y.test.tsx)) |
-
-<details>
-<summary><strong>Repository structure</strong></summary>
-
-```text
-side-by-side/
-├── prisma/
-│   ├── schema.prisma              # Data models (SQLite default, PostgreSQL-ready)
-│   └── seed.ts                    # Clinics, educational articles, Rendra/Sari/Dr. Maya demo seed
-├── public/                        # App emblem (logo-icon.png), manifest.webmanifest & service worker
-├── server/
-│   ├── crypto-auth.ts             # Server session & hashing utilities
-│   └── index.ts                   # Fastify 5 API routes (/api/health, sync, consents, pairings, QR share)
-├── src/
-│   ├── components/Layout.tsx      # Responsive navigation, ID/EN switcher, Dark Mode & Demo Panel
-│   ├── config/                    # Auditable JSON rules, WHO 2021 reference & Zod validation schemas
-│   ├── i18n/index.ts              # Bilingual ID/EN dictionaries
-│   ├── lib/                       # Pure assessment rules engine & AES-GCM IndexedDB storage vault
-│   ├── pages/                     # 14 mobile-first screens supporting bilingual routes
-│   └── test/                      # 31 automated unit, privacy, user-flow & accessibility tests
-├── Dockerfile                     # Node 22 Alpine container image
-└── vercel.json                    # Vercel production build, headers & SPA routing rules
-```
-
-</details>
+| **AI (optional)** | Anthropic Messages API (`claude-sonnet-5-5`, `claude-haiku-5-5`) with tool use, or any OpenAI-compatible endpoint; server-side only, called through a thin provider layer with no SDK dependency |
+| **Testing** | `Vitest 3` + `Testing Library` + `jsdom` across unit, backend security/encryption, privacy, and accessibility suites |
 
 <a id="privacy-guarantees--medical-boundaries"></a>
 
 ### Privacy Guarantees & Medical Boundaries
 
-- **Indonesian PDP Law (`UU PDP`) Alignment:** Granular consent toggles (`store_results`, `share_partner`, `share_nakes`) default to **OFF**. Raw Anonymous Mode inputs stay encrypted locally (`AES-GCM` 256-bit) and inspectable via Settings **`On-Device Encrypted Storage Proof`**.
+- **Indonesian PDP Law (`UU PDP`) Alignment:** Granular consent toggles (`store_results`, `share_partner`, `share_nakes`) default to **OFF**. Raw Anonymous Mode inputs stay encrypted locally (`AES-GCM` 256-bit), and synced server records are encrypted at rest (`AES-256-GCM`). Service Worker explicitly bypasses `/api/*` routes so private clinical API payloads are never cached.
 - **Anti-Leakage Rules:** Even when trying duration (> 12 months, or > 6 months with female partner ≥ 35) triggers `within_1_2_months`, the UI never leaks female partner age in factor explanations or partner views.
-- **2-Step Full Data Erasure:** **`Delete all my data`** in `/settings` wipes both local browser storage (`IndexedDB` / `localStorage`) and server records via `DELETE /api/users/:userId/data`.
+- **Role & Ownership Guards:** Partner privacy switches are strictly locked to Partner A (`user_a`), anonymous Q&A replies and 1-hour patient QR lookups require an authenticated `nakes` session, and clinicians register only with `NAKES_INVITE_CODE` (or CLI provisioning).
+- **2-Step Full Data Erasure:** **`Delete all my data`** in `/settings` or `/account` wipes both local browser storage (`IndexedDB` / `localStorage`) and all server records (including the encrypted health journal and clinician care plans) via `DELETE /api/users/:userId/data`.
+- **Consent-Gated History:** Self-check history and check-ins are recorded only when `store_results` consent is ON (default OFF), can be stopped or deleted from `/progress`, and never include partner details or free-text notes in what a clinician sees.
+- **Clinician Write-Back Limits:** Only verified `nakes` sessions can write a post-visit care plan, only for non-revoked codes, within 24 hours of the code being created; every write is logged in the patient-visible audit log and encrypted at rest.
+- **AI Is Opt-In and Minimal:** AI features need their own `ai_assist` consent (default OFF), send no identity data, never store chats or uploaded lab files, and only suggest actions the user must confirm. Clinician visit briefs require the patient's separate tick on the QR code and are audit-logged.
 - **Non-Diagnostic Medical Boundary:** Side by Side provides educational guidance and care navigation only—zero diagnosis, treatment claims, fertility guarantees, or medication/dosage/supplement recommendations. Free-text entries screen for severe emotional distress and surface the Indonesian Ministry of Health **SEJIWA** hotline (`119 ext 8`).
 
 ---
@@ -172,138 +169,47 @@ side-by-side/
 
 *[↑ Back to Top / English](#english)*
 
-> **Tema Tantangan:** `[Kesuburan] Kesehatan Reproduksi Pria`  
 > **Misi:** Membantu pria memahami, memeriksakan, dan menindaklanjuti kesehatan reproduksinya lebih awal—secara privat, tanpa penghakiman, bersama pasangan, dan terhubung ke layanan medis tepercaya.
 
-Secara global, **1 dari 6 orang dewasa** mengalami infertilitas sepanjang hidupnya (WHO, 2023), dengan faktor pria berkontribusi pada sekitar separuh kasus—namun pria sering menunda pemeriksaan awal akibat stigma, ketidakjelasan langkah pemeriksaan, dan rasa cemas. **Side by Side** menjembatani hal ini lewat aplikasi web responsif (`mobile-first`), dwi-bahasa (`ID`/`EN`), dan siap PWA dari tahap cek awal hingga interpretasi hasil lab, pendampingan pasangan, serta berbagi ringkasan ke dokter berbasis persetujuan.
+Secara global, **1 dari 6 orang dewasa** mengalami infertilitas sepanjang hidupnya (WHO, 2023), dengan faktor pria berkontribusi pada sekitar separuh kasus—namun pria sering menunda pemeriksaan awal akibat stigma, ketidakjelasan langkah pemeriksaan, dan rasa cemas. **Side by Side** menjembatani hal ini lewat aplikasi web full-stack dwi-bahasa (`ID`/`EN`) yang siap produksi dari tahap cek awal hingga interpretasi hasil lab, kolaborasi pasangan waktu nyata, serta serah terima klinis terverifikasi ke dokter.
 
-### Peta Fitur & Rute Dwi-Bahasa
+### Penyempurnaan Babak Final (Masukan Juri)
 
-Seluruh halaman mendukung tampilan seluler/desktop, **Mode Gelap (Dark Mode)**, serta rute berbahasa Indonesia dan Inggris:
+- **Rincian risiko yang dapat dijelaskan** (`/cek-awal`): alasan hasil, meter pengaruh berbentuk kata (bukan skor), rincian per faktor beserta “yang bisa Anda lakukan”, hal yang sudah baik, dan “apa yang bisa mengubah hasil Anda”.
+- **Jalur rujukan spesialis terhubung** (`/jalur-perawatan`): Cek Awal → spesialis yang tepat & alasannya → jalur JKN berjenjang atau mandiri → fasilitas → jadwal & persiapan → Ringkasan Rujukan → catatan konsultasi atau **rencana pasca-kunjungan yang dikirim dokter** → perawatan lanjutan dengan pengingat.
+- **Pelacakan longitudinal privat** (`/progres`): riwayat Cek Awal, check-in bulanan 30 detik, grafik tren dengan ringkasan bahasa awam, TMSC dari waktu ke waktu—terenkripsi dan hanya aktif dengan persetujuan.
+- **Pembaruan instalasi lama:** jalankan `npm run db:push` sekali setelah menarik kode terbaru.
 
-| Modul | Rute ID | Rute EN | Fungsi Utama |
-| :--- | :--- | :--- | :--- |
-| **Sambutan & Privasi Awal** | `/sambutan` | `/welcome` | Masuk Mode Anonim tanpa akun & persetujuan granular opt-in |
-| **Beranda** | `/beranda` | `/home` | Ringkasan langkah berikutnya & akses cepat ke alat klinis |
-| **Cek Awal Privat** | `/cek-awal` | `/assessment` | Penilaian < 3 menit dengan penjelasan faktor bahasa awam & batas non-diagnostik |
-| **Simulator Sperma WHO 2021** | `/simulator` | `/semen-calculator` | Kalkulator *Total Motile Sperm Count* (**TMSC**) & perbandingan rujukan WHO Edisi ke-6 |
-| **Pelacak Siklus 72–74 Hari** | `/siklus-72-hari` | `/cycle-tracker` | Melacak kebiasaan gaya hidup sepanjang siklus pematangan sel sperma (~74 hari) |
-| **Checklist Pertanyaan Dokter** | `/checklist-dokter` | `/doctor-checklist` | Menyusun daftar pertanyaan konsultasi dokter siap salin atau cetak PDF |
-| **Cari Layanan Medis** | `/layanan` | `/facilities` | Filter klinik/RS **Menerima JKN** & **Skor Ramah Pria**, plus pengingat masa pantang 2–7 hari |
-| **Hasil Saya & Tren WHO** | `/hasil` | `/results` | Grafik tren riwayat analisis semen dibandingkan nilai rujukan WHO 2021 |
-| **Mode Berdua (Rencana Kita)** | `/berdua` | `/couple` | Progres 6 tahap bersama & templat **"Ajak dengan lembut"** tanpa membuka jawaban/lab pria |
-| **Pustaka & Tanya Dokter** | `/pustaka` | `/library` | Artikel edukasi, mitos vs. fakta, & antrean tanya jawab anonim |
-| **Bagi ke Nakes (QR 1 Jam)** | `/bagikan-nakes` | `/share` | Pemilihan cakupan per item untuk membuat kode QR berlaku 1 jam (`MAYA-RENDRA-1H`) |
-| **Dasbor Nakes (Dokter)** | `/nakes` | `/provider` | Ringkasan pasien sesuai izin, templat konseling terstruktur, & catatan audit akses |
-| **Akun & Inspektor Vault** | `/akun` · `/pengaturan` | `/account` · `/settings` | **`Bukti Penyimpanan Terenkripsi Perangkat`** & tombol 2-langkah **`Hapus semua data saya`** |
+### Fitur Asisten AI (Opsional, Atas Persetujuan)
 
-### Diagram Arsitektur & Aliran Privasi
+- **Pendamping Kesehatan AI (agen)** (`/asisten`): menjawab pertanyaan dengan bahasa awam berdasarkan hasil, tahap jalur, dan tren pengguna; dapat mencari Pustaka, nilai rujukan WHO 2021, dan faskes ramah pria; menyarankan tugas, pengingat, atau halaman sebagai tombol—tidak ada yang berubah sebelum pengguna menekannya.
+- **Pembaca Laporan Lab** (`/hasil`): membaca foto/PDF hasil analisis semen dan mengisi formulir; pengguna memeriksa setiap angka sebelum menyimpan. Berkas tidak disimpan server.
+- **Ringkasan Kunjungan & Penjelas Rencana**: ringkasan pra-kunjungan untuk dokter hanya bila pasien mencentang izinnya (tercatat di log akses), serta penjelasan rencana dokter dalam kata sederhana untuk pasien.
+- **Deteksi Distres Lebih Cermat**: catatan bebas diperiksa kata kunci dan model AI cepat; bila perlu, banner dukungan SEJIWA `119 ext 8` muncul.
+- **Pengaturan:** isi `ANTHROPIC_API_KEY` di `.env` (model bawaan `claude-sonnet-5-5` dan `claude-haiku-5-5`, atau endpoint kompatibel OpenAI). Tanpa kunci, semua fitur AI tersembunyi. AI **nonaktif secara bawaan** dan perlu persetujuan `ai_assist` di Pengaturan; tidak mengirim nama, email, ID, atau usia pasangan; tidak mendiagnosis atau menyarankan obat.
 
-```mermaid
-flowchart LR
-  User["Browser Pengguna / Pasangan (React 19 PWA)"] -->|"Mode Anonim"| Vault["Web Crypto AES-GCM 256 + Vault IndexedDB"]
-  User -->|"UI / Bahasa / Mode Gelap"| Rules["Aturan JSON Tervalidasi Zod (WHO Ed. 6 2021)"]
-  User -->|"Izin Pasangan & QR 1 Jam"| API["Fastify 5 REST API (/api/*)"]
-  API --> DB["Prisma ORM (SQLite Default / PostgreSQL)"]
-  Clinician["Dasbor Nakes (/nakes)"] -->|"QR Terbatas 1 Jam + Catatan Akses"| API
-```
-
-### Cara Menjalankan Proyek (Lokal & Docker)
-
-**Prasyarat:** Node.js `20+` (image Docker memakai `node:22-alpine`) dan `npm`.
+### Cara Menjalankan (Pengembangan & Produksi)
 
 ```bash
-git clone https://github.com/fabrianivan/side-by-side.git
-cd side-by-side
-
 # 1. Instal dependensi
 npm install
 
-# 2. Salin konfigurasi environment (opsional — bawaan SQLite langsung berjalan)
+# 2. Salin & sesuaikan konfigurasi environment (.env)
 cp .env.example .env
 
-# 3. Inisialisasi database SQLite (file:./dev.db) & isi seed data demo
+# 3. Inisialisasi database & seed direktori faskes serta artikel edukasi klinis
 npm run db:setup
 
-# 4. Jalankan server API Fastify (port 3001) + frontend Vite (port 5173)
+# 4. Mode pengembangan (Fastify API :3001 + Vite HMR :5173)
 npm run dev
 
-# 5. Jalankan seluruh pengujian (31 unit, flow, privacy & accessibility tests)
-npm test
-
-# 6. Bangun bundle produksi PWA (TypeScript + Vite)
+# 5. Build & jalankan server produksi terpadu (Fastify melayani /api/* dan SPA dist/ pada port 3001)
 npm run build
+npm start
+
+# 6. Opsional: Buat akun Tenaga Kesehatan (Nakes) langsung lewat CLI
+npx tsx server/create-provider.ts dokter@klinik.id "KataSandiKuat123!" "dr. Hendra, Sp.And"
+
+# 7. Jalankan seluruh pengujian otomatis
+npm test
 ```
-
-<details>
-<summary><strong>Variabel environment (<code>.env.example</code>) & perintah Docker</strong></summary>
-
-- `DATABASE_URL`: Bawaan `"file:./dev.db"` (SQLite) agar demo berjalan instan; ganti `provider` di [`prisma/schema.prisma`](./prisma/schema.prisma) dan isi URL `postgresql://...` untuk produksi.
-- `PORT` / `HOST` / `CORS_ORIGIN`: Backend berjalan di port `3001`, host `0.0.0.0`, dan origin `http://localhost:5173`.
-- `VITE_API_URL`: Alamat dasar API frontend (`"http://localhost:3001/api"` di lokal; [`vercel.json`](./vercel.json) mengatur routing SPA dan header `/sw.js` saat deploy).
-
-```bash
-# Menjalankan lewat Docker
-docker build -t side-by-side .
-docker run -p 3001:3001 -p 5173:5173 side-by-side
-```
-
-</details>
-
-### Panduan Skenario Demo Hackathon (1 Klik)
-
-Gunakan **Panel Demo Hackathon** di bagian bawah layar (tersedia lokal maupun di [side-by-side-omega.vercel.app](https://side-by-side-omega.vercel.app)) untuk mencoba ketiga peran secara langsung:
-
-1. **Rendra (32 thn, Suami — Alur Pasien):**
-   - Klik **`1. Rendra (32 thn, Suami)`** pada Panel Demo atau buka `/cek-awal` lalu tekan **`Isi Contoh Rendra (Selesai Instan)`**.
-   - Menghasilkan saran *"Sebaiknya periksa dalam 1 sampai 2 bulan"* (`within_1_2_months`) dengan penjelasan faktor risiko bahasa awam (lama program hamil 6–12 bulan, panas laptop di pangkuan, rokok/vape ringan, kurang tidur) tanpa membocorkan usia pasangan.
-   - Jelajahi klinik JKN di `/layanan`, buat pertanyaan di `/checklist-dokter`, uji **Simulator Lab WHO 2021** (`/simulator`) & **Siklus 72–74 Hari** (`/siklus-72-hari`), lihat tren peningkatan semen (`14,5 → 18,5 juta/mL` konsentrasi, `39% → 45%` motilitas) di `/hasil`, dan buat QR `MAYA-RENDRA-1H` di `/bagikan-nakes`.
-2. **Sari (30 thn, Istri — Dukungan Berdua Tanpa Mengungkap Data Mentah):**
-   - Klik **`2. Sari (30 thn, Istri)`** untuk membuka `/berdua`.
-   - Sari memantau 6 tahap perjalanan bersama, mengirim pesan semangat, dan menyalin templat **"Ajak dengan lembut"** (*Hangat*, *Santai*, *Praktis*) **tanpa melihat jawaban kuesioner atau angka lab Rendra** kecuali diizinkan per item.
-3. **dr. Maya (Nakes Puskesmas — Serah Terima Klinis Terkendali):**
-   - Klik **`3. dr. Maya (Nakes Puskesmas)`** atau tombol **`Simulasikan dr. Maya Membuka QR Ini`** menuju `/nakes`.
-   - dr. Maya hanya melihat ringkasan cakupan yang disetujui, dapat menyalin templat konseling terstruktur, dan setiap pembukaan QR otomatis masuk ke **Catatan Akses Tenaga Kesehatan** milik Rendra.
-
-### Teknologi & Struktur Proyek
-
-| Lapisan | Detail Implementasi |
-| :--- | :--- |
-| **Frontend & UI** | `React 19`, `TypeScript 5.7`, `Vite 6`, `React Router 7`, `TanStack Query 5`, `Tailwind CSS 3`, `Lucide React`, `qrcode.react` |
-| **Backend API & Auth** | `Fastify 5` (`@fastify/cookie`, `@fastify/cors`, `@fastify/helmet`, `@fastify/rate-limit`) dengan 24 endpoint di [`server/index.ts`](./server/index.ts) |
-| **Database & ORM** | `Prisma 6` dengan SQLite (`file:./dev.db`) secara default dan siap dialihkan ke PostgreSQL lewat `DATABASE_URL` |
-| **Enkripsi Sisi Klien** | Web Crypto `AES-GCM` 256-bit di [`src/lib/crypto-storage.ts`](./src/lib/crypto-storage.ts), tersimpan pada IndexedDB (`sbs_encrypted_vault`) dengan kunci perangkat `sbs_device_aes_key_v1` |
-| **Mesin Aturan Klinis** | Konfigurasi deklaratif ([`assessment-rules.json`](./src/config/assessment-rules.json), [`semen-reference.json`](./src/config/semen-reference.json)) yang divalidasi Zod ([`schemas.ts`](./src/config/schemas.ts)) |
-| **Pengujian** | `Vitest 3` + `Testing Library` + `jsdom` (`31` tes pada [`assessment-engine.test.ts`](./src/test/assessment-engine.test.ts) dan [`flows-and-a11y.test.tsx`](./src/test/flows-and-a11y.test.tsx)) |
-
-<details>
-<summary><strong>Struktur folder repositori</strong></summary>
-
-```text
-side-by-side/
-├── prisma/
-│   ├── schema.prisma              # Skema data (SQLite default, siap PostgreSQL)
-│   └── seed.ts                    # Data klinik, artikel pustaka & skenario Rendra/Sari/dr. Maya
-├── public/                        # Ikon aplikasi (logo-icon.png), manifest.webmanifest & service worker
-├── server/
-│   ├── crypto-auth.ts             # Utilitas hash & sesi autentikasi server
-│   └── index.ts                   # Endpoint Fastify 5 (/api/health, sync, consents, pairings, share QR)
-├── src/
-│   ├── components/Layout.tsx      # Navigasi responsif, pengalih ID/EN, Mode Gelap & Panel Demo
-│   ├── config/                    # Aturan medis JSON, rujukan WHO 2021 & skema validasi Zod
-│   ├── i18n/index.ts              # Kamus dwi-bahasa ID/EN
-│   ├── lib/                       # Mesin penilaian mandiri & brankas terenkripsi AES-GCM IndexedDB
-│   ├── pages/                     # 14 halaman mobile-first dengan dukungan rute ID & EN
-│   └── test/                      # 31 pengujian unit, privasi, alur pengguna & aksesibilitas
-├── Dockerfile                     # Definisi kontainer Node 22 Alpine
-└── vercel.json                    # Konfigurasi build produksi Vercel, header & routing SPA
-```
-
-</details>
-
-### Jaminan Privasi & Batas Klinis
-
-- **Kepatuhan Prinsip UU PDP:** Seluruh toggle izin (`store_results`, `share_partner`, `share_nakes`) bernilai **OFF secara default**. Pada Mode Anonim, data mentah dienkripsi secara lokal (`AES-GCM` 256-bit) dan dapat diperiksa melalui **`Bukti Penyimpanan Terenkripsi Perangkat`** di Pengaturan.
-- **Perlindungan Data Pasangan:** Bila durasi program hamil (> 12 bulan, atau > 6 bulan jika usia pasangan perempuan ≥ 35 tahun) memicu saran `within_1_2_months`, aplikasi tidak pernah menampilkan usia pasangan pada daftar faktor risiko maupun ke halaman pasangan.
-- **Penghapusan Data 2 Langkah:** Tombol **`Hapus semua data saya`** di `/pengaturan` menghapus data lokal (`IndexedDB` / `localStorage`) sekaligus data server melalui `DELETE /api/users/:userId/data`.
-- **Batas Medis Non-Diagnostik:** Aplikasi ini hanya berfungsi sebagai edukasi dan navigasi layanan kesehatan—tidak memuat diagnosis medis, klaim pengobatan, janji kesuburan, maupun saran obat/dosis/suplemen. Isian teks bebas juga mendeteksi tekanan emosional berat untuk menampilkan hotline **SEJIWA** Kemenkes (`119 ext 8`).

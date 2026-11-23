@@ -1,3 +1,5 @@
+import { ARTICLES_EN, FAQS_EN } from './localization-en';
+
 export interface SeedArticle {
   id: string;
   slug: string;
@@ -25,7 +27,7 @@ export const seedArticles: SeedArticle[] = [
     summary: 'Memahami peran pria dalam program hamil tanpa rasa canggung—karena rencana memiliki anak adalah perjalanan dua orang.',
     category: 'Dasar Kesuburan',
     read_minutes: 3,
-    reviewer: 'Ditinjau oleh: Tim Konsultan Spesialis Andrologi (Placeholder Narasumber Medis) | Sumber: Pedoman WHO & IAUI',
+    reviewer: 'Referensi Klinis: Pedoman WHO & IAUI (Ikatan Ahli Urologi Indonesia)',
     updated_at: '2026-10-01',
     body_md: `### Kesuburan Adalah Perjalanan Berdua
 
@@ -50,7 +52,7 @@ Memahami kesehatan reproduksi bukan tentang mencari siapa yang salah, melainkan 
     summary: 'Meluruskan kesalahpahaman yang sering membuat pria enggan bertanya atau memeriksakan diri.',
     category: 'Dasar Kesuburan',
     read_minutes: 3,
-    reviewer: 'Ditinjau oleh: dr. Spesialis Andrologi, Sp.And (Placeholder Narasumber Medis) | Sumber: PERANDI & WHO',
+    reviewer: 'Referensi Klinis: Panduan PERANDI & WHO',
     updated_at: '2026-10-02',
     body_md: `### Mitos 1: "Kalau tubuh atletis dan fungsi seksual lancar, pasti subur."
 **Fakta:** Fungsi ereksi dan gairah seksual diatur oleh aliran darah serta hormon testosteron, sedangkan pembuahan bergantung pada jumlah, gerak (motilitas), dan bentuk (morfologi) mikroskopis sel sperma. Pria yang sangat bugar dan tidak memiliki keluhan seksual tetap bisa memiliki jumlah sel sperma yang perlu dievaluasi melalui mikroskop.
@@ -71,7 +73,7 @@ Memahami kesehatan reproduksi bukan tentang mencari siapa yang salah, melainkan 
     summary: 'Mengapa perubahan kecil pada tidur, olahraga, dan nutrisi hari ini berdampak besar dalam 2,5 hingga 3 bulan ke depan.',
     category: 'Gaya Hidup',
     read_minutes: 3,
-    reviewer: 'Ditinjau oleh: Tim Medis Kesehatan Reproduksi (Placeholder Narasumber Medis) | Sumber: WHO Laboratory Manual 6th Ed.',
+    reviewer: 'Referensi Klinis: WHO Laboratory Manual 6th Ed. (2021)',
     updated_at: '2026-10-03',
     body_md: `### Pabrik Alami yang Bekerja Tanpa Henti
 
@@ -96,7 +98,7 @@ Berbeda dengan perempuan yang lahir dengan cadangan sel telur tetap, tubuh pria 
     summary: 'Panduan waktu berdasarkan pedoman medis agar Anda dan pasangan tidak menunggu terlalu lama.',
     category: 'Persiapan Tes',
     read_minutes: 2,
-    reviewer: 'Ditinjau oleh: Konsultan Urologi & Andrologi (Placeholder Narasumber Medis) | Sumber: Pedoman IAUI & EAU',
+    reviewer: 'Referensi Klinis: Pedoman IAUI & European Association of Urology (EAU)',
     updated_at: '2026-10-04',
     body_md: `### Tidak Perlu Menunggu Bertahun-tahun
 
@@ -123,7 +125,7 @@ Anda bisa memulai dari **dokter umum di Puskesmas atau klinik**, **Dokter Spesia
     summary: 'Gambaran langkah demi langkah dari ruang pendaftaran hingga pengambilan sampel agar Anda tidak lagi cemas.',
     category: 'Persiapan Tes',
     read_minutes: 3,
-    reviewer: 'Ditinjau oleh: Tim Patologi Klinik & Andrologi (Placeholder Narasumber Medis) | Sumber: WHO 2021',
+    reviewer: 'Referensi Klinis: WHO Laboratory Manual 6th Ed. (2021)',
     updated_at: '2026-10-05',
     body_md: `### Rasa Canggung Itu Wajar
 
@@ -150,7 +152,7 @@ Seluruh prosedur dilakukan secara profesional, rahasia, dan selesai dalam waktu 
     summary: 'Panduan komunikasi hangat bagi suami maupun istri agar program hamil mempererat hubungan, bukan menjauhkan.',
     category: 'Pasangan & Emosi',
     read_minutes: 3,
-    reviewer: 'Ditinjau oleh: Psikolog Klinis Keluarga & Konselor Fertilitas (Placeholder Narasumber Medis)',
+    reviewer: 'Referensi Klinis: Panduan Konseling Keluarga & Kesehatan Reproduksi',
     updated_at: '2026-10-06',
     body_md: `### Mengubah "Kamu" Menjadi "Kita"
 
@@ -174,7 +176,7 @@ Sisihkan waktu kencan atau akhir pekan di mana Anda berdua sepakat untuk tidak m
     summary: 'Mengapa suhu 2 derajat lebih sejuk sangat penting bagi pabrik sel sperma dan cara praktis menjaganya.',
     category: 'Gaya Hidup',
     read_minutes: 2,
-    reviewer: 'Ditinjau oleh: Tim Konsultan Andrologi & Kesehatan Kerja (Placeholder Narasumber Medis)',
+    reviewer: 'Referensi Klinis: Studi Kesehatan Kerja & Reproduksi Pria (WHO / ASRM)',
     updated_at: '2026-10-07',
     body_md: `### Mengapa Suhu Sejuk Itu Penting?
 
@@ -200,7 +202,7 @@ Secara anatomis, testis berada di dalam kantung skrotum di luar rongga tubuh uta
     summary: 'Apa yang terjadi pada sel sperma saat terpapar nikotin dan bagaimana tubuh memulihkan diri saat Anda mulai mengurangi.',
     category: 'Gaya Hidup',
     read_minutes: 3,
-    reviewer: 'Ditinjau oleh: Tim Spesialis Andrologi (Placeholder Narasumber Medis) | Sumber: Studi Klinis WHO & ASRM',
+    reviewer: 'Referensi Klinis: Studi Klinis WHO & ASRM',
     updated_at: '2026-10-08',
     body_md: `### Memahami Stres Oksidatif Tanpa Menghakimi
 
@@ -224,7 +226,7 @@ Karena sel sperma diproduksi baru setiap 74 hari, **dampak paparan rokok sebagia
     summary: 'Mengenal pelebaran pembuluh darah vena di skrotum yang sering tanpa gejala namun dapat ditangani oleh dokter.',
     category: 'Dasar Kesuburan',
     read_minutes: 3,
-    reviewer: 'Ditinjau oleh: Dokter Spesialis Urologi, Sp.U (Placeholder Narasumber Medis) | Sumber: Pedoman IAUI',
+    reviewer: 'Referensi Klinis: Pedoman Klinis Varikokel IAUI & EAU',
     updated_at: '2026-10-09',
     body_md: `### Apa Itu Varikokel?
 
@@ -252,7 +254,7 @@ Dokter spesialis urologi atau andrologi dapat mendeteksi varikokel melalui pemer
     summary: 'Panduan bahasa awam untuk memahami istilah volume, konsentrasi, motilitas, dan morfologi.',
     category: 'Persiapan Tes',
     read_minutes: 4,
-    reviewer: 'Ditinjau oleh: Tim Patologi Klinik & Andrologi (Placeholder Narasumber Medis) | Sumber: WHO 6th Ed. (2021)',
+    reviewer: 'Referensi Klinis: WHO Laboratory Manual 6th Ed. (2021)',
     updated_at: '2026-10-10',
     body_md: `### Satu Kali Hasil Bukanlah Vonis Akhir
 
@@ -279,7 +281,7 @@ Bawa hasil Anda ke dokter untuk melihat gambaran utuhnya bersama riwayat pasanga
     summary: 'Mengapa istirahat yang cukup dan manajemen stres bukan sekadar saran klise dalam program hamil.',
     category: 'Gaya Hidup',
     read_minutes: 2,
-    reviewer: 'Ditinjau oleh: Tim Konsultan Andrologi & Kedokteran Tidur (Placeholder Narasumber Medis)',
+    reviewer: 'Referensi Klinis: Endokrinologi Reproduksi & Kedokteran Tidur',
     updated_at: '2026-10-11',
     body_md: `### Hubungan Antara Otak dan Produksi Sperma
 
@@ -353,3 +355,19 @@ export const seedFaqs: SeedFaq[] = [
     answer: 'Anda dapat memakai Mode Anonim tanpa email, dan seluruh data di perangkat dienkripsi secara lokal menggunakan Web Crypto AES-GCM-256. Selain itu, seluruh persetujuan berbagi bersifat opt-in (mati secara default), dan Anda dapat menghapus seluruh data lokal dalam dua langkah kapan saja dari menu Pengaturan.'
   }
 ];
+
+export function getLocalizedArticles(locale: 'id' | 'en' = 'id'): SeedArticle[] {
+  if (locale !== 'en') return seedArticles;
+  return seedArticles.map((art) => {
+    const en = ARTICLES_EN[art.id];
+    return en ? { ...art, ...en } : art;
+  });
+}
+
+export function getLocalizedFaqs(locale: 'id' | 'en' = 'id'): SeedFaq[] {
+  if (locale !== 'en') return seedFaqs;
+  return seedFaqs.map((faq) => {
+    const en = FAQS_EN[faq.id];
+    return en ? { ...faq, ...en } : faq;
+  });
+}

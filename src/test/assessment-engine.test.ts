@@ -2,9 +2,30 @@ import { describe, it, expect } from 'vitest';
 import {
   evaluateAssessment,
   detectEmotionalDistress,
-  RENDRA_DEMO_ANSWERS,
+  type AssessmentAnswers,
 } from '../lib/assessment-engine';
-import { assessmentRulesConfig, semenReferenceConfig } from '../config/schemas';
+import {
+  assessmentRulesConfig,
+  semenReferenceConfig,
+  getLocalizedAssessmentConfig,
+  getLocalizedSemenReference,
+  getLocalizedTemplates,
+} from '../config/schemas';
+
+const SAMPLE_LIFESTYLE_ANSWERS: AssessmentAnswers = {
+  ttc_duration: '6_to_12_months',
+  partner_context: 'under_35',
+  prior_pregnancy: 'never',
+  reproductive_history: 'none',
+  physical_symptoms: 'none',
+  smoking_habit: 'occasional_or_vape',
+  alcohol_habit: 'none',
+  heat_exposure: 'moderate_laptop_sitting',
+  physical_activity: 'sedentary',
+  bmi_category: 'normal',
+  medications_supplements: 'none_or_vitamins',
+  sleep_and_stress: 'moderate_stress_lack_sleep',
+};
 
 describe('Mesin Penilaian Risiko Mandiri (Rule-Based Assessment Engine — 18 Kasus Uji)', () => {
   it('Kasus 1: Jawaban kosong menghasilkan saran "Pertimbangkan pemeriksaan rutin"', () => {
@@ -82,8 +103,8 @@ describe('Mesin Penilaian Risiko Mandiri (Rule-Based Assessment Engine — 18 Ka
     expect(res.levelCode).toBe('routine');
   });
 
-  it('Kasus 8: Skenario Demo Rendra (8 bulan promil + faktor gaya hidup) menghasilkan "Sebaiknya periksa dalam 1 sampai 2 bulan"', () => {
-    const res = evaluateAssessment(RENDRA_DEMO_ANSWERS);
+  it('Kasus 8: Profil kombinasi 8 bulan promil dan faktor gaya hidup menghasilkan "Sebaiknya periksa dalam 1 sampai 2 bulan"', () => {
+    const res = evaluateAssessment(SAMPLE_LIFESTYLE_ANSWERS);
     expect(res.levelCode).toBe('within_1_2_months');
     expect(res.levelLabel).toBe('Sebaiknya periksa dalam 1 sampai 2 bulan');
     expect(res.factors.length).toBeGreaterThanOrEqual(3);
@@ -168,7 +189,7 @@ describe('Mesin Penilaian Risiko Mandiri (Rule-Based Assessment Engine — 18 Ka
   });
 
   it('Kasus 18: Batas medis & etika — wajib menyertakan disclaimer bukan diagnosis dan tanpa saran obat/dosis di konfigurasi', () => {
-    const res = evaluateAssessment(RENDRA_DEMO_ANSWERS);
+    const res = evaluateAssessment(SAMPLE_LIFESTYLE_ANSWERS);
     expect(res.disclaimer).toBe('Ini bukan diagnosis. Hanya dokter yang dapat menilai kondisi Anda.');
     const allConfigText = JSON.stringify({
       assessmentRulesConfig,
@@ -176,5 +197,51 @@ describe('Mesin Penilaian Risiko Mandiri (Rule-Based Assessment Engine — 18 Ka
     }).toLowerCase();
     expect(allConfigText).not.toContain('dijamin hamil');
     expect(allConfigText).not.toContain('dosis mg');
+  });
+
+  it('Kasus 19: Evaluasi dalam Bahasa Inggris (locale = en) menerjemahkan ringkasan dan faktor tanpa melanggar privasi pasangan', () => {
+    const res = evaluateAssessment(
+      {
+        ttc_duration: '6_to_12_months',
+        partner_context: 'over_35',
+        heat_exposure: 'moderate_laptop_sitting',
+      },
+      '',
+      undefined,
+      'en',
+    );
+    expect(res.levelCode).toBe('within_1_2_months');
+    expect(res.levelLabel).toBe('Recommended to consult within 1 to 2 months');
+    expect(res.disclaimer).toBe('This is not a diagnosis. Only a clinician can evaluate your health condition.');
+    expect(res.factors.some((f) => f.questionId === 'heat_exposure')).toBe(true);
+    expect(res.factors.some((f) => f.questionId === 'partner_context')).toBe(false);
+    expect(JSON.stringify(res.factors).toLowerCase()).not.toContain('35');
+  });
+
+  it('Kasus 20: Deteksi tekanan emosional juga aktif untuk frasa Bahasa Inggris di catatan bebas', () => {
+    const res = evaluateAssessment(
+      { ttc_duration: 'under_6_months' },
+      'Sometimes I feel completely hopeless and want to give up.',
+      undefined,
+      'en',
+    );
+    expect(res.showEmotionalSupport).toBe(true);
+    expect(res.emotionalSupportBanner.title).toContain('You Are Not Alone');
+  });
+
+  it('Kasus 21: Batas medis & etika konfigurasi EN serta profil kombinasi gaya hidup tetap bebas klaim diagnosis/dosis', () => {
+    const res = evaluateAssessment(SAMPLE_LIFESTYLE_ANSWERS, undefined, undefined, 'en');
+    expect(res.levelCode).toBe('within_1_2_months');
+    expect(res.factors.length).toBeGreaterThan(0);
+
+    const localizedText = JSON.stringify({
+      assessment: getLocalizedAssessmentConfig('en'),
+      semen: getLocalizedSemenReference('en'),
+      templates: getLocalizedTemplates('en'),
+    }).toLowerCase();
+    expect(localizedText).not.toContain('guaranteed pregnant');
+    expect(localizedText).not.toContain('dose mg');
+    expect(localizedText).not.toContain('dijamin hamil');
+    expect(localizedText).not.toContain('dosis mg');
   });
 });

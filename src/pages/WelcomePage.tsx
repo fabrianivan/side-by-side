@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Lock, HeartHandshake, UserCheck, Sparkles, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Lock, HeartHandshake, UserCheck, ArrowRight, KeyRound } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getTranslations } from '../i18n';
 
@@ -11,18 +11,20 @@ export const WelcomePage: React.FC = () => {
     updateConsent,
     startAnonymousMode,
     loginAccount,
-    switchDemoPersona,
   } = useApp();
   const t = getTranslations(locale);
   const navigate = useNavigate();
 
   const [showAuthForm, setShowAuthForm] = useState(false);
-  const [authTab, setAuthTab] = useState<'login' | 'register' | 'magic'>('register');
+  const [authTab, setAuthTab] = useState<'login' | 'register'>('register');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayNameInput, setDisplayNameInput] = useState('');
   const [role, setRole] = useState<'user' | 'nakes'>('user');
+  const [inviteCode, setInviteCode] = useState('');
   const [authError, setAuthError] = useState('');
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEn = locale === 'en';
 
@@ -35,70 +37,92 @@ export const WelcomePage: React.FC = () => {
     e.preventDefault();
     setAuthError('');
 
-    if (authTab === 'magic') {
-      if (!email.includes('@')) {
-        setAuthError(
-          isEn
-            ? 'Please enter a valid email address to receive a Magic Link.'
-            : 'Masukkan alamat email yang valid untuk menerima Magic Link.'
-        );
-        return;
-      }
-      setMagicLinkSent(true);
-      return;
-    }
-
-    if (!email.includes('@') || password.length < 6) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail.includes('@') || password.length < 8) {
       setAuthError(
         isEn
-          ? 'Please enter a valid email and a password of at least 6 characters.'
-          : 'Masukkan email yang valid dan kata sandi minimal 6 karakter.'
+          ? 'Please enter a valid email and a password of at least 8 characters.'
+          : 'Masukkan email yang valid dan kata sandi minimal 8 karakter.'
       );
       return;
     }
 
+    if (authTab === 'register') {
+      if (password !== confirmPassword) {
+        setAuthError(
+          isEn ? 'Password confirmation does not match.' : 'Konfirmasi kata sandi tidak cocok.'
+        );
+        return;
+      }
+      if (role === 'nakes' && !inviteCode.trim()) {
+        setAuthError(
+          isEn
+            ? 'A clinic invite access code is required to register as a Healthcare Provider.'
+            : 'Kode akses undangan klinik wajib diisi untuk mendaftar sebagai Tenaga Kesehatan.'
+        );
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
     try {
       const endpoint = authTab === 'register' ? '/api/auth/register' : '/api/auth/login';
+      const payload =
+        authTab === 'register'
+          ? {
+              email: normalizedEmail,
+              password,
+              role,
+              displayName: displayNameInput.trim() || undefined,
+              ...(role === 'nakes' ? { inviteCode: inviteCode.trim() } : {}),
+            }
+          : { email: normalizedEmail, password };
+
       const res = await fetch(endpoint, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, role }),
+        body: JSON.stringify(payload),
       });
       const isJson = res.headers.get('content-type')?.includes('application/json');
       if (res.ok && isJson) {
         const data = await res.json();
-        await loginAccount(data.email, data.role, data.displayName);
+        await loginAccount(data.email, data.role, data.displayName, data.id, {
+          preserveLocalOnRegister: authTab === 'register',
+        });
         navigate(
           data.role === 'nakes' ? (isEn ? '/provider' : '/nakes') : isEn ? '/home' : '/'
         );
         return;
       }
-      if (res.status !== 404 && res.status < 500 && isJson) {
+      if (isJson) {
         const errData = await res.json();
         setAuthError(
           errData.error ||
-            (isEn ? 'Authentication failed. Please check your details.' : 'Gagal memproses autentikasi.')
+            (isEn ? 'Authentication failed. Please check your credentials.' : 'Gagal memproses autentikasi.')
         );
-        return;
+      } else {
+        setAuthError(
+          isEn
+            ? 'Authentication server returned an unexpected response.'
+            : 'Server autentikasi mengembalikan respons tidak valid.'
+        );
       }
     } catch {
-      // Fallback offline untuk kemudahan demo
+      setAuthError(
+        isEn
+          ? 'Unable to connect to the authentication server. Please verify the server is running and try again.'
+          : 'Tidak dapat terhubung ke server autentikasi. Pastikan server aktif dan coba lagi.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    await loginAccount(email, role);
-    navigate(role === 'nakes' ? (isEn ? '/provider' : '/nakes') : isEn ? '/home' : '/');
-  };
-
-  const handleStartDemoRendra = async () => {
-    await switchDemoPersona('rendra');
-    navigate(isEn ? '/home' : '/');
   };
 
   return (
     <div className="space-y-6">
       {/* Kartu Utama Sambutan (F1) */}
       <section className="card relative overflow-hidden p-6 sm:p-10 space-y-8">
-        {/* Aksen dekoratif lembut */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -top-32 -right-24 w-96 h-96 rounded-full bg-brand-teal/10 blur-3xl"
@@ -126,15 +150,6 @@ export const WelcomePage: React.FC = () => {
               </p>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={handleStartDemoRendra}
-            className="btn btn-coral-soft self-start sm:self-auto"
-          >
-            <Sparkles className="w-4 h-4" />
-            {isEn ? 'Load Rendra Demo Scenario (Ready to Explore)' : 'Muat Skenario Demo Rendra (Siap Pakai)'}
-          </button>
         </div>
 
         <div className="relative space-y-4 max-w-3xl">
@@ -165,7 +180,7 @@ export const WelcomePage: React.FC = () => {
             aria-expanded={showAuthForm}
             className="btn btn-secondary btn-lg flex-1"
           >
-            {isEn ? 'Create account' : 'Buat akun'}
+            {isEn ? 'Create account / Sign in' : 'Buat akun / Masuk'}
           </button>
         </div>
 
@@ -214,7 +229,7 @@ export const WelcomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Formulir Buat Akun / Masuk (Mode Akun, Magic Link & Login Nakes) */}
+        {/* Formulir Buat Akun / Masuk (Email + Kata Sandi Nyata) */}
         {showAuthForm && (
           <div className="relative well p-5 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-navy/10 dark:border-white/10 pb-3">
@@ -223,7 +238,7 @@ export const WelcomePage: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setAuthTab('register');
-                    setMagicLinkSent(false);
+                    setAuthError('');
                   }}
                   className={`px-3.5 py-2 rounded-full text-xs font-bold transition ${
                     authTab === 'register'
@@ -231,13 +246,13 @@ export const WelcomePage: React.FC = () => {
                       : 'text-brand-navy/70 dark:text-white/70 hover:bg-brand-navy/[0.06] dark:hover:bg-white/10'
                   }`}
                 >
-                  Buat Akun Baru
+                  {isEn ? 'Create New Account' : 'Buat Akun Baru'}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setAuthTab('login');
-                    setMagicLinkSent(false);
+                    setAuthError('');
                   }}
                   className={`px-3.5 py-2 rounded-full text-xs font-bold transition ${
                     authTab === 'login'
@@ -245,119 +260,153 @@ export const WelcomePage: React.FC = () => {
                       : 'text-brand-navy/70 dark:text-white/70 hover:bg-brand-navy/[0.06] dark:hover:bg-white/10'
                   }`}
                 >
-                  Masuk (Email & Sandi)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthTab('magic');
-                    setMagicLinkSent(false);
-                  }}
-                  className={`px-3.5 py-2 rounded-full text-xs font-bold transition ${
-                    authTab === 'magic'
-                      ? 'bg-brand-teal-strong text-white shadow-xs'
-                      : 'text-brand-navy/70 dark:text-white/70 hover:bg-brand-navy/[0.06] dark:hover:bg-white/10'
-                  }`}
-                >
-                  Magic Link (Tanpa Sandi)
+                  {isEn ? 'Sign In (Email & Password)' : 'Masuk (Email & Sandi)'}
                 </button>
               </div>
-              <span className="text-xs text-brand-teal font-medium">Sinkron Antar Perangkat</span>
+              <span className="text-xs text-brand-teal font-medium">
+                {isEn ? 'Encrypted Multi-Device Sync' : 'Sinkron Terenkripsi Antar Perangkat'}
+              </span>
             </div>
 
-            {magicLinkSent ? (
-              <div className="p-4 rounded-card bg-status-success-bg dark:bg-status-success/15 border border-status-success/30 space-y-3 text-xs">
-                <div className="font-bold text-status-success text-sm">
-                  {isEn
-                    ? `One-Time Sign-In Link (Magic Link) Sent to ${email}!`
-                    : `Tautan Masuk Sekali Pakai (Magic Link) Terkirim ke ${email}!`}
+            <form onSubmit={handleAccountSubmit} className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="auth-email" className="field-label">
+                    {isEn ? 'Email Address' : 'Alamat Email'}
+                  </label>
+                  <input
+                    id="auth-email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={isEn ? 'name@email.com' : 'nama@email.com'}
+                    className="field w-full"
+                  />
                 </div>
-                <p className="text-brand-navy/85 dark:text-white/85 leading-relaxed">
-                  {isEn
-                    ? 'Check your inbox for passwordless sign-in. For demo purposes, click the button below to verify immediately:'
-                    : 'Periksa kotak masuk email Anda untuk masuk tanpa kata sandi. Untuk keperluan demo, klik tombol di bawah ini untuk langsung memverifikasi tautan:'}
-                </p>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await loginAccount(email, role);
-                    navigate(role === 'nakes' ? (isEn ? '/provider' : '/nakes') : isEn ? '/home' : '/');
-                  }}
-                  className="btn btn-primary"
-                >
-                  {isEn ? 'Verify Magic Link & Enter App →' : 'Verifikasi Magic Link & Masuk Sekarang →'}
-                </button>
+                <div>
+                  <label htmlFor="auth-password" className="field-label">
+                    {isEn ? 'Password' : 'Kata Sandi'}
+                  </label>
+                  <input
+                    id="auth-password"
+                    type="password"
+                    required
+                    minLength={8}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={isEn ? 'Minimum 8 characters' : 'Minimal 8 karakter'}
+                    className="field w-full"
+                  />
+                </div>
               </div>
-            ) : (
-              <form onSubmit={handleAccountSubmit} className="space-y-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label htmlFor="auth-email" className="field-label">
-                      Alamat Email
-                    </label>
-                    <input
-                      id="auth-email"
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="nama@email.com (atau rendra@demo.id)"
-                      className="field w-full"
-                    />
-                  </div>
-                  {authTab !== 'magic' && (
+
+              {authTab === 'register' && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="auth-password" className="field-label">
-                        Kata Sandi
+                      <label htmlFor="auth-confirm-password" className="field-label">
+                        {isEn ? 'Confirm Password' : 'Ulangi Kata Sandi'}
                       </label>
                       <input
-                        id="auth-password"
+                        id="auth-confirm-password"
                         type="password"
                         required
-                        minLength={6}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Minimal 6 karakter"
+                        minLength={8}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder={isEn ? 'Re-enter password' : 'Masukkan ulang kata sandi'}
                         className="field w-full"
                       />
                     </div>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="auth-role" className="field-label">
-                    Peran Pengguna
-                  </label>
-                  <select
-                    id="auth-role"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as 'user' | 'nakes')}
-                    className="field w-full"
-                  >
-                    <option value="user">Pengguna / Pasangan (Pria / Istri)</option>
-                    <option value="nakes">Tenaga Kesehatan (Dokter / Konselor — Mode Nakes)</option>
-                  </select>
-                </div>
-
-                {authError && <p className="text-xs text-status-urgent font-medium">{authError}</p>}
-
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                  <div className="text-xs text-brand-navy/70 dark:text-white/70">
-                    Akun demo: <code>rendra@demo.id</code>, <code>sari@demo.id</code>, <code>maya@puskesmas.id</code> (Sandi: <code>DemoAman123!</code>)
+                    <div>
+                      <label htmlFor="auth-display-name" className="field-label">
+                        {isEn ? 'Display Name / Nickname' : 'Nama Panggilan'}
+                      </label>
+                      <input
+                        id="auth-display-name"
+                        type="text"
+                        value={displayNameInput}
+                        onChange={(e) => setDisplayNameInput(e.target.value)}
+                        placeholder={isEn ? 'Your preferred name' : 'Nama panggilan Anda'}
+                        className="field w-full"
+                      />
+                    </div>
                   </div>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                  >
-                    {authTab === 'magic'
-                      ? 'Kirim Magic Link'
-                      : authTab === 'register'
-                      ? 'Daftar & Masuk'
-                      : 'Masuk Sekarang'}
-                  </button>
-                </div>
-              </form>
-            )}
+
+                  <div>
+                    <label htmlFor="auth-role" className="field-label">
+                      {isEn ? 'Account Role' : 'Peran Pengguna'}
+                    </label>
+                    <select
+                      id="auth-role"
+                      value={role}
+                      onChange={(e) => setRole(e.target.value as 'user' | 'nakes')}
+                      className="field w-full"
+                    >
+                      <option value="user">
+                        {isEn
+                          ? 'User / Partner (Husband / Wife)'
+                          : 'Pengguna / Pasangan (Pria / Istri)'}
+                      </option>
+                      <option value="nakes">
+                        {isEn
+                          ? 'Healthcare Provider (Requires Clinic Invite Code)'
+                          : 'Tenaga Kesehatan (Memerlukan Kode Undangan Klinik)'}
+                      </option>
+                    </select>
+                  </div>
+
+                  {role === 'nakes' && (
+                    <div>
+                      <label htmlFor="auth-invite-code" className="field-label flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-brand-teal" />
+                        <span>{isEn ? 'Clinic / Provider Invite Code' : 'Kode Akses Undangan Klinik'}</span>
+                      </label>
+                      <input
+                        id="auth-invite-code"
+                        type="text"
+                        required
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                        placeholder={
+                          isEn
+                            ? 'Enter the access code issued by your clinic administrator'
+                            : 'Masukkan kode akses dari administrator klinik Anda'
+                        }
+                        className="field w-full font-mono"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {authError && (
+                <p role="alert" className="text-xs text-status-urgent font-medium">
+                  {authError}
+                </p>
+              )}
+
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn btn-primary"
+                >
+                  {isSubmitting
+                    ? isEn
+                      ? 'Processing...'
+                      : 'Memproses...'
+                    : authTab === 'register'
+                    ? isEn
+                      ? 'Register & Sign In'
+                      : 'Daftar & Masuk'
+                    : isEn
+                    ? 'Sign In Now'
+                    : 'Masuk Sekarang'}
+                </button>
+              </div>
+            </form>
           </div>
         )}
       </section>
@@ -385,21 +434,33 @@ export const WelcomePage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
           <div className="well p-4">
-            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">Data Apa yang Disimpan?</div>
+            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">
+              {isEn ? 'What Data Is Stored?' : 'Data Apa yang Disimpan?'}
+            </div>
             <p className="text-brand-navy/80 dark:text-white/80 leading-relaxed">
-              Hanya pilihan jawaban Cek Awal, catatan hasil lab yang Anda ketik sendiri, dan jadwal pengingat. Tidak ada pelacak iklan atau lokasi paksa.
+              {isEn
+                ? 'Only Self-Check selections, lab entries you type yourself, and reminder schedules. Zero ad trackers or forced geolocation.'
+                : 'Hanya pilihan jawaban Cek Awal, catatan hasil lab yang Anda ketik sendiri, dan jadwal pengingat. Tidak ada pelacak iklan atau lokasi paksa.'}
             </p>
           </div>
           <div className="well p-4">
-            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">Untuk Apa Digunakan?</div>
+            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">
+              {isEn ? 'How Is It Used?' : 'Untuk Apa Digunakan?'}
+            </div>
             <p className="text-brand-navy/80 dark:text-white/80 leading-relaxed">
-              Memberikan panduan langkah pemeriksaan berikutnya, menampilkan grafik tren pribadi, dan membantu Anda menyusun rencana bersama pasangan.
+              {isEn
+                ? 'To provide next-step guidance, display personal trend charts, and help you plan milestones together with your partner.'
+                : 'Memberikan panduan langkah pemeriksaan berikutnya, menampilkan grafik tren pribadi, dan membantu Anda menyusun rencana bersama pasangan.'}
             </p>
           </div>
           <div className="well p-4">
-            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">Siapa yang Bisa Melihat?</div>
+            <div className="font-bold text-brand-teal-dark dark:text-[#7FDADB] mb-1">
+              {isEn ? 'Who Can See It?' : 'Siapa yang Bisa Melihat?'}
+            </div>
             <p className="text-brand-navy/80 dark:text-white/80 leading-relaxed">
-              Hanya Anda sendiri di perangkat ini. Pasangan atau dokter tidak dapat melihat isi hasil Anda kecuali Anda menyalakan izinnya sendiri.
+              {isEn
+                ? 'Only you on this device. Neither your partner nor a clinician can view your answers or lab results unless you turn on sharing yourself.'
+                : 'Hanya Anda sendiri di perangkat ini. Pasangan atau dokter tidak dapat melihat isi hasil Anda kecuali Anda menyalakan izinnya sendiri.'}
             </p>
           </div>
         </div>
@@ -407,9 +468,15 @@ export const WelcomePage: React.FC = () => {
         <div className="divide-y divide-brand-navy/10 dark:divide-white/10 border-t border-brand-navy/10 dark:border-white/10">
           <label className="py-4 flex items-center justify-between gap-4 cursor-pointer">
             <div>
-              <div className="text-sm font-bold text-brand-navy dark:text-white">1. Penyimpanan Riwayat Hasil & Tren</div>
+              <div className="text-sm font-bold text-brand-navy dark:text-white">
+                {isEn
+                  ? '1. Store Results & Trend History'
+                  : '1. Penyimpanan Riwayat Hasil & Tren'}
+              </div>
               <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed mt-0.5">
-                Izinkan aplikasi menyimpan riwayat hasil Cek Awal dan analisis semen terenkripsi agar Anda dapat melihat grafik tren dari waktu ke waktu.
+                {isEn
+                  ? 'Allow the app to save encrypted Self-Check and semen analysis records so you can view trend charts over time.'
+                  : 'Izinkan aplikasi menyimpan riwayat hasil Cek Awal dan analisis semen terenkripsi agar Anda dapat melihat grafik tren dari waktu ke waktu.'}
               </p>
             </div>
             <input
@@ -423,9 +490,15 @@ export const WelcomePage: React.FC = () => {
 
           <label className="py-4 flex items-center justify-between gap-4 cursor-pointer">
             <div>
-              <div className="text-sm font-bold text-brand-navy dark:text-white">2. Berbagi Progres Rencana dengan Pasangan</div>
+              <div className="text-sm font-bold text-brand-navy dark:text-white">
+                {isEn
+                  ? '2. Share Plan Progress with Partner'
+                  : '2. Berbagi Progres Rencana dengan Pasangan'}
+              </div>
               <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed mt-0.5">
-                Izinkan sinkronisasi status tahapan di Mode Berdua (tanpa membuka jawaban kuesioner maupun angka laboratorium).
+                {isEn
+                  ? 'Allow syncing milestone step statuses in Couple Mode (without revealing questionnaire answers or lab numbers).'
+                  : 'Izinkan sinkronisasi status tahapan di Mode Berdua (tanpa membuka jawaban kuesioner maupun angka laboratorium).'}
               </p>
             </div>
             <input
@@ -439,9 +512,15 @@ export const WelcomePage: React.FC = () => {
 
           <label className="py-4 flex items-center justify-between gap-4 cursor-pointer">
             <div>
-              <div className="text-sm font-bold text-brand-navy dark:text-white">3. Berbagi Ringkasan ke Tenaga Kesehatan (QR 1 Jam)</div>
+              <div className="text-sm font-bold text-brand-navy dark:text-white">
+                {isEn
+                  ? '3. Share Summary with Healthcare Provider (1-Hour QR)'
+                  : '3. Berbagi Ringkasan ke Tenaga Kesehatan (QR 1 Jam)'}
+              </div>
               <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed mt-0.5">
-                Izinkan pembuatan kode QR sementara (berlaku 1 jam) saat Anda berkonsultasi dengan dokter.
+                {isEn
+                  ? 'Allow generating a temporary 1-hour expiring QR code when consulting with your doctor.'
+                  : 'Izinkan pembuatan kode QR sementara (berlaku 1 jam) saat Anda berkonsultasi dengan dokter.'}
               </p>
             </div>
             <input

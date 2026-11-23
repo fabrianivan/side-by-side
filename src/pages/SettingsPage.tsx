@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck,
   Download,
+  Upload,
   Printer,
   Trash2,
   AlertTriangle,
@@ -12,9 +13,11 @@ import {
   Sun,
   User,
   ArrowRight,
+  CheckCircle2,
 } from 'lucide-react';
 import { useApp, type TextScale } from '../context/AppContext';
 import { inspectEncryptedVault } from '../lib/crypto-storage';
+import { MAX_BACKUP_FILE_BYTES } from '../lib/backup-import';
 import type { Locale } from '../i18n';
 
 export const SettingsPage: React.FC = () => {
@@ -32,10 +35,15 @@ export const SettingsPage: React.FC = () => {
     labResults,
     reminders,
     pairing,
+    habitLog,
+    cycleStartDate,
+    doctorChecklist,
+    healthJournal,
     setLocale,
     setTextScale,
     setDarkMode,
     updateConsent,
+    importBackupData,
     wipeAllData,
   } = useApp();
 
@@ -45,6 +53,53 @@ export const SettingsPage: React.FC = () => {
   // State Konfirmasi 2 Langkah untuk "Hapus semua data saya"
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0);
   const [confirmWord, setConfirmWord] = useState<string>('');
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [importStatus, setImportStatus] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+
+  const handleImportJsonFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setImportStatus(null);
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.size > MAX_BACKUP_FILE_BYTES) {
+      setImportStatus({
+        kind: 'err',
+        text: isEn ? 'Backup file exceeds the 2 MB limit.' : 'Ukuran berkas cadangan melebihi batas 2 MB.',
+      });
+      return;
+    }
+    try {
+      const text =
+        typeof file.text === 'function'
+          ? await file.text()
+          : await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+              reader.onerror = () => reject(new Error('read'));
+              reader.readAsText(file);
+            });
+      const res = await importBackupData(text);
+      if (!res.ok || !res.data) {
+        setImportStatus({
+          kind: 'err',
+          text: res.error || (isEn ? 'Failed to restore backup.' : 'Gagal memulihkan cadangan.'),
+        });
+        return;
+      }
+      const s = res.data;
+      setImportStatus({
+        kind: 'ok',
+        text: isEn
+          ? `Backup restored & encrypted on this device (${s.labCount} lab result(s), ${s.reminderCount} reminder(s), ${s.checkInCount} check-in(s), ${s.habitDaysCount} habit day(s)).`
+          : `Cadangan berhasil dipulihkan & dienkripsi di perangkat ini (${s.labCount} hasil lab, ${s.reminderCount} pengingat, ${s.checkInCount} check-in, ${s.habitDaysCount} hari kebiasaan).`,
+      });
+    } catch {
+      setImportStatus({
+        kind: 'err',
+        text: isEn ? 'Unable to read the selected file.' : 'Tidak dapat membaca berkas yang dipilih.',
+      });
+    }
+  };
 
   const handleExportJson = () => {
     const exportPayload = {
@@ -58,6 +113,9 @@ export const SettingsPage: React.FC = () => {
       labResults,
       reminders,
       pairing,
+      cycleTracker: { cycleStartDate, habitLog },
+      doctorChecklist,
+      healthJournal,
     };
     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
       type: 'application/json',
@@ -241,6 +299,25 @@ export const SettingsPage: React.FC = () => {
               className="switch"
             />
           </label>
+
+          <label className="py-4 flex items-center justify-between gap-4 cursor-pointer">
+            <div>
+              <div className="text-sm font-bold text-brand-navy dark:text-white">
+                {isEn ? 'Consent: AI Assistant Features' : 'Persetujuan: Fitur Asisten AI'}
+              </div>
+              <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed mt-0.5">
+                {isEn
+                  ? 'Allow the AI companion, lab report reader, plan explainer and AI distress check. Only what each task needs is sent to the AI provider through our server, never your name or contact details. (Default: OFF)'
+                  : 'Izinkan Asisten AI, pembaca hasil lab, penjelas rencana, dan deteksi tekanan emosional berbasis AI. Hanya data yang dibutuhkan tiap tugas yang dikirim ke penyedia AI melalui server kami, tidak pernah nama atau kontak Anda. (Default: OFF)'}
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              checked={consents.ai_assist}
+              onChange={(e) => updateConsent('ai_assist', e.target.checked)}
+              className="switch"
+            />
+          </label>
         </div>
 
         {/* Bukti Transparansi Enkripsi Sisi Klien (Web Crypto AES-GCM Vault Inspector) */}
@@ -363,20 +440,30 @@ export const SettingsPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Ekspor Data (JSON / PDF) */}
+        {/* Ekspor & Pulihkan Data (JSON / PDF) */}
         <section className="card p-5 sm:p-6 flex flex-col justify-between space-y-4">
           <div className="space-y-2">
             <h2 className="section-title">
-              {isEn ? 'Data Portability & Export (JSON / PDF)' : 'Portabilitas & Ekspor Data Saya (JSON / PDF)'}
+              {isEn ? 'Data Portability: Export & Restore (JSON / PDF)' : 'Portabilitas Data: Ekspor & Pulihkan (JSON / PDF)'}
             </h2>
             <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
               {isEn
-                ? 'As part of your privacy rights, you can download a complete structured JSON copy of your records or print a PDF summary anytime.'
-                : 'Sebagai hak privasi Anda, Anda dapat mengunduh salinan lengkap data Anda dalam format JSON terstruktur atau mencetak ringkasan PDF kapan saja.'}
+                ? 'Download a complete structured JSON backup of your records, restore an earlier Side by Side JSON backup on this device, or print a PDF summary anytime.'
+                : 'Unduh salinan lengkap data Anda dalam format JSON terstruktur, pulihkan cadangan JSON Side by Side sebelumnya ke perangkat ini, atau cetak ringkasan PDF kapan saja.'}
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-2.5">
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportJsonFile}
+            aria-label={isEn ? 'Restore JSON backup file' : 'Pilih berkas cadangan JSON'}
+            data-testid="backup-import-input"
+            className="hidden"
+          />
+
+          <div className="flex flex-wrap gap-2.5">
             <button
               type="button"
               onClick={handleExportJson}
@@ -388,13 +475,40 @@ export const SettingsPage: React.FC = () => {
 
             <button
               type="button"
+              onClick={() => importInputRef.current?.click()}
+              className="btn btn-secondary flex-1"
+            >
+              <Upload className="w-4 h-4 text-brand-teal" />
+              {isEn ? 'Restore Backup (JSON)' : 'Pulihkan Cadangan (JSON)'}
+            </button>
+
+            <button
+              type="button"
               onClick={handleExportPdf}
-              className="btn btn-navy flex-1"
+              className="btn btn-navy w-full sm:w-auto"
             >
               <Printer className="w-4 h-4" />
               {isEn ? 'Print / Save PDF' : 'Cetak / Simpan PDF'}
             </button>
           </div>
+
+          {importStatus && (
+            <div
+              role={importStatus.kind === 'err' ? 'alert' : 'status'}
+              className={`p-3 rounded-xl text-xs font-semibold flex items-start gap-2 ${
+                importStatus.kind === 'ok'
+                  ? 'bg-status-success-bg dark:bg-status-success/15 text-[#1F7A50] dark:text-[#7BD9AC]'
+                  : 'bg-status-urgent-bg dark:bg-status-urgent/15 text-[#B33834] dark:text-[#FF8A85]'
+              }`}
+            >
+              {importStatus.kind === 'ok' ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              )}
+              <span>{importStatus.text}</span>
+            </div>
+          )}
         </section>
       </div>
 

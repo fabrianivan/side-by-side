@@ -1,25 +1,61 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import {
+  clearEncryptedVault,
   loadEncryptedItem,
+  removeEncryptedItem,
   saveEncryptedItem,
   wipeAllLocalData,
 } from '../lib/crypto-storage';
 import {
   evaluateAssessment,
-  RENDRA_DEMO_ANSWERS,
   type AssessmentAnswers,
   type AssessmentEvaluationResult,
 } from '../lib/assessment-engine';
 import type { Locale } from '../i18n';
+import { PLAN_STEPS_EN } from '../config/localization-en';
+import {
+  appendAssessmentSnapshot,
+  boundJournal,
+  createAssessmentSnapshot,
+  createEmptyJournal,
+  describeMetricTrend,
+  getLevelLabels,
+  normalizeJournal,
+  NUMERIC_METRICS,
+  type HealthJournal,
+} from '../lib/health-journal';
+import { parseBackupJson, type ParsedBackupData } from '../lib/backup-import';
+import {
+  FIRST_TESTS,
+  importClinicianPlans,
+  recommendSpecialist,
+  SPECIALISTS,
+  type ClinicianCarePlan,
+} from '../lib/care-pathway';
+import { explainAssessment, INFLUENCE_LABELS, CHANGEABILITY_LABELS } from '../lib/risk-explainer';
+
+function secureRandomCode(length = 6): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(length);
+  if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < length; i++) {
+      bytes[i] = Math.floor(Math.random() * 256);
+    }
+  }
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
+}
 
 export type AuthMode = 'welcome' | 'anonymous' | 'account' | 'nakes';
-export type DemoPersona = 'rendra' | 'sari' | 'maya' | 'custom';
 export type TextScale = 'normal' | 'lg' | 'xl';
 
 export interface ConsentState {
   store_results: boolean;
   share_partner: boolean;
   share_nakes: boolean;
+  /** Persetujuan memakai fitur AI (default OFF). */
+  ai_assist: boolean;
 }
 
 export interface LabResultEntry {
@@ -33,6 +69,12 @@ export interface LabResultEntry {
   notes?: string;
   attachmentName?: string;
   createdAt: string;
+}
+
+export interface LabAttachmentData {
+  name: string;
+  mimeType: string;
+  dataUrl: string;
 }
 
 export interface ReminderItem {
@@ -53,8 +95,17 @@ export interface PlanStepItem {
   status_b: 'not_started' | 'in_progress' | 'done';
 }
 
+export interface PrepChecklistItem {
+  id: string;
+  text: string;
+  textEn: string;
+  checked: boolean;
+}
+
 export interface PairingState {
   invite_code: string;
+  user_a?: string;
+  user_b?: string | null;
   partner_a_alias: string;
   partner_b_alias: string;
   status: 'active' | 'revoked';
@@ -66,6 +117,12 @@ export interface PairingState {
     noteFromA: string;
     noteFromB: string;
   };
+  prep_checklist?: PrepChecklistItem[];
+  partner_shared_preview?: {
+    assessmentLevel?: string;
+    answeredTopicsCount?: number;
+    labCount?: number;
+  };
   plan_steps: PlanStepItem[];
 }
 
@@ -76,9 +133,27 @@ export interface AccessLogEntry {
   action: string;
 }
 
+export type ShareScope = 'history' | 'risk_factors' | 'lab_results' | 'care_pathway' | 'progress';
+
+export interface SharedRiskExplanation {
+  headline: string;
+  reasons: string[];
+  domains: Array<{ title: string; influence: string }>;
+  factors: Array<{ title: string; influence: string; changeability: string; decisive: boolean }>;
+}
+
+export interface SharedReferral {
+  specialist: string;
+  reasons: string[];
+  firstTests: string[];
+  route?: string;
+  facility?: string;
+  appointmentAt?: string;
+}
+
 export interface ShareTokenState {
   token_code: string;
-  scope: ('history' | 'risk_factors' | 'lab_results')[];
+  scope: ShareScope[];
   expires_at: string;
   revoked: boolean;
   accessed_log: AccessLogEntry[];
@@ -87,8 +162,15 @@ export interface ShareTokenState {
     programDuration?: string;
     assessmentLevel?: string;
     reportedRiskFactors?: string[];
+    riskExplanation?: SharedRiskExplanation;
+    referral?: SharedReferral;
+    progressSummary?: string[];
     labResults?: LabResultEntry[];
+    /** Pasien mengizinkan Nakes memakai ringkasan AI untuk QR ini. */
+    aiAllowed?: boolean;
   };
+  care_plan_written_at?: string | null;
+  ai_allowed?: boolean;
 }
 
 export interface QuestionTicketItem {
@@ -101,9 +183,24 @@ export interface QuestionTicketItem {
   created_at: string;
 }
 
+export interface DoctorChecklistData {
+  context: Record<string, boolean>;
+  selected: Record<string, boolean>;
+  customQuestions: Array<{ id: string; text: string }>;
+}
+
+export interface LoginOptions {
+  preserveLocalOnRegister?: boolean;
+}
+
+export interface ActionResult<T = void> {
+  ok: boolean;
+  data?: T;
+  error?: string;
+}
+
 interface AppContextValue {
   authMode: AuthMode;
-  activePersona: DemoPersona;
   userId: string;
   userEmail: string | null;
   displayName: string;
@@ -120,38 +217,73 @@ interface AppContextValue {
   tickets: QuestionTicketItem[];
   habitLog: Record<string, string[]>;
   cycleStartDate: string;
+  doctorChecklist: DoctorChecklistData;
+  healthJournal: HealthJournal;
   lastSyncTime: string | null;
+  syncError: string | null;
   isSyncing: boolean;
 
   // Actions
   startAnonymousMode: () => Promise<void>;
-  loginAccount: (email: string, role: 'user' | 'nakes', name?: string) => Promise<void>;
+  loginAccount: (
+    email: string,
+    role: 'user' | 'nakes',
+    name?: string,
+    serverUserId?: string,
+    options?: LoginOptions
+  ) => Promise<void>;
   logoutToWelcome: () => void;
-  updateProfile: (name: string, newPassword?: string) => Promise<boolean>;
+  updateProfile: (
+    name: string,
+    passwordUpdate?: { currentPassword?: string; newPassword?: string }
+  ) => Promise<ActionResult>;
   syncCloudData: () => Promise<boolean>;
   setLocale: (loc: Locale) => void;
   setTextScale: (scale: TextScale) => void;
   setDarkMode: (dark: boolean) => void;
   updateConsent: (key: keyof ConsentState, granted: boolean) => Promise<void>;
   saveAssessment: (answers: AssessmentAnswers, freeText?: string) => Promise<AssessmentEvaluationResult>;
-  addLabResult: (entry: Omit<LabResultEntry, 'id' | 'createdAt'>) => Promise<void>;
+  addLabResult: (
+    entry: Omit<LabResultEntry, 'id' | 'createdAt'>,
+    attachment?: LabAttachmentData | null
+  ) => Promise<void>;
+  editLabResult: (
+    id: string,
+    updates: Partial<Omit<LabResultEntry, 'id' | 'createdAt'>>,
+    attachment?: LabAttachmentData | null
+  ) => Promise<void>;
   deleteLabResult: (id: string) => Promise<void>;
+  loadLabAttachment: (resultId: string) => Promise<LabAttachmentData | null>;
   addReminder: (rem: Omit<ReminderItem, 'id' | 'completed'>) => Promise<void>;
   toggleReminder: (id: string) => Promise<void>;
   deleteReminder: (id: string) => Promise<void>;
-  updatePlanStep: (stepKey: string, actor: 'a' | 'b', status: 'not_started' | 'in_progress' | 'done') => Promise<void>;
-  updatePairingSharedItems: (updates: Partial<PairingState['shared_items']>) => Promise<void>;
-  createNewPairing: (aliasA?: string, aliasB?: string, customCode?: string) => Promise<void>;
-  revokePairing: () => Promise<void>;
-  createShareToken: (scope: ('history' | 'risk_factors' | 'lab_results')[]) => Promise<ShareTokenState>;
-  revokeShareToken: () => Promise<void>;
-  recordNakesAccess: (code: string, viewerName?: string) => Promise<ShareTokenState | null>;
-  submitQuestionTicket: (category: string, text: string) => Promise<void>;
-  replyToTicket: (ticketId: string, replyText: string, repliedBy?: string) => Promise<void>;
+  updatePlanStep: (
+    stepKey: string,
+    actor: 'a' | 'b',
+    status: 'not_started' | 'in_progress' | 'done'
+  ) => Promise<ActionResult>;
+  updatePairingSharedItems: (updates: Partial<PairingState['shared_items']>) => Promise<ActionResult>;
+  updatePrepChecklist: (items: PrepChecklistItem[]) => Promise<ActionResult>;
+  createNewPairing: (aliasA?: string, aliasB?: string) => Promise<ActionResult<PairingState>>;
+  joinPairing: (code: string, aliasB?: string) => Promise<ActionResult<PairingState>>;
+  refreshPairing: () => Promise<ActionResult<PairingState>>;
+  revokePairing: () => Promise<ActionResult>;
+  createShareToken: (
+    scope: ShareScope[],
+    options?: { aiAllowed?: boolean }
+  ) => Promise<ActionResult<ShareTokenState>>;
+  refreshShareTokenAudit: () => Promise<ActionResult<ShareTokenState>>;
+  revokeShareToken: () => Promise<ActionResult>;
+  recordNakesAccess: (code: string, viewerName?: string) => Promise<ActionResult<ShareTokenState>>;
+  refreshTickets: () => Promise<ActionResult<QuestionTicketItem[]>>;
+  submitQuestionTicket: (category: string, text: string) => Promise<ActionResult<QuestionTicketItem>>;
+  replyToTicket: (ticketId: string, replyText: string) => Promise<ActionResult<QuestionTicketItem>>;
   toggleDailyHabit: (dateStr: string, habitKey: string) => Promise<void>;
   setCycleStartDate: (dateStr: string) => Promise<void>;
-  loadRendraDemoScenario: () => Promise<void>;
-  switchDemoPersona: (persona: DemoPersona) => Promise<void>;
+  saveDoctorChecklist: (next: DoctorChecklistData) => Promise<void>;
+  updateHealthJournal: (updater: (current: HealthJournal) => HealthJournal) => Promise<HealthJournal>;
+  fetchClinicianCarePlans: () => Promise<ActionResult<number>>;
+  importBackupData: (rawJson: string) => Promise<ActionResult<ParsedBackupData['summary']>>;
   wipeAllData: () => Promise<void>;
 }
 
@@ -159,56 +291,67 @@ const DEFAULT_CONSENTS: ConsentState = {
   store_results: false,
   share_partner: false,
   share_nakes: false,
+  ai_assist: false,
 };
 
-const DEFAULT_PLAN_STEPS: PlanStepItem[] = [
-  { step_key: 'cek_awal', step_order: 1, title: 'Cek Awal Mandiri', status_a: 'not_started', status_b: 'not_started' },
-  { step_key: 'pilih_layanan', step_order: 2, title: 'Pilih Layanan Pemeriksaan', status_a: 'not_started', status_b: 'not_started' },
-  { step_key: 'jadwalkan', step_order: 3, title: 'Jadwalkan & Persiapan (Pantang 2–7 Hari)', status_a: 'not_started', status_b: 'not_started' },
-  { step_key: 'periksa', step_order: 4, title: 'Kunjungan Pemeriksaan', status_a: 'not_started', status_b: 'not_started' },
-  { step_key: 'pahami_hasil', step_order: 5, title: 'Pahami Hasil Bersama', status_a: 'not_started', status_b: 'not_started' },
-  { step_key: 'tindak_lanjut', step_order: 6, title: 'Rencana Tindak Lanjut Dokter', status_a: 'not_started', status_b: 'not_started' },
+const DEFAULT_DOCTOR_CHECKLIST: DoctorChecklistData = {
+  context: {
+    hasProlongedDuration: true,
+    hasHeatExposure: true,
+    hasLabResult: false,
+    hasVaricoceleSuspicion: false,
+    hasPartnerChecked: true,
+  },
+  selected: {},
+  customQuestions: [],
+};
+
+const PLAN_STEPS_ID: Record<string, string> = {
+  cek_awal: 'Cek Awal Mandiri',
+  pilih_layanan: 'Pilih Layanan Pemeriksaan',
+  jadwalkan: 'Jadwalkan & Persiapan (Pantang 2–7 Hari)',
+  periksa: 'Kunjungan Pemeriksaan',
+  pahami_hasil: 'Pahami Hasil Bersama',
+  tindak_lanjut: 'Rencana Tindak Lanjut Dokter',
+};
+
+const STEP_KEYS_ORDERED: { step_key: string; step_order: number }[] = [
+  { step_key: 'cek_awal', step_order: 1 },
+  { step_key: 'pilih_layanan', step_order: 2 },
+  { step_key: 'jadwalkan', step_order: 3 },
+  { step_key: 'periksa', step_order: 4 },
+  { step_key: 'pahami_hasil', step_order: 5 },
+  { step_key: 'tindak_lanjut', step_order: 6 },
 ];
 
-const RENDRA_SAMPLE_LABS: LabResultEntry[] = [
-  {
-    id: 'lab-rendra-1',
-    testDate: '2026-08-10',
-    volume_ml: 2.1,
-    concentration_m_per_ml: 14.5,
-    total_motility_pct: 39,
-    progressive_motility_pct: 28,
-    morphology_normal_pct: 4.0,
-    notes: 'Pemeriksaan perdana di lab klinik (sempat sering pangku laptop & tidur < 6 jam).',
-    attachmentName: 'Hasil_Lab_Agustus_2026.jpg (Tersimpan Lokal)',
-    createdAt: '2026-08-10T09:00:00.000Z',
-  },
-  {
-    id: 'lab-rendra-2',
-    testDate: '2026-10-18',
-    volume_ml: 2.4,
-    concentration_m_per_ml: 18.5,
-    total_motility_pct: 45,
-    progressive_motility_pct: 33,
-    morphology_normal_pct: 4.5,
-    notes: 'Pemeriksaan kedua setelah 2 bulan rutin jalan pagi, tidur 7 jam, dan tidak memangku laptop.',
-    attachmentName: 'Hasil_Lab_Oktober_2026.jpg (Tersimpan Lokal)',
-    createdAt: '2026-10-18T10:00:00.000Z',
-  },
-];
+function getStepTitleForLocale(stepKey: string, locale: Locale, fallback = ''): string {
+  if (locale === 'en') {
+    return PLAN_STEPS_EN[stepKey] || PLAN_STEPS_ID[stepKey] || fallback;
+  }
+  return PLAN_STEPS_ID[stepKey] || fallback;
+}
 
-const INITIAL_TICKETS: QuestionTicketItem[] = [
-  {
-    id: 'ticket-demo-1',
-    category: 'Persiapan Tes & JKN',
-    text: 'Dok, saya sudah 8 bulan promil bersama istri. Kalau mau analisis semen atau periksa di RS rujukan JKN, apakah saya bisa minta pengantar dari dokter umum Puskesmas dulu?',
-    status: 'dijawab',
-    reply_text:
-      'Halo, terima kasih sudah berani bertanya. Ya, Anda sangat disarankan berkonsultasi ke dokter umum di Puskesmas/FKTP terlebih dahulu. Dokter akan melakukan wawancara medis dan pemeriksaan fisik dasar (misalnya mengecek ada tidaknya keluhan varikokel) untuk menentukan alur rujukan yang tepat.',
-    replied_by: 'dr. Maya (Dokter Umum Puskesmas)',
-    created_at: '2026-10-20T08:30:00.000Z',
-  },
-];
+export function buildDefaultPlanSteps(locale: Locale = 'id'): PlanStepItem[] {
+  return STEP_KEYS_ORDERED.map(({ step_key, step_order }) => ({
+    step_key,
+    step_order,
+    title: getStepTitleForLocale(step_key, locale),
+    status_a: 'not_started',
+    status_b: 'not_started',
+  }));
+}
+
+async function parseErrorMessage(res: Response, fallback: string): Promise<string> {
+  try {
+    if (res.headers.get('content-type')?.includes('application/json')) {
+      const data = (await res.json()) as { error?: string };
+      if (data.error) return data.error;
+    }
+  } catch {
+    // Ignore parse error
+  }
+  return fallback;
+}
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
@@ -216,14 +359,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [authMode, setAuthMode] = useState<AuthMode>(() => {
     return (localStorage.getItem('sbs_auth_mode') as AuthMode) || 'welcome';
   });
-  const [activePersona, setActivePersona] = useState<DemoPersona>('custom');
   const [userId, setUserId] = useState<string>(() => {
-    return localStorage.getItem('sbs_user_id') || 'anon-' + Math.random().toString(36).substring(2, 9);
+    return localStorage.getItem('sbs_user_id') || 'anon-' + secureRandomCode(8).toLowerCase();
   });
   const [userEmail, setUserEmail] = useState<string | null>(() => localStorage.getItem('sbs_user_email'));
-  const [displayName, setDisplayName] = useState<string>(() => localStorage.getItem('sbs_display_name') || 'Pengguna Anonim');
+  const [displayName, setDisplayName] = useState<string>(() => {
+    const saved = localStorage.getItem('sbs_display_name');
+    if (saved) return saved;
+    return ((localStorage.getItem('sbs_locale') as Locale) || 'id') === 'en'
+      ? 'Anonymous User'
+      : 'Pengguna Anonim';
+  });
   const [locale, setLocaleState] = useState<Locale>(() => (localStorage.getItem('sbs_locale') as Locale) || 'id');
-  const [textScale, setTextScaleState] = useState<TextScale>(() => (localStorage.getItem('sbs_text_scale') as TextScale) || 'normal');
+  const [textScale, setTextScaleState] = useState<TextScale>(
+    () => (localStorage.getItem('sbs_text_scale') as TextScale) || 'normal'
+  );
   const [darkMode, setDarkModeState] = useState<boolean>(() => localStorage.getItem('sbs_dark_mode') === 'true');
 
   const [consents, setConsents] = useState<ConsentState>(DEFAULT_CONSENTS);
@@ -233,31 +383,247 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reminders, setReminders] = useState<ReminderItem[]>([]);
   const [pairing, setPairing] = useState<PairingState | null>(null);
   const [shareToken, setShareToken] = useState<ShareTokenState | null>(null);
-  const [tickets, setTickets] = useState<QuestionTicketItem[]>(INITIAL_TICKETS);
+  const [tickets, setTickets] = useState<QuestionTicketItem[]>([]);
   const [habitLog, setHabitLog] = useState<Record<string, string[]>>({});
   const [cycleStartDate, setCycleStartDateState] = useState<string>(() =>
     new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
   );
+  const [doctorChecklist, setDoctorChecklist] = useState<DoctorChecklistData>(DEFAULT_DOCTOR_CHECKLIST);
+  const [healthJournal, setHealthJournalState] = useState<HealthJournal>(() => createEmptyJournal());
+  const healthJournalRef = useRef<HealthJournal>(healthJournal);
+  const setHealthJournal = useCallback((next: HealthJournal) => {
+    healthJournalRef.current = next;
+    setHealthJournalState(next);
+  }, []);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(() => localStorage.getItem('sbs_last_sync'));
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
-  // Muat data terenkripsi dari IndexedDB saat inisialisasi
+  const resetSessionLocalData = useCallback(async () => {
+    await clearEncryptedVault();
+    setConsents(DEFAULT_CONSENTS);
+    setAssessmentAnswers({});
+    setAssessmentResult(null);
+    setLabResults([]);
+    setReminders([]);
+    setPairing(null);
+    setShareToken(null);
+    setTickets([]);
+    setHabitLog({});
+    setCycleStartDateState(new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
+    setDoctorChecklist(DEFAULT_DOCTOR_CHECKLIST);
+    setHealthJournal(createEmptyJournal());
+    setLastSyncTime(null);
+    setSyncError(null);
+    localStorage.removeItem('sbs_last_sync');
+  }, [setHealthJournal]);
+
+  const ensureServerSession = useCallback(async (): Promise<boolean> => {
+    try {
+      const checkRes = await fetch('/api/auth/session', { credentials: 'include' });
+      if (checkRes.ok && checkRes.headers.get('content-type')?.includes('application/json')) {
+        const s = (await checkRes.json()) as { authenticated: boolean; userId: string | null };
+        if (s.authenticated && s.userId) {
+          return true;
+        }
+      }
+      const targetAnonId = userId.startsWith('anon-')
+        ? userId
+        : 'anon-' + secureRandomCode(8).toLowerCase();
+      const anonRes = await fetch('/api/auth/anonymous', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: targetAnonId }),
+      });
+      if (anonRes.ok && anonRes.headers.get('content-type')?.includes('application/json')) {
+        const data = (await anonRes.json()) as { userId: string };
+        setUserId(data.userId);
+        localStorage.setItem('sbs_user_id', data.userId);
+        if (authMode === 'welcome') {
+          setAuthMode('anonymous');
+          localStorage.setItem('sbs_auth_mode', 'anonymous');
+        }
+        return true;
+      }
+    } catch {
+      // Handled by caller
+    }
+    return false;
+  }, [authMode, userId]);
+
+  const localizePairing = useCallback(
+    (raw: PairingState, activeLocale: Locale): PairingState => ({
+      ...raw,
+      plan_steps: (raw.plan_steps || []).map((s) => ({
+        ...s,
+        title: getStepTitleForLocale(s.step_key, activeLocale, s.title),
+      })),
+    }),
+    []
+  );
+
+  const hydrateAccountFromServer = useCallback(
+    async (activeLocale: Locale): Promise<boolean> => {
+      try {
+        const res = await fetch('/api/account/data', { credentials: 'include' });
+        if (res.status === 401 || res.status === 404) {
+          const savedMode = localStorage.getItem('sbs_auth_mode');
+          if (savedMode === 'account' || savedMode === 'nakes') {
+            const freshAnonId = 'anon-' + secureRandomCode(8).toLowerCase();
+            setAuthMode('welcome');
+            setUserId(freshAnonId);
+            setUserEmail(null);
+            setDisplayName(activeLocale === 'en' ? 'Anonymous User' : 'Pengguna Anonim');
+            localStorage.setItem('sbs_auth_mode', 'welcome');
+            localStorage.setItem('sbs_user_id', freshAnonId);
+            localStorage.removeItem('sbs_user_email');
+            localStorage.removeItem('sbs_display_name');
+          }
+          return false;
+        }
+        if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+          return false;
+        }
+        const data = (await res.json()) as {
+          user?: { id: string; email: string | null; displayName: string | null; role: string; locale?: string };
+          consents?: ConsentState;
+          assessmentAnswers?: AssessmentAnswers | null;
+          results?: LabResultEntry[];
+          reminders?: ReminderItem[];
+          pairing?: PairingState | null;
+          shareToken?: ShareTokenState | null;
+          tickets?: QuestionTicketItem[];
+          cycleTracker?: { cycleStartDate: string; habitLog: Record<string, string[]> } | null;
+          doctorChecklist?: DoctorChecklistData | null;
+          journal?: Partial<HealthJournal> | null;
+        };
+        if (!data.user) return false;
+
+        const nextMode: AuthMode = data.user.role === 'nakes' ? 'nakes' : 'account';
+        const resolvedName = data.user.displayName || data.user.email?.split('@')[0] || displayName;
+        setAuthMode(nextMode);
+        setUserId(data.user.id);
+        setUserEmail(data.user.email);
+        setDisplayName(resolvedName);
+        localStorage.setItem('sbs_auth_mode', nextMode);
+        localStorage.setItem('sbs_user_id', data.user.id);
+        if (data.user.email) localStorage.setItem('sbs_user_email', data.user.email);
+        localStorage.setItem('sbs_display_name', resolvedName);
+
+        const nextConsents = { ...DEFAULT_CONSENTS, ...(data.consents || {}) };
+        setConsents(nextConsents);
+        await saveEncryptedItem('consents', nextConsents);
+
+        if (data.assessmentAnswers && Object.keys(data.assessmentAnswers).length > 0) {
+          const evaluated = evaluateAssessment(data.assessmentAnswers, undefined, undefined, activeLocale);
+          setAssessmentAnswers(data.assessmentAnswers);
+          setAssessmentResult(evaluated);
+          await saveEncryptedItem('assessment_answers', data.assessmentAnswers);
+          await saveEncryptedItem('assessment_result', evaluated);
+        } else {
+          setAssessmentAnswers({});
+          setAssessmentResult(null);
+        }
+
+        const nextResults = data.results || [];
+        setLabResults(nextResults);
+        if (nextResults.length > 0) {
+          await saveEncryptedItem('lab_results', nextResults);
+        }
+
+        const nextReminders = data.reminders || [];
+        setReminders(nextReminders);
+        if (nextReminders.length > 0) {
+          await saveEncryptedItem('reminders', nextReminders);
+        }
+
+        if (data.pairing) {
+          const localizedPairing = localizePairing(data.pairing, activeLocale);
+          setPairing(localizedPairing);
+          await saveEncryptedItem('pairing', localizedPairing);
+        } else {
+          setPairing(null);
+        }
+
+        if (data.shareToken) {
+          setShareToken(data.shareToken);
+          await saveEncryptedItem('share_token', data.shareToken);
+        } else {
+          setShareToken(null);
+        }
+
+        const nextTickets = data.tickets || [];
+        setTickets(nextTickets);
+        if (nextTickets.length > 0) {
+          await saveEncryptedItem('tickets', nextTickets);
+        }
+
+        if (data.cycleTracker) {
+          setCycleStartDateState(data.cycleTracker.cycleStartDate);
+          setHabitLog(data.cycleTracker.habitLog || {});
+          await saveEncryptedItem('cycle_start_date', data.cycleTracker.cycleStartDate);
+          await saveEncryptedItem('habit_log', data.cycleTracker.habitLog || {});
+        }
+
+        if (data.doctorChecklist) {
+          setDoctorChecklist(data.doctorChecklist);
+          await saveEncryptedItem('doctor_checklist', data.doctorChecklist);
+        }
+
+        if (data.journal) {
+          const serverJournal = normalizeJournal(data.journal);
+          const localJournal = healthJournalRef.current;
+          // Server adalah sumber utama Mode Akun; versi lokal yang lebih baru dipertahankan (mis. dibuat offline).
+          const nextJournal =
+            new Date(localJournal.updatedAt).getTime() > new Date(serverJournal.updatedAt).getTime()
+              ? localJournal
+              : serverJournal;
+          setHealthJournal(nextJournal);
+          await saveEncryptedItem('health_journal', nextJournal);
+        }
+
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [displayName, localizePairing, setHealthJournal]
+  );
+
   useEffect(() => {
     let mounted = true;
     async function hydrate() {
-      const savedConsents = await loadEncryptedItem<ConsentState>('consents');
-      const savedAnswers = await loadEncryptedItem<AssessmentAnswers>('assessment_answers');
-      const savedResult = await loadEncryptedItem<AssessmentEvaluationResult>('assessment_result');
-      const savedLabs = await loadEncryptedItem<LabResultEntry[]>('lab_results');
-      const savedReminders = await loadEncryptedItem<ReminderItem[]>('reminders');
-      const savedPairing = await loadEncryptedItem<PairingState>('pairing');
-      const savedShare = await loadEncryptedItem<ShareTokenState>('share_token');
-      const savedTickets = await loadEncryptedItem<QuestionTicketItem[]>('tickets');
-      const savedHabits = await loadEncryptedItem<Record<string, string[]>>('habit_log');
-      const savedCycleDate = await loadEncryptedItem<string>('cycle_start_date');
+      const [
+        savedConsents,
+        savedAnswers,
+        savedResult,
+        savedLabs,
+        savedReminders,
+        savedPairing,
+        savedShare,
+        savedTickets,
+        savedHabits,
+        savedCycleDate,
+        savedChecklist,
+        savedJournal,
+      ] = await Promise.all([
+        loadEncryptedItem<ConsentState>('consents'),
+        loadEncryptedItem<AssessmentAnswers>('assessment_answers'),
+        loadEncryptedItem<AssessmentEvaluationResult>('assessment_result'),
+        loadEncryptedItem<LabResultEntry[]>('lab_results'),
+        loadEncryptedItem<ReminderItem[]>('reminders'),
+        loadEncryptedItem<PairingState>('pairing'),
+        loadEncryptedItem<ShareTokenState>('share_token'),
+        loadEncryptedItem<QuestionTicketItem[]>('tickets'),
+        loadEncryptedItem<Record<string, string[]>>('habit_log'),
+        loadEncryptedItem<string>('cycle_start_date'),
+        loadEncryptedItem<DoctorChecklistData>('doctor_checklist'),
+        loadEncryptedItem<HealthJournal>('health_journal'),
+      ]);
 
       if (!mounted) return;
-      if (savedConsents) setConsents(savedConsents);
+      if (savedConsents) setConsents({ ...DEFAULT_CONSENTS, ...savedConsents });
       if (savedAnswers) setAssessmentAnswers(savedAnswers);
       if (savedResult) setAssessmentResult(savedResult);
       if (savedLabs) setLabResults(savedLabs);
@@ -267,21 +633,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (savedTickets && savedTickets.length > 0) setTickets(savedTickets);
       if (savedHabits) setHabitLog(savedHabits);
       if (savedCycleDate) setCycleStartDateState(savedCycleDate);
+      if (savedChecklist) setDoctorChecklist(savedChecklist);
+      if (savedJournal) setHealthJournal(normalizeJournal(savedJournal));
+
+      const savedMode = localStorage.getItem('sbs_auth_mode');
+      if (savedMode === 'account' || savedMode === 'nakes') {
+        await hydrateAccountFromServer((localStorage.getItem('sbs_locale') as Locale) || 'id');
+      }
     }
     hydrate();
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Set judul dokumen dan ikon standar Side by Side
   useEffect(() => {
     document.title = 'Side by Side — Better together.';
     const faviconEl = document.getElementById('app-favicon') as HTMLLinkElement | null;
     if (faviconEl) faviconEl.href = '/logo-icon.png';
   }, []);
 
-  // Sinkronkan ukuran teks dan mode gelap pada elemen <html>
   useEffect(() => {
     const html = document.documentElement;
     html.classList.remove('text-scale-lg', 'text-scale-xl');
@@ -297,260 +669,273 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('sbs_dark_mode', String(darkMode));
   }, [darkMode]);
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   const startAnonymousMode = useCallback(async () => {
-    const anonId = 'anon-' + Math.random().toString(36).substring(2, 9);
+    if (authMode === 'account' || authMode === 'nakes') {
+      await resetSessionLocalData();
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+    }
+    const anonId = 'anon-' + secureRandomCode(8).toLowerCase();
+    const anonLabel = locale === 'en' ? 'Anonymous Mode (Private On-Device)' : 'Mode Anonim (Privat di Perangkat)';
     setAuthMode('anonymous');
-    setActivePersona('custom');
     setUserId(anonId);
     setUserEmail(null);
-    setDisplayName('Mode Anonim (Privat di Perangkat)');
+    setDisplayName(anonLabel);
     localStorage.setItem('sbs_auth_mode', 'anonymous');
     localStorage.setItem('sbs_user_id', anonId);
     localStorage.removeItem('sbs_user_email');
-    localStorage.setItem('sbs_display_name', 'Mode Anonim (Privat di Perangkat)');
-    // Pastikan semua persetujuan default OFF
+    localStorage.setItem('sbs_display_name', anonLabel);
     setConsents(DEFAULT_CONSENTS);
     await saveEncryptedItem('consents', DEFAULT_CONSENTS);
-  }, []);
+    try {
+      await fetch('/api/auth/anonymous', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: anonId }),
+      });
+    } catch {
+      // Anonymous mode still works privately on-device
+    }
+  }, [authMode, locale, resetSessionLocalData]);
 
-  /**
-   * Muat Skenario Demo Lengkap (Rendra, 32 thn, 8 bln promil bersama Sari, dr. Maya di Puskesmas).
-   */
-  const loadRendraDemoScenario = useCallback(async () => {
-    const evalResult = evaluateAssessment(RENDRA_DEMO_ANSWERS);
-    setAssessmentAnswers(RENDRA_DEMO_ANSWERS);
-    setAssessmentResult(evalResult);
-    setLabResults(RENDRA_SAMPLE_LABS);
-
-    const demoReminders: ReminderItem[] = [
-      {
-        id: 'rem-rendra-1',
-        type: 'semen_analysis',
-        title: 'Pemeriksaan Analisis Semen & Konsultasi (Masa Pantang 3–4 Hari)',
-        facilityName: 'RSUPN Dr. Cipto Mangunkusumo (Poli Urologi-Andrologi)',
-        remindAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
-        notes: 'Mulai masa pantang (abstinensia) 3 hari sebelum jadwal tes. Bawa rujukan JKN & daftar pertanyaan dokter.',
-        completed: false,
-      },
-      {
-        id: 'rem-rendra-2',
-        type: 'follow_up',
-        title: 'Evaluasi Ulang Gaya Hidup (Siklus 74 Hari)',
-        facilityName: 'Puskesmas Kecamatan Tebet (dr. Maya)',
-        remindAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
-        notes: 'Diskusi hasil tren perbaikan konsentrasi & motilitas bersama dr. Maya.',
-        completed: false,
-      },
-    ];
-    setReminders(demoReminders);
-
-    const demoPairing: PairingState = {
-      invite_code: 'BERSAMA24',
-      partner_a_alias: 'Rendra (Suami)',
-      partner_b_alias: 'Sari (Istri)',
-      status: 'active',
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      shared_items: {
-        shareAssessmentAnswers: false,
-        shareAssessmentLevel: false,
-        shareLabSummary: false,
-        noteFromA: 'Aku mau kita cek bareng, bukan karena ada yang salah, tapi biar kita tahu langkah terbaik.',
-        noteFromB: 'Terima kasih sudah mau melangkah bareng. Kita jalani pelan-pelan ya.',
-      },
-      plan_steps: [
-        { step_key: 'cek_awal', step_order: 1, title: 'Cek Awal Mandiri', status_a: 'done', status_b: 'done' },
-        { step_key: 'pilih_layanan', step_order: 2, title: 'Pilih Layanan Pemeriksaan', status_a: 'done', status_b: 'done' },
-        { step_key: 'jadwalkan', step_order: 3, title: 'Jadwalkan & Persiapan (Pantang 2–7 Hari)', status_a: 'in_progress', status_b: 'done' },
-        { step_key: 'periksa', step_order: 4, title: 'Kunjungan Pemeriksaan', status_a: 'done', status_b: 'done' },
-        { step_key: 'pahami_hasil', step_order: 5, title: 'Pahami Hasil Bersama', status_a: 'in_progress', status_b: 'in_progress' },
-        { step_key: 'tindak_lanjut', step_order: 6, title: 'Rencana Tindak Lanjut Dokter', status_a: 'not_started', status_b: 'not_started' },
-      ],
-    };
-    setPairing(demoPairing);
-
-    const demoShare: ShareTokenState = {
-      token_code: 'MAYA-RENDRA-1H',
-      scope: ['history', 'risk_factors', 'lab_results'],
-      expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-      revoked: false,
-      accessed_log: [
-        {
-          accessed_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-          viewer_name: 'dr. Maya (Puskesmas Kecamatan Tebet)',
-          viewer_role: 'nakes',
-          action: 'Melihat ringkasan pasien via Kode QR',
-        },
-      ],
-      snapshot: {
-        patientAlias: 'Rendra (32 thn)',
-        programDuration: '8 bulan program hamil bersama istri (Sari, 30 thn)',
-        assessmentLevel: evalResult.levelLabel,
-        reportedRiskFactors: evalResult.factors.map((f) => `${f.factorTitle} (${f.topic})`),
-        labResults: RENDRA_SAMPLE_LABS,
-      },
-    };
-    setShareToken(demoShare);
-
-    const demoConsents: ConsentState = {
-      store_results: true,
-      share_partner: true,
-      share_nakes: true,
-    };
-    setConsents(demoConsents);
-
-    const demoHabits: Record<string, string[]> = {
-      [new Date().toISOString().slice(0, 10)]: ['cool_temp', 'hydration_antioxidant', 'sleep_rest'],
-      [new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)]: ['cool_temp', 'exercise', 'sleep_rest', 'no_smoke'],
-      [new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)]: ['cool_temp', 'hydration_antioxidant', 'exercise', 'sleep_rest'],
-    };
-    const demoCycleDate = new Date(Date.now() - 44 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    setHabitLog(demoHabits);
-    setCycleStartDateState(demoCycleDate);
-
-    await saveEncryptedItem('consents', demoConsents);
-    await saveEncryptedItem('assessment_answers', RENDRA_DEMO_ANSWERS);
-    await saveEncryptedItem('assessment_result', evalResult);
-    await saveEncryptedItem('lab_results', RENDRA_SAMPLE_LABS);
-    await saveEncryptedItem('reminders', demoReminders);
-    await saveEncryptedItem('pairing', demoPairing);
-    await saveEncryptedItem('share_token', demoShare);
-    await saveEncryptedItem('habit_log', demoHabits);
-    await saveEncryptedItem('cycle_start_date', demoCycleDate);
-  }, []);
-
-  const switchDemoPersona = useCallback(
-    async (persona: DemoPersona) => {
-      setActivePersona(persona);
-      await loadRendraDemoScenario();
-
-      if (persona === 'rendra') {
-        setAuthMode('account');
-        setUserId('user-rendra-demo');
-        setUserEmail('rendra@demo.id');
-        setDisplayName('Rendra (Suami)');
-        localStorage.setItem('sbs_auth_mode', 'account');
-        localStorage.setItem('sbs_user_id', 'user-rendra-demo');
-        localStorage.setItem('sbs_user_email', 'rendra@demo.id');
-        localStorage.setItem('sbs_display_name', 'Rendra (Suami)');
-      } else if (persona === 'sari') {
-        setAuthMode('account');
-        setUserId('user-sari-demo');
-        setUserEmail('sari@demo.id');
-        setDisplayName('Sari (Istri)');
-        localStorage.setItem('sbs_auth_mode', 'account');
-        localStorage.setItem('sbs_user_id', 'user-sari-demo');
-        localStorage.setItem('sbs_user_email', 'sari@demo.id');
-        localStorage.setItem('sbs_display_name', 'Sari (Istri)');
-      } else if (persona === 'maya') {
-        setAuthMode('nakes');
-        setUserId('user-drmaya-demo');
-        setUserEmail('maya@puskesmas.id');
-        setDisplayName('dr. Maya (Dokter Puskesmas)');
-        localStorage.setItem('sbs_auth_mode', 'nakes');
-        localStorage.setItem('sbs_user_id', 'user-drmaya-demo');
-        localStorage.setItem('sbs_user_email', 'maya@puskesmas.id');
-        localStorage.setItem('sbs_display_name', 'dr. Maya (Dokter Puskesmas)');
+  const pushCurrentStateToServer = useCallback(
+    async (
+      targetUserId: string,
+      opts?: {
+        nextResults?: LabResultEntry[];
+        nextReminders?: ReminderItem[];
+        nextAssessment?: { answers: AssessmentAnswers; result: AssessmentEvaluationResult };
+        nextCycleTracker?: { cycleStartDate: string; habitLog: Record<string, string[]> };
+        nextDoctorChecklist?: DoctorChecklistData;
+        nextJournal?: HealthJournal;
+      }
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch('/api/sync', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: targetUserId,
+            results: opts?.nextResults ?? labResults,
+            reminders: opts?.nextReminders ?? reminders,
+            ...(opts?.nextAssessment
+              ? {
+                  assessment: {
+                    answers: opts.nextAssessment.answers,
+                    level: opts.nextAssessment.result.levelCode,
+                    summaryFactors: opts.nextAssessment.result.factors,
+                  },
+                }
+              : {}),
+            cycleTracker: opts?.nextCycleTracker ?? { cycleStartDate, habitLog },
+            doctorChecklist: opts?.nextDoctorChecklist ?? doctorChecklist,
+            journal: opts?.nextJournal ?? healthJournalRef.current,
+          }),
+        });
+        if (res.ok) {
+          const timeLocale = locale === 'en' ? 'en-US' : 'id-ID';
+          const timeNow = new Date().toLocaleTimeString(timeLocale, { hour: '2-digit', minute: '2-digit' });
+          setLastSyncTime(timeNow);
+          setSyncError(null);
+          localStorage.setItem('sbs_last_sync', timeNow);
+          return true;
+        }
+        const errMsg = await parseErrorMessage(
+          res,
+          locale === 'en' ? 'Failed to sync with server.' : 'Gagal menyinkronkan data ke server.'
+        );
+        setSyncError(errMsg);
+        return false;
+      } catch {
+        setSyncError(
+          locale === 'en'
+            ? 'Network unreachable. Changes saved locally on device.'
+            : 'Jaringan tidak terjangkau. Perubahan tersimpan terenkripsi di perangkat.'
+        );
+        return false;
       }
     },
-    [loadRendraDemoScenario]
+    [labResults, reminders, cycleStartDate, habitLog, doctorChecklist, locale]
   );
 
-  const loginAccount = useCallback(async (email: string, role: 'user' | 'nakes', name?: string) => {
-    const lower = email.toLowerCase();
-    if (lower.includes('rendra')) {
-      await switchDemoPersona('rendra');
-      return;
-    }
-    if (lower.includes('sari')) {
-      await switchDemoPersona('sari');
-      return;
-    }
-    if (lower.includes('maya')) {
-      await switchDemoPersona('maya');
-      return;
-    }
+  const loginAccount = useCallback(
+    async (
+      email: string,
+      role: 'user' | 'nakes',
+      name?: string,
+      serverUserId?: string,
+      options?: LoginOptions
+    ) => {
+      const mode: AuthMode = role === 'nakes' ? 'nakes' : 'account';
+      const derivedName = name || email.split('@')[0];
+      const derivedId = serverUserId || 'user-' + email.replace(/[^a-z0-9]/gi, '').toLowerCase();
 
-    const mode: AuthMode = role === 'nakes' ? 'nakes' : 'account';
-    const derivedName = name || email.split('@')[0];
-    const derivedId = 'user-' + email.replace(/[^a-z0-9]/gi, '').toLowerCase();
-    setAuthMode(mode);
-    setActivePersona('custom');
-    setUserId(derivedId);
-    setUserEmail(email);
-    setDisplayName(derivedName);
-    localStorage.setItem('sbs_auth_mode', mode);
-    localStorage.setItem('sbs_user_id', derivedId);
-    localStorage.setItem('sbs_user_email', email);
-    localStorage.setItem('sbs_display_name', derivedName);
-  }, [switchDemoPersona]);
+      if (!options?.preserveLocalOnRegister) {
+        await resetSessionLocalData();
+      }
+
+      setAuthMode(mode);
+      setUserId(derivedId);
+      setUserEmail(email);
+      setDisplayName(derivedName);
+      localStorage.setItem('sbs_auth_mode', mode);
+      localStorage.setItem('sbs_user_id', derivedId);
+      localStorage.setItem('sbs_user_email', email);
+      localStorage.setItem('sbs_display_name', derivedName);
+
+      if (options?.preserveLocalOnRegister) {
+        await pushCurrentStateToServer(derivedId, {
+          nextAssessment:
+            assessmentResult && Object.keys(assessmentAnswers).length > 0
+              ? { answers: assessmentAnswers, result: assessmentResult }
+              : undefined,
+        });
+        for (const [k, val] of Object.entries(consents) as [keyof ConsentState, boolean][]) {
+          fetch(`/api/consents/${derivedId}`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: k, granted: val }),
+          }).catch(() => {});
+        }
+      } else {
+        await hydrateAccountFromServer(locale);
+      }
+    },
+    [
+      assessmentAnswers,
+      assessmentResult,
+      consents,
+      hydrateAccountFromServer,
+      locale,
+      pushCurrentStateToServer,
+      resetSessionLocalData,
+    ]
+  );
 
   const logoutToWelcome = useCallback(() => {
+    void resetSessionLocalData();
+    const freshAnonId = 'anon-' + secureRandomCode(8).toLowerCase();
     setAuthMode('welcome');
-    setActivePersona('custom');
+    setUserId(freshAnonId);
     setUserEmail(null);
-    setDisplayName('Pengguna Anonim');
+    setDisplayName(locale === 'en' ? 'Anonymous User' : 'Pengguna Anonim');
     localStorage.setItem('sbs_auth_mode', 'welcome');
+    localStorage.setItem('sbs_user_id', freshAnonId);
     localStorage.removeItem('sbs_user_email');
     localStorage.removeItem('sbs_display_name');
-  }, []);
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+  }, [locale, resetSessionLocalData]);
 
   const updateProfile = useCallback(
-    async (newName: string, newPassword?: string): Promise<boolean> => {
+    async (
+      newName: string,
+      passwordUpdate?: { currentPassword?: string; newPassword?: string }
+    ): Promise<ActionResult> => {
       try {
         const res = await fetch(`/api/auth/profile/${userId}`, {
           method: 'PUT',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ displayName: newName, newPassword }),
+          body: JSON.stringify({
+            displayName: newName,
+            ...(passwordUpdate?.newPassword
+              ? {
+                  currentPassword: passwordUpdate.currentPassword,
+                  newPassword: passwordUpdate.newPassword,
+                }
+              : {}),
+          }),
         });
-        if (res.ok) {
-          const data = await res.json();
-          setDisplayName(data.display_name);
-          localStorage.setItem('sbs_display_name', data.display_name);
-          return true;
+        if (!res.ok) {
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              locale === 'en' ? 'Failed to update profile.' : 'Gagal memperbarui profil.'
+            ),
+          };
         }
+        const data = (await res.json()) as { display_name?: string };
+        const updatedName = data.display_name || newName;
+        setDisplayName(updatedName);
+        localStorage.setItem('sbs_display_name', updatedName);
+        return { ok: true };
       } catch {
-        // Fallback offline
+        return {
+          ok: false,
+          error:
+            locale === 'en'
+              ? 'Unable to reach authentication server.'
+              : 'Tidak dapat terhubung ke server autentikasi.',
+        };
       }
-      setDisplayName(newName);
-      localStorage.setItem('sbs_display_name', newName);
-      return true;
     },
-    [userId]
+    [userId, locale]
   );
 
   const syncCloudData = useCallback(async (): Promise<boolean> => {
     setIsSyncing(true);
-    try {
-      const res = await fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          results: labResults,
-          reminders,
-        }),
-      });
-      if (res.ok) {
-        const timeNow = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        setLastSyncTime(timeNow);
-        localStorage.setItem('sbs_last_sync', timeNow);
-        setIsSyncing(false);
-        return true;
-      }
-    } catch {
-      // offline safe
-    }
-    const timeNow = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-    setLastSyncTime(timeNow);
-    localStorage.setItem('sbs_last_sync', timeNow);
+    const ok = await pushCurrentStateToServer(userId, {
+      nextAssessment:
+        assessmentResult && Object.keys(assessmentAnswers).length > 0
+          ? { answers: assessmentAnswers, result: assessmentResult }
+          : undefined,
+    });
     setIsSyncing(false);
-    return true;
-  }, [userId, labResults, reminders]);
+    return ok;
+  }, [userId, assessmentAnswers, assessmentResult, pushCurrentStateToServer]);
 
-  const setLocale = useCallback((loc: Locale) => {
-    setLocaleState(loc);
-    localStorage.setItem('sbs_locale', loc);
-  }, []);
+  const setLocale = useCallback(
+    (loc: Locale) => {
+      setLocaleState(loc);
+      localStorage.setItem('sbs_locale', loc);
+
+      if (displayName === 'Pengguna Anonim' && loc === 'en') {
+        setDisplayName('Anonymous User');
+      } else if (displayName === 'Anonymous User' && loc === 'id') {
+        setDisplayName('Pengguna Anonim');
+      } else if (displayName === 'Mode Anonim (Privat di Perangkat)' && loc === 'en') {
+        setDisplayName('Anonymous Mode (Private On-Device)');
+      } else if (displayName === 'Anonymous Mode (Private On-Device)' && loc === 'id') {
+        setDisplayName('Mode Anonim (Privat di Perangkat)');
+      }
+
+      if (Object.keys(assessmentAnswers).length > 0) {
+        const reevaluated = evaluateAssessment(assessmentAnswers, undefined, undefined, loc);
+        const updatedResult: AssessmentEvaluationResult = {
+          ...reevaluated,
+          showEmotionalSupport: Boolean(
+            assessmentResult?.showEmotionalSupport || reevaluated.showEmotionalSupport
+          ),
+          evaluatedAt: assessmentResult?.evaluatedAt || reevaluated.evaluatedAt,
+        };
+        setAssessmentResult(updatedResult);
+        void saveEncryptedItem('assessment_result', updatedResult);
+      }
+
+      if (pairing) {
+        const nextPairing = localizePairing(pairing, loc);
+        setPairing(nextPairing);
+        void saveEncryptedItem('pairing', nextPairing);
+      }
+
+      if (authMode === 'account' || authMode === 'nakes') {
+        fetch(`/api/auth/profile/${userId}`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ locale: loc }),
+        }).catch(() => {});
+      }
+    },
+    [assessmentAnswers, assessmentResult, authMode, displayName, localizePairing, pairing, userId]
+  );
 
   const setTextScale = useCallback((scale: TextScale) => {
     setTextScaleState(scale);
@@ -560,64 +945,157 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setDarkModeState(dark);
   }, []);
 
+  /** Pembaruan jurnal kesehatan (riwayat Cek Awal, check-in, jalur perawatan) — terenkripsi lokal & tersinkron untuk Mode Akun. */
+  const updateHealthJournal = useCallback(
+    async (updater: (current: HealthJournal) => HealthJournal): Promise<HealthJournal> => {
+      const next: HealthJournal = boundJournal({
+        ...updater(healthJournalRef.current),
+        updatedAt: new Date().toISOString(),
+      });
+      setHealthJournal(next);
+      await saveEncryptedItem('health_journal', next);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, { nextJournal: next });
+      }
+      return next;
+    },
+    [authMode, pushCurrentStateToServer, setHealthJournal, userId]
+  );
+
   const updateConsent = useCallback(
     async (key: keyof ConsentState, granted: boolean) => {
       const next = { ...consents, [key]: granted };
       setConsents(next);
       await saveEncryptedItem('consents', next);
-      if (authMode === 'account') {
+      // Saat riwayat privat diaktifkan, Cek Awal terakhir menjadi titik awal riwayat progres.
+      if (
+        key === 'store_results' &&
+        granted &&
+        assessmentResult &&
+        Object.keys(assessmentAnswers).length > 0 &&
+        healthJournalRef.current.assessmentHistory.length === 0
+      ) {
+        await updateHealthJournal((j) => ({
+          ...j,
+          assessmentHistory: appendAssessmentSnapshot(
+            j.assessmentHistory,
+            createAssessmentSnapshot(assessmentAnswers, assessmentResult)
+          ),
+        }));
+      }
+      if (authMode === 'account' || authMode === 'nakes') {
         try {
           await fetch(`/api/consents/${userId}`, {
             method: 'PUT',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ key, granted }),
           });
         } catch {
-          // Offline-safe
+          // Local encrypted preference retained
         }
       }
     },
-    [consents, authMode, userId]
+    [consents, authMode, userId, assessmentResult, assessmentAnswers, updateHealthJournal]
   );
 
   const saveAssessment = useCallback(
     async (answers: AssessmentAnswers, freeText?: string) => {
-      const result = evaluateAssessment(answers, freeText);
+      const result = evaluateAssessment(answers, freeText, undefined, locale);
       setAssessmentAnswers(answers);
       setAssessmentResult(result);
-      // Di Mode Anonim maupun Akun, simpan terenkripsi AES-GCM di IndexedDB
       await saveEncryptedItem('assessment_answers', answers);
       await saveEncryptedItem('assessment_result', result);
 
-      // Tandai langkah 'cek_awal' selesai bila ada pairing aktif
       if (pairing && pairing.status === 'active') {
+        const actor: 'a' | 'b' = pairing.user_b && userId === pairing.user_b ? 'b' : 'a';
         const nextSteps = pairing.plan_steps.map((s) =>
-          s.step_key === 'cek_awal' ? { ...s, status_a: 'done' as const } : s
+          s.step_key === 'cek_awal'
+            ? actor === 'b'
+              ? { ...s, status_b: 'done' as const }
+              : { ...s, status_a: 'done' as const }
+            : s
         );
         const updatedPairing = { ...pairing, plan_steps: nextSteps };
         setPairing(updatedPairing);
         await saveEncryptedItem('pairing', updatedPairing);
+        fetch(`/api/pairings/${pairing.invite_code}/step`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stepKey: 'cek_awal', actor, status: 'done' }),
+        }).catch(() => {});
+      }
+
+      // Riwayat longitudinal privat hanya dicatat bila pengguna menyetujui penyimpanan hasil (default OFF).
+      let nextJournal: HealthJournal | undefined;
+      if (consents.store_results) {
+        nextJournal = {
+          ...healthJournalRef.current,
+          assessmentHistory: appendAssessmentSnapshot(
+            healthJournalRef.current.assessmentHistory,
+            createAssessmentSnapshot(answers, result)
+          ),
+          updatedAt: new Date().toISOString(),
+        };
+        setHealthJournal(nextJournal);
+        await saveEncryptedItem('health_journal', nextJournal);
+      }
+
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, {
+          nextAssessment: { answers, result },
+          ...(nextJournal ? { nextJournal } : {}),
+        });
       }
 
       return result;
     },
-    [pairing]
+    [pairing, locale, authMode, userId, pushCurrentStateToServer, consents.store_results, setHealthJournal]
   );
 
   const addLabResult = useCallback(
-    async (entry: Omit<LabResultEntry, 'id' | 'createdAt'>) => {
+    async (entry: Omit<LabResultEntry, 'id' | 'createdAt'>, attachment?: LabAttachmentData | null) => {
+      const id = 'lab-' + Date.now();
       const newEntry: LabResultEntry = {
         ...entry,
-        id: 'lab-' + Date.now(),
+        id,
         createdAt: new Date().toISOString(),
       };
+      if (attachment) {
+        await saveEncryptedItem(`lab_attachment_${id}`, attachment);
+      }
       const next = [...labResults, newEntry].sort(
         (a, b) => new Date(a.testDate).getTime() - new Date(b.testDate).getTime()
       );
       setLabResults(next);
       await saveEncryptedItem('lab_results', next);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, { nextResults: next });
+      }
     },
-    [labResults]
+    [labResults, authMode, userId, pushCurrentStateToServer]
+  );
+
+  const editLabResult = useCallback(
+    async (
+      id: string,
+      updates: Partial<Omit<LabResultEntry, 'id' | 'createdAt'>>,
+      attachment?: LabAttachmentData | null
+    ) => {
+      if (attachment) {
+        await saveEncryptedItem(`lab_attachment_${id}`, attachment);
+      }
+      const next = labResults
+        .map((r) => (r.id === id ? { ...r, ...updates } : r))
+        .sort((a, b) => new Date(a.testDate).getTime() - new Date(b.testDate).getTime());
+      setLabResults(next);
+      await saveEncryptedItem('lab_results', next);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, { nextResults: next });
+      }
+    },
+    [labResults, authMode, userId, pushCurrentStateToServer]
   );
 
   const deleteLabResult = useCallback(
@@ -625,9 +1103,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const next = labResults.filter((r) => r.id !== id);
       setLabResults(next);
       await saveEncryptedItem('lab_results', next);
+      await removeEncryptedItem(`lab_attachment_${id}`);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, { nextResults: next });
+      }
     },
-    [labResults]
+    [labResults, authMode, userId, pushCurrentStateToServer]
   );
+
+  const loadLabAttachment = useCallback(async (resultId: string): Promise<LabAttachmentData | null> => {
+    return loadEncryptedItem<LabAttachmentData>(`lab_attachment_${resultId}`);
+  }, []);
 
   const addReminder = useCallback(
     async (rem: Omit<ReminderItem, 'id' | 'completed'>) => {
@@ -639,8 +1125,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const next = [newRem, ...reminders];
       setReminders(next);
       await saveEncryptedItem('reminders', next);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, { nextReminders: next });
+      }
     },
-    [reminders]
+    [reminders, authMode, userId, pushCurrentStateToServer]
   );
 
   const toggleReminder = useCallback(
@@ -648,8 +1137,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const next = reminders.map((r) => (r.id === id ? { ...r, completed: !r.completed } : r));
       setReminders(next);
       await saveEncryptedItem('reminders', next);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, { nextReminders: next });
+      }
     },
-    [reminders]
+    [reminders, authMode, userId, pushCurrentStateToServer]
   );
 
   const deleteReminder = useCallback(
@@ -657,285 +1149,823 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const next = reminders.filter((r) => r.id !== id);
       setReminders(next);
       await saveEncryptedItem('reminders', next);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, { nextReminders: next });
+      }
     },
-    [reminders]
+    [reminders, authMode, userId, pushCurrentStateToServer]
   );
 
   const createNewPairing = useCallback(
-    async (aliasA?: string, aliasB?: string, customCode?: string) => {
+    async (aliasA?: string, aliasB?: string): Promise<ActionResult<PairingState>> => {
+      const isEn = locale === 'en';
       const resolvedA =
         aliasA?.trim() ||
-        (!displayName.includes('Anonim') ? displayName : 'Pasangan A');
-      const resolvedB = aliasB?.trim() || 'Pasangan';
-      const cleanCustom = customCode?.trim().toUpperCase();
-      const code = cleanCustom && cleanCustom.length >= 4 ? cleanCustom : Math.random().toString(36).substring(2, 6).toUpperCase() + '24';
-      const newPairing: PairingState = {
-        invite_code: code,
-        partner_a_alias: resolvedA,
-        partner_b_alias: resolvedB,
-        status: 'active',
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        shared_items: {
-          shareAssessmentAnswers: false,
-          shareAssessmentLevel: false,
-          shareLabSummary: false,
-          noteFromA: 'Aku mau kita cek bareng, bukan karena ada yang salah, tapi biar kita tahu langkah terbaik.',
-          noteFromB: 'Terima kasih sudah mau melangkah bareng. Kita jalani pelan-pelan ya.',
-        },
-        plan_steps: DEFAULT_PLAN_STEPS.map((s) =>
-          s.step_key === 'cek_awal' && assessmentResult
-            ? { ...s, status_a: 'done' }
-            : s
-        ),
-      };
-      setPairing(newPairing);
-      await saveEncryptedItem('pairing', newPairing);
+        (!displayName.includes('Anonim') && !displayName.includes('Anonymous')
+          ? displayName
+          : isEn
+          ? 'Partner A'
+          : 'Pasangan A');
+      const resolvedB = aliasB?.trim() || (isEn ? 'Partner B' : 'Pasangan B');
+
+      const hasSession = await ensureServerSession();
+      if (!hasSession) {
+        return {
+          ok: false,
+          error: isEn
+            ? 'Unable to connect to server to generate an active partner code.'
+            : 'Tidak dapat terhubung ke server untuk membuat kode pasangan aktif.',
+        };
+      }
+
+      try {
+        const res = await fetch('/api/pairings', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            partnerAAlias: resolvedA,
+            partnerBAlias: resolvedB,
+          }),
+        });
+        if (!res.ok) {
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              isEn ? 'Failed to create partner invite code.' : 'Gagal membuat kode undangan pasangan.'
+            ),
+          };
+        }
+        const serverPairing = (await res.json()) as PairingState;
+        const localizedServerPairing = localizePairing(serverPairing, locale);
+        setPairing(localizedServerPairing);
+        await saveEncryptedItem('pairing', localizedServerPairing);
+        return { ok: true, data: localizedServerPairing };
+      } catch {
+        return {
+          ok: false,
+          error: isEn
+            ? 'Network error while creating partner invite code.'
+            : 'Terjadi gangguan jaringan saat membuat kode undangan pasangan.',
+        };
+      }
     },
-    [assessmentResult, displayName]
+    [displayName, ensureServerSession, locale, localizePairing]
   );
 
+  const joinPairing = useCallback(
+    async (code: string, aliasB?: string): Promise<ActionResult<PairingState>> => {
+      const isEn = locale === 'en';
+      const cleanCode = code.trim().toUpperCase();
+      if (cleanCode.length < 4) {
+        return {
+          ok: false,
+          error: isEn ? 'Enter a valid 6-character partner code.' : 'Masukkan kode pasangan yang valid.',
+        };
+      }
+
+      const hasSession = await ensureServerSession();
+      if (!hasSession) {
+        return {
+          ok: false,
+          error: isEn
+            ? 'Unable to connect to server to verify partner code.'
+            : 'Tidak dapat terhubung ke server untuk memverifikasi kode pasangan.',
+        };
+      }
+
+      try {
+        const res = await fetch(`/api/pairings/${encodeURIComponent(cleanCode)}/join`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            partnerBAlias:
+              aliasB?.trim() ||
+              (!displayName.includes('Anonim') && !displayName.includes('Anonymous')
+                ? displayName
+                : undefined),
+          }),
+        });
+        if (!res.ok) {
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              isEn ? 'Partner code not found or expired.' : 'Kode pasangan tidak ditemukan atau telah kedaluwarsa.'
+            ),
+          };
+        }
+        const serverPairing = (await res.json()) as PairingState;
+        const localizedServerPairing = localizePairing(serverPairing, locale);
+        setPairing(localizedServerPairing);
+        await saveEncryptedItem('pairing', localizedServerPairing);
+        return { ok: true, data: localizedServerPairing };
+      } catch {
+        return {
+          ok: false,
+          error: isEn
+            ? 'Network error while connecting to partner.'
+            : 'Gangguan jaringan saat menautkan kode pasangan.',
+        };
+      }
+    },
+    [displayName, ensureServerSession, locale, localizePairing]
+  );
+
+  const refreshPairing = useCallback(async (): Promise<ActionResult<PairingState>> => {
+    if (!pairing || pairing.status !== 'active') {
+      return { ok: false, error: 'No active pairing.' };
+    }
+    try {
+      const res = await fetch(`/api/pairings/${encodeURIComponent(pairing.invite_code)}`, {
+        credentials: 'include',
+      });
+      if (res.status === 404 || res.status === 410) {
+        const expiredOrRevoked: PairingState = { ...pairing, status: 'revoked' };
+        setPairing(expiredOrRevoked);
+        await saveEncryptedItem('pairing', expiredOrRevoked);
+        return {
+          ok: false,
+          error: await parseErrorMessage(res, 'Pairing expired or revoked.'),
+        };
+      }
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: await parseErrorMessage(res, 'Failed to refresh pairing.'),
+        };
+      }
+      const serverPairing = (await res.json()) as PairingState;
+      const localized = localizePairing(serverPairing, locale);
+      setPairing(localized);
+      await saveEncryptedItem('pairing', localized);
+      return { ok: true, data: localized };
+    } catch {
+      return { ok: false, error: 'Network error while refreshing pairing.' };
+    }
+  }, [locale, localizePairing, pairing]);
+
   const updatePlanStep = useCallback(
-    async (stepKey: string, actor: 'a' | 'b', status: 'not_started' | 'in_progress' | 'done') => {
-      if (!pairing) return;
+    async (
+      stepKey: string,
+      actor: 'a' | 'b',
+      status: 'not_started' | 'in_progress' | 'done'
+    ): Promise<ActionResult> => {
+      if (!pairing) return { ok: false, error: 'No active pairing.' };
+      const previous = pairing;
       const nextSteps = pairing.plan_steps.map((s) => {
         if (s.step_key !== stepKey) return s;
         return actor === 'a' ? { ...s, status_a: status } : { ...s, status_b: status };
       });
       const nextPairing = { ...pairing, plan_steps: nextSteps };
       setPairing(nextPairing);
-      await saveEncryptedItem('pairing', nextPairing);
+
       try {
-        await fetch(`/api/pairings/${pairing.invite_code}/step`, {
+        const res = await fetch(`/api/pairings/${encodeURIComponent(pairing.invite_code)}/step`, {
           method: 'PUT',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ stepKey, actor, status }),
         });
+        if (!res.ok) {
+          setPairing(previous);
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              locale === 'en' ? 'Failed to update step status.' : 'Gagal memperbarui status tahapan.'
+            ),
+          };
+        }
+        await saveEncryptedItem('pairing', nextPairing);
+        return { ok: true };
       } catch {
-        // Offline-safe
+        setPairing(previous);
+        return {
+          ok: false,
+          error: locale === 'en' ? 'Network error updating step.' : 'Gangguan jaringan saat memperbarui tahapan.',
+        };
       }
     },
-    [pairing]
+    [locale, pairing]
   );
 
   const updatePairingSharedItems = useCallback(
-    async (updates: Partial<PairingState['shared_items']>) => {
-      if (!pairing) return;
+    async (updates: Partial<PairingState['shared_items']>): Promise<ActionResult> => {
+      if (!pairing) return { ok: false, error: 'No active pairing.' };
+      const previous = pairing;
       const nextShared = { ...pairing.shared_items, ...updates };
-      const nextPairing = { ...pairing, shared_items: nextShared };
-      setPairing(nextPairing);
-      await saveEncryptedItem('pairing', nextPairing);
+      const optimistic = { ...pairing, shared_items: nextShared };
+      setPairing(optimistic);
+
+      try {
+        const res = await fetch(`/api/pairings/${encodeURIComponent(pairing.invite_code)}/shared`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) {
+          setPairing(previous);
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              locale === 'en' ? 'Permission denied or sync failed.' : 'Izin ditolak atau gagal menyimpan perubahan.'
+            ),
+          };
+        }
+        const serverPairing = (await res.json()) as PairingState;
+        const localized = localizePairing(serverPairing, locale);
+        setPairing(localized);
+        await saveEncryptedItem('pairing', localized);
+        return { ok: true };
+      } catch {
+        setPairing(previous);
+        return {
+          ok: false,
+          error: locale === 'en' ? 'Network error saving partner settings.' : 'Gangguan jaringan saat menyimpan.',
+        };
+      }
     },
-    [pairing]
+    [locale, localizePairing, pairing]
   );
 
-  const revokePairing = useCallback(async () => {
-    if (!pairing) return;
-    const revoked: PairingState = { ...pairing, status: 'revoked' };
-    setPairing(revoked);
-    await saveEncryptedItem('pairing', revoked);
+  const updatePrepChecklist = useCallback(
+    async (items: PrepChecklistItem[]): Promise<ActionResult> => {
+      if (!pairing) return { ok: false, error: 'No active pairing.' };
+      const previous = pairing;
+      const optimistic = { ...pairing, prep_checklist: items };
+      setPairing(optimistic);
+      try {
+        const res = await fetch(`/api/pairings/${encodeURIComponent(pairing.invite_code)}/prep`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items }),
+        });
+        if (!res.ok) {
+          setPairing(previous);
+          return {
+            ok: false,
+            error: await parseErrorMessage(res, 'Failed to sync prep checklist.'),
+          };
+        }
+        const serverPairing = (await res.json()) as PairingState;
+        const localized = localizePairing(serverPairing, locale);
+        setPairing(localized);
+        await saveEncryptedItem('pairing', localized);
+        return { ok: true };
+      } catch {
+        setPairing(previous);
+        return { ok: false, error: 'Network error updating prep checklist.' };
+      }
+    },
+    [locale, localizePairing, pairing]
+  );
+
+  const revokePairing = useCallback(async (): Promise<ActionResult> => {
+    if (!pairing) return { ok: false };
     try {
-      await fetch(`/api/pairings/${pairing.invite_code}/revoke`, { method: 'POST' });
+      const res = await fetch(`/api/pairings/${encodeURIComponent(pairing.invite_code)}/revoke`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: await parseErrorMessage(res, 'Failed to revoke pairing.'),
+        };
+      }
+      const revoked: PairingState = { ...pairing, status: 'revoked' };
+      setPairing(revoked);
+      await saveEncryptedItem('pairing', revoked);
+      return { ok: true };
     } catch {
-      // Offline-safe
+      return { ok: false, error: 'Network error revoking pairing.' };
     }
   }, [pairing]);
 
   const createShareToken = useCallback(
-    async (scope: ('history' | 'risk_factors' | 'lab_results')[]) => {
-      const code = 'MAYA-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-1H';
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    async (scope: ShareScope[], options?: { aiAllowed?: boolean }): Promise<ActionResult<ShareTokenState>> => {
+      const isEn = locale === 'en';
+      const hasSession = await ensureServerSession();
+      if (!hasSession) {
+        return {
+          ok: false,
+          error: isEn
+            ? 'Unable to reach server to generate a verifiable 1-hour QR token.'
+            : 'Tidak dapat terhubung ke server untuk membuat token QR 1 jam yang terverifikasi.',
+        };
+      }
 
-      const ttcDurationLabels: Record<string, string> = {
-        under_6_months: 'Kurang dari 6 bulan program hamil',
-        '6_to_12_months': '6 sampai 12 bulan program hamil',
-        '12_to_24_months': '12 sampai 24 bulan program hamil',
-        over_24_months: 'Lebih dari 24 bulan program hamil',
-      };
+      const ttcDurationLabels: Record<string, string> = isEn
+        ? {
+            under_6_months: 'Trying to conceive < 6 months',
+            '6_to_12_months': '6 to 12 months trying to conceive',
+            '12_to_24_months': '12 to 24 months trying to conceive',
+            over_24_months: 'Over 24 months trying to conceive',
+          }
+        : {
+            under_6_months: 'Kurang dari 6 bulan program hamil',
+            '6_to_12_months': '6 sampai 12 bulan program hamil',
+            '12_to_24_months': '12 sampai 24 bulan program hamil',
+            over_24_months: 'Lebih dari 24 bulan program hamil',
+          };
 
       const snapshot: ShareTokenState['snapshot'] = {
-        patientAlias: displayName.includes('Anonim') ? 'Pasien (Mode Anonim)' : displayName,
+        patientAlias:
+          displayName.includes('Anonim') || displayName.includes('Anonymous')
+            ? isEn
+              ? 'Patient (Anonymous Mode)'
+              : 'Pasien (Mode Anonim)'
+            : displayName,
       };
       if (scope.includes('history')) {
         const durationKey = typeof assessmentAnswers.ttc_duration === 'string' ? assessmentAnswers.ttc_duration : '';
-        snapshot.programDuration = ttcDurationLabels[durationKey] || 'Belum mengisi durasi program hamil';
+        snapshot.programDuration =
+          ttcDurationLabels[durationKey] ||
+          (isEn ? 'TTC duration not specified yet' : 'Belum mengisi durasi program hamil');
         snapshot.assessmentLevel =
-          assessmentResult?.levelLabel || 'Belum menyelesaikan Cek Awal';
+          assessmentResult?.levelLabel ||
+          (isEn ? 'Self-Check not yet completed' : 'Belum menyelesaikan Cek Awal');
       }
       if (scope.includes('risk_factors')) {
         snapshot.reportedRiskFactors = assessmentResult
           ? assessmentResult.factors.length > 0
             ? assessmentResult.factors.map((f) => `${f.factorTitle} (${f.topic})`)
-            : ['Tidak ada faktor risiko utama yang dilaporkan pada Cek Awal']
-          : ['Belum menyelesaikan Cek Awal'];
+            : [
+                isEn
+                  ? 'No major contributing risk factors reported in Self-Check'
+                  : 'Tidak ada faktor risiko utama yang dilaporkan pada Cek Awal',
+              ]
+          : [isEn ? 'Self-Check not yet completed' : 'Belum menyelesaikan Cek Awal'];
+      }
+      if (scope.includes('risk_factors') && assessmentResult && Object.keys(assessmentAnswers).length > 0) {
+        const exp = explainAssessment(assessmentAnswers, locale);
+        const loc = isEn ? 'en' : 'id';
+        snapshot.riskExplanation = {
+          headline: exp.headline,
+          reasons: exp.reasons.map((r) => r.text),
+          domains: exp.domains.map((d) => ({ title: d.title, influence: INFLUENCE_LABELS[loc][d.influence] })),
+          factors: exp.factors.map((f) => ({
+            title: f.title,
+            influence: INFLUENCE_LABELS[loc][f.influence],
+            changeability: CHANGEABILITY_LABELS[loc][f.changeability],
+            decisive: f.isDecisive,
+          })),
+        };
+      }
+      if (scope.includes('care_pathway')) {
+        const pathway = healthJournalRef.current.carePathway;
+        const rec = assessmentResult
+          ? recommendSpecialist(assessmentAnswers, assessmentResult.levelCode, locale)
+          : null;
+        const chosen = pathway.specialistKey || rec?.primary;
+        snapshot.referral = {
+          specialist: chosen
+            ? isEn
+              ? SPECIALISTS[chosen].name.en
+              : SPECIALISTS[chosen].name.id
+            : isEn
+            ? 'Not chosen yet'
+            : 'Belum dipilih',
+          reasons: rec?.reasons ?? [],
+          firstTests: (rec?.firstTests ?? []).map((t) => (isEn ? FIRST_TESTS[t].en : FIRST_TESTS[t].id)),
+          route: pathway.route
+            ? pathway.route === 'jkn'
+              ? isEn
+                ? 'JKN tiered referral (FKTP → hospital)'
+                : 'Rujukan berjenjang JKN (FKTP → RS)'
+              : isEn
+              ? 'Private / self-referral'
+              : 'Mandiri / swasta'
+            : undefined,
+          facility: pathway.facility?.name,
+          appointmentAt: pathway.appointmentAt,
+        };
+      }
+      if (scope.includes('progress')) {
+        const journal = healthJournalRef.current;
+        const loc = isEn ? 'en' : 'id';
+        const levelLabels = getLevelLabels(loc);
+        const lines: string[] = [];
+        for (const snap of journal.assessmentHistory.slice(-4)) {
+          lines.push(
+            `${snap.takenAt.slice(0, 10)} — ${isEn ? 'Self-check' : 'Cek Awal'}: ${levelLabels[snap.levelCode]}`
+          );
+        }
+        for (const def of NUMERIC_METRICS) {
+          const trend = describeMetricTrend(journal.checkIns, def, loc);
+          if (trend) lines.push(trend.text);
+        }
+        snapshot.progressSummary =
+          lines.length > 0
+            ? lines
+            : [isEn ? 'No private progress history recorded yet.' : 'Belum ada riwayat progres privat yang tercatat.'];
       }
       if (scope.includes('lab_results')) {
         snapshot.labResults = labResults;
       }
-
-      const tokenObj: ShareTokenState = {
-        token_code: code,
-        scope,
-        expires_at: expiresAt,
-        revoked: false,
-        accessed_log: [],
-        snapshot,
-      };
+      if (options?.aiAllowed) {
+        snapshot.aiAllowed = true;
+      }
 
       try {
         const res = await fetch('/api/share-tokens', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, scope, snapshot }),
+          body: JSON.stringify({ scope, snapshot }),
         });
-        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
-          const data = await res.json();
-          tokenObj.token_code = data.token_code;
-          tokenObj.expires_at = data.expires_at;
+        if (!res.ok) {
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              isEn ? 'Failed to generate QR share token.' : 'Gagal membuat kode QR berbagi.'
+            ),
+          };
         }
+        const data = (await res.json()) as { token_code: string; expires_at: string };
+        const tokenObj: ShareTokenState = {
+          token_code: data.token_code,
+          scope,
+          expires_at: data.expires_at,
+          revoked: false,
+          accessed_log: [],
+          snapshot,
+        };
+        setShareToken(tokenObj);
+        await saveEncryptedItem('share_token', tokenObj);
+        return { ok: true, data: tokenObj };
       } catch {
-        // Gunakan token lokal bila server offline
+        return {
+          ok: false,
+          error: isEn ? 'Network error creating QR token.' : 'Gangguan jaringan saat membuat token QR.',
+        };
       }
-
-      setShareToken(tokenObj);
-      await saveEncryptedItem('share_token', tokenObj);
-      return tokenObj;
     },
-    [displayName, assessmentAnswers, assessmentResult, labResults, userId]
+    [displayName, assessmentAnswers, assessmentResult, labResults, ensureServerSession, locale]
   );
 
-  const revokeShareToken = useCallback(async () => {
-    if (!shareToken) return;
-    const next = { ...shareToken, revoked: true };
-    setShareToken(next);
-    await saveEncryptedItem('share_token', next);
+  /** Mengambil rencana pasca-konsultasi yang ditulis dokter melalui kode QR, lalu menggabungkannya ke Jalur Perawatan. */
+  const fetchClinicianCarePlans = useCallback(async (): Promise<ActionResult<number>> => {
+    const isEn = locale === 'en';
+    const hasSession = await ensureServerSession();
+    if (!hasSession) {
+      return {
+        ok: false,
+        error: isEn
+          ? 'Unable to reach the server to check for your doctor’s care plan.'
+          : 'Tidak dapat terhubung ke server untuk memeriksa rencana dari dokter.',
+      };
+    }
     try {
-      await fetch(`/api/share-tokens/${shareToken.token_code}/revoke`, { method: 'POST' });
+      const res = await fetch('/api/care-plans', { credentials: 'include' });
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: await parseErrorMessage(
+            res,
+            isEn ? 'Failed to load care plans.' : 'Gagal memuat rencana perawatan.'
+          ),
+        };
+      }
+      const plans = (await res.json()) as ClinicianCarePlan[];
+      const { pathway, importedCount } = importClinicianPlans(
+        healthJournalRef.current.carePathway,
+        Array.isArray(plans) ? plans : []
+      );
+      if (importedCount > 0) {
+        await updateHealthJournal((j) => ({ ...j, carePathway: pathway }));
+      }
+      return { ok: true, data: importedCount };
     } catch {
-      // Offline-safe
+      return {
+        ok: false,
+        error: isEn ? 'Network error loading care plans.' : 'Gangguan jaringan saat memuat rencana perawatan.',
+      };
+    }
+  }, [ensureServerSession, locale, updateHealthJournal]);
+
+  const refreshShareTokenAudit = useCallback(async (): Promise<ActionResult<ShareTokenState>> => {
+    if (!shareToken) return { ok: false, error: 'No share token.' };
+    try {
+      const res = await fetch(`/api/share-tokens/${encodeURIComponent(shareToken.token_code)}/audit`, {
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        return { ok: false, error: await parseErrorMessage(res, 'Failed to load audit log.') };
+      }
+      const data = (await res.json()) as {
+        revoked: boolean;
+        expires_at: string;
+        accessed_log: AccessLogEntry[];
+        care_plan_written_at?: string | null;
+      };
+      const updated: ShareTokenState = {
+        ...shareToken,
+        revoked: data.revoked,
+        expires_at: data.expires_at,
+        accessed_log: data.accessed_log,
+        care_plan_written_at: data.care_plan_written_at ?? null,
+      };
+      setShareToken(updated);
+      await saveEncryptedItem('share_token', updated);
+      return { ok: true, data: updated };
+    } catch {
+      return { ok: false, error: 'Network error loading audit log.' };
+    }
+  }, [shareToken]);
+
+  const revokeShareToken = useCallback(async (): Promise<ActionResult> => {
+    if (!shareToken) return { ok: false };
+    try {
+      const res = await fetch(`/api/share-tokens/${encodeURIComponent(shareToken.token_code)}/revoke`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        return {
+          ok: false,
+          error: await parseErrorMessage(res, 'Failed to revoke share token.'),
+        };
+      }
+      const next = { ...shareToken, revoked: true };
+      setShareToken(next);
+      await saveEncryptedItem('share_token', next);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'Network error revoking share token.' };
     }
   }, [shareToken]);
 
   const recordNakesAccess = useCallback(
-    async (code: string, viewerName = 'dr. Maya (Dokter Umum Puskesmas)'): Promise<ShareTokenState | null> => {
-      // Coba ambil dari server terlebih dahulu
+    async (
+      code: string,
+      viewerName = locale === 'en' ? 'Healthcare Provider' : 'Tenaga Kesehatan'
+    ): Promise<ActionResult<ShareTokenState>> => {
+      const isEn = locale === 'en';
       try {
         const res = await fetch(
-          `/api/share-tokens/${encodeURIComponent(code)}?viewer=${encodeURIComponent(viewerName)}`
+          `/api/share-tokens/${encodeURIComponent(code.trim().toUpperCase())}?viewer=${encodeURIComponent(
+            viewerName
+          )}`,
+          { credentials: 'include' }
         );
-        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
-          const serverToken = (await res.json()) as ShareTokenState;
-          if (shareToken && shareToken.token_code.toUpperCase() === code.toUpperCase()) {
-            setShareToken(serverToken);
-            await saveEncryptedItem('share_token', serverToken);
-          }
-          return serverToken;
+        if (!res.ok) {
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              isEn
+                ? 'Summary code not found, revoked by patient, or expired.'
+                : 'Kode ringkasan tidak ditemukan, sudah dicabut pasien, atau kedaluwarsa.'
+            ),
+          };
         }
+        const serverToken = (await res.json()) as ShareTokenState;
+        return { ok: true, data: serverToken };
       } catch {
-        // Fallback ke state lokal
-      }
-
-      if (shareToken && shareToken.token_code.toUpperCase() === code.toUpperCase()) {
-        if (shareToken.revoked || new Date(shareToken.expires_at).getTime() < Date.now()) {
-          return null;
-        }
-        const newLog: AccessLogEntry = {
-          accessed_at: new Date().toISOString(),
-          viewer_name: viewerName,
-          viewer_role: 'nakes',
-          action: 'Membuka Ringkasan Pasien via Kode/QR',
+        return {
+          ok: false,
+          error: isEn
+            ? 'Unable to connect to server to verify summary code.'
+            : 'Tidak dapat terhubung ke server untuk memverifikasi kode ringkasan.',
         };
-        const updated: ShareTokenState = {
-          ...shareToken,
-          accessed_log: [newLog, ...shareToken.accessed_log],
-        };
-        setShareToken(updated);
-        await saveEncryptedItem('share_token', updated);
-        return updated;
       }
-      return null;
     },
-    [shareToken]
+    [locale]
   );
 
+  const refreshTickets = useCallback(async (): Promise<ActionResult<QuestionTicketItem[]>> => {
+    if (authMode === 'welcome') return { ok: true, data: tickets };
+    const hasSession = await ensureServerSession();
+    if (!hasSession) {
+      return { ok: false, error: 'Session unavailable.' };
+    }
+    try {
+      const res = await fetch('/api/tickets', { credentials: 'include' });
+      if (!res.ok) {
+        return { ok: false, error: await parseErrorMessage(res, 'Failed to load question tickets.') };
+      }
+      const rows = (await res.json()) as QuestionTicketItem[];
+      setTickets(rows);
+      await saveEncryptedItem('tickets', rows);
+      return { ok: true, data: rows };
+    } catch {
+      return { ok: false, error: 'Network error loading tickets.' };
+    }
+  }, [authMode, ensureServerSession, tickets]);
+
   const submitQuestionTicket = useCallback(
-    async (category: string, text: string) => {
-      const newTicket: QuestionTicketItem = {
-        id: 'ticket-' + Date.now(),
-        category,
-        text,
-        status: 'terkirim',
-        created_at: new Date().toISOString(),
-      };
-      const next = [newTicket, ...tickets];
-      setTickets(next);
-      await saveEncryptedItem('tickets', next);
+    async (category: string, text: string): Promise<ActionResult<QuestionTicketItem>> => {
+      const isEn = locale === 'en';
+      const hasSession = await ensureServerSession();
+      if (!hasSession) {
+        return {
+          ok: false,
+          error: isEn
+            ? 'Unable to connect to server to send your question.'
+            : 'Tidak dapat terhubung ke server untuk mengirim pertanyaan Anda.',
+        };
+      }
       try {
-        await fetch('/api/tickets', {
+        const res = await fetch('/api/tickets', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ anonToken: userId, category, text }),
+          body: JSON.stringify({ category, text }),
         });
+        if (!res.ok) {
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              isEn ? 'Failed to submit question ticket.' : 'Gagal mengirim tiket pertanyaan.'
+            ),
+          };
+        }
+        const saved = (await res.json()) as QuestionTicketItem;
+        const next = [saved, ...tickets];
+        setTickets(next);
+        await saveEncryptedItem('tickets', next);
+        return { ok: true, data: saved };
       } catch {
-        // Offline-safe
+        return {
+          ok: false,
+          error: isEn ? 'Network error sending ticket.' : 'Gangguan jaringan saat mengirim tiket.',
+        };
       }
     },
-    [tickets, userId]
+    [ensureServerSession, locale, tickets]
   );
 
   const replyToTicket = useCallback(
-    async (ticketId: string, replyText: string, repliedBy = 'dr. Maya (Dokter Umum Puskesmas)') => {
-      const next = tickets.map((t) =>
-        t.id === ticketId
-          ? { ...t, status: 'dijawab' as const, reply_text: replyText, replied_by: repliedBy }
-          : t
-      );
-      setTickets(next);
-      await saveEncryptedItem('tickets', next);
+    async (ticketId: string, replyText: string): Promise<ActionResult<QuestionTicketItem>> => {
+      const isEn = locale === 'en';
       try {
-        await fetch(`/api/tickets/${ticketId}/reply`, {
+        const res = await fetch(`/api/tickets/${encodeURIComponent(ticketId)}/reply`, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ replyText, repliedBy }),
+          body: JSON.stringify({ replyText }),
         });
+        if (!res.ok) {
+          return {
+            ok: false,
+            error: await parseErrorMessage(
+              res,
+              isEn ? 'Failed to publish clinical reply.' : 'Gagal mengirim jawaban klinis.'
+            ),
+          };
+        }
+        const updated = (await res.json()) as QuestionTicketItem;
+        const next = tickets.map((tItem) => (tItem.id === ticketId ? updated : tItem));
+        setTickets(next);
+        await saveEncryptedItem('tickets', next);
+        return { ok: true, data: updated };
       } catch {
-        // Offline-safe
+        return {
+          ok: false,
+          error: isEn ? 'Network error sending reply.' : 'Gangguan jaringan saat membalas tiket.',
+        };
       }
     },
-    [tickets]
+    [tickets, locale]
   );
 
   const toggleDailyHabit = useCallback(
     async (dateStr: string, habitKey: string) => {
-      setHabitLog((prev) => {
-        const currentList = prev[dateStr] || [];
-        const exists = currentList.includes(habitKey);
-        const updatedList = exists
-          ? currentList.filter((k) => k !== habitKey)
-          : [...currentList, habitKey];
-        const next = { ...prev, [dateStr]: updatedList };
-        saveEncryptedItem('habit_log', next);
-        return next;
-      });
+      const currentList = habitLog[dateStr] || [];
+      const exists = currentList.includes(habitKey);
+      const updatedList = exists
+        ? currentList.filter((k) => k !== habitKey)
+        : [...currentList, habitKey];
+      const next = { ...habitLog, [dateStr]: updatedList };
+      setHabitLog(next);
+      await saveEncryptedItem('habit_log', next);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, {
+          nextCycleTracker: { cycleStartDate, habitLog: next },
+        });
+      }
     },
-    []
+    [authMode, cycleStartDate, habitLog, pushCurrentStateToServer, userId]
   );
 
-  const setCycleStartDate = useCallback(async (dateStr: string) => {
-    setCycleStartDateState(dateStr);
-    await saveEncryptedItem('cycle_start_date', dateStr);
-  }, []);
+  const setCycleStartDate = useCallback(
+    async (dateStr: string) => {
+      setCycleStartDateState(dateStr);
+      await saveEncryptedItem('cycle_start_date', dateStr);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, {
+          nextCycleTracker: { cycleStartDate: dateStr, habitLog },
+        });
+      }
+    },
+    [authMode, habitLog, pushCurrentStateToServer, userId]
+  );
+
+  const saveDoctorChecklist = useCallback(
+    async (next: DoctorChecklistData) => {
+      setDoctorChecklist(next);
+      await saveEncryptedItem('doctor_checklist', next);
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, { nextDoctorChecklist: next });
+      }
+    },
+    [authMode, pushCurrentStateToServer, userId]
+  );
+
+  const importBackupData = useCallback(
+    async (rawJson: string): Promise<ActionResult<ParsedBackupData['summary']>> => {
+      const parsed = parseBackupJson(rawJson, locale);
+      if (!parsed.ok) {
+        return { ok: false, error: parsed.error };
+      }
+      const data = parsed.data;
+
+      let nextAssessmentOverride: { answers: AssessmentAnswers; result: AssessmentEvaluationResult } | undefined;
+      if (data.consents) {
+        const mergedConsents: ConsentState = { ...consents, ...data.consents };
+        setConsents(mergedConsents);
+        await saveEncryptedItem('consents', mergedConsents);
+      }
+      if (data.assessmentAnswers) {
+        const evaluated = evaluateAssessment(data.assessmentAnswers, undefined, undefined, locale);
+        setAssessmentAnswers(data.assessmentAnswers);
+        setAssessmentResult(evaluated);
+        await saveEncryptedItem('assessment_answers', data.assessmentAnswers);
+        await saveEncryptedItem('assessment_result', evaluated);
+        nextAssessmentOverride = { answers: data.assessmentAnswers, result: evaluated };
+      }
+      if (data.labResults) {
+        setLabResults(data.labResults);
+        await saveEncryptedItem('lab_results', data.labResults);
+      }
+      if (data.reminders) {
+        setReminders(data.reminders);
+        await saveEncryptedItem('reminders', data.reminders);
+      }
+      if (data.cycleStartDate) {
+        setCycleStartDateState(data.cycleStartDate);
+        await saveEncryptedItem('cycle_start_date', data.cycleStartDate);
+      }
+      if (data.habitLog) {
+        setHabitLog(data.habitLog);
+        await saveEncryptedItem('habit_log', data.habitLog);
+      }
+      if (data.doctorChecklist) {
+        setDoctorChecklist(data.doctorChecklist);
+        await saveEncryptedItem('doctor_checklist', data.doctorChecklist);
+      }
+      if (data.healthJournal) {
+        setHealthJournal(data.healthJournal);
+        await saveEncryptedItem('health_journal', data.healthJournal);
+      }
+
+      if (authMode === 'account' || authMode === 'nakes') {
+        void pushCurrentStateToServer(userId, {
+          ...(nextAssessmentOverride ? { nextAssessment: nextAssessmentOverride } : {}),
+          ...(data.labResults ? { nextResults: data.labResults } : {}),
+          ...(data.reminders ? { nextReminders: data.reminders } : {}),
+          ...(data.cycleStartDate || data.habitLog
+            ? {
+                nextCycleTracker: {
+                  cycleStartDate: data.cycleStartDate ?? cycleStartDate,
+                  habitLog: data.habitLog ?? habitLog,
+                },
+              }
+            : {}),
+          ...(data.doctorChecklist ? { nextDoctorChecklist: data.doctorChecklist } : {}),
+          ...(data.healthJournal ? { nextJournal: data.healthJournal } : {}),
+        });
+      }
+
+      return { ok: true, data: data.summary };
+    },
+    [authMode, consents, cycleStartDate, habitLog, locale, pushCurrentStateToServer, setHealthJournal, userId]
+  );
 
   const wipeAllData = useCallback(async () => {
     try {
-      await fetch(`/api/users/${userId}/data`, { method: 'DELETE' });
+      await fetch(`/api/users/${encodeURIComponent(userId)}/data`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
     } catch {
       // Tetap lanjutkan penghapusan lokal walaupun server tidak terhubung
     }
     await wipeAllLocalData();
+    const freshAnonId = 'anon-' + secureRandomCode(8).toLowerCase();
     setAuthMode('welcome');
-    setActivePersona('custom');
+    setUserId(freshAnonId);
     setUserEmail(null);
-    setDisplayName('Pengguna Anonim');
+    setDisplayName(locale === 'en' ? 'Anonymous User' : 'Pengguna Anonim');
     setConsents(DEFAULT_CONSENTS);
     setAssessmentAnswers({});
     setAssessmentResult(null);
@@ -943,18 +1973,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setReminders([]);
     setPairing(null);
     setShareToken(null);
-    setTickets(INITIAL_TICKETS);
+    setTickets([]);
     setHabitLog({});
     setCycleStartDateState(new Date().toISOString().slice(0, 10));
-    localStorage.removeItem('sbs_is_locked');
-    localStorage.removeItem('sbs_auto_lock');
-  }, [userId]);
+    setDoctorChecklist(DEFAULT_DOCTOR_CHECKLIST);
+    setHealthJournal(createEmptyJournal());
+    setLastSyncTime(null);
+    setSyncError(null);
+  }, [userId, locale, setHealthJournal]);
 
   return (
     <AppContext.Provider
       value={{
         authMode,
-        activePersona,
         userId,
         userEmail,
         displayName,
@@ -971,7 +2002,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         tickets,
         habitLog,
         cycleStartDate,
+        doctorChecklist,
+        healthJournal,
         lastSyncTime,
+        syncError,
         isSyncing,
         startAnonymousMode,
         loginAccount,
@@ -984,23 +2018,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateConsent,
         saveAssessment,
         addLabResult,
+        editLabResult,
         deleteLabResult,
+        loadLabAttachment,
         addReminder,
         toggleReminder,
         deleteReminder,
         updatePlanStep,
         updatePairingSharedItems,
+        updatePrepChecklist,
         createNewPairing,
+        joinPairing,
+        refreshPairing,
         revokePairing,
         createShareToken,
+        refreshShareTokenAudit,
         revokeShareToken,
         recordNakesAccess,
+        refreshTickets,
         submitQuestionTicket,
         replyToTicket,
         toggleDailyHabit,
         setCycleStartDate,
-        loadRendraDemoScenario,
-        switchDemoPersona,
+        saveDoctorChecklist,
+        updateHealthJournal,
+        fetchClinicianCarePlans,
+        importBackupData,
         wipeAllData,
       }}
     >

@@ -19,22 +19,17 @@ import {
   Smartphone,
   Download,
   Trash2,
-  FileText,
   Palette,
   Activity,
   Heart,
   Calendar,
   CheckCircle,
   X,
-  UserCheck,
   Database,
   Users,
   ArrowLeftRight,
-  ChevronRight,
-  ChevronDown,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { getTranslations } from '../i18n';
 import { readLocalValue, writeLocalValue } from '../lib/crypto-storage';
 
 const AVATAR_THEMES = ['teal', 'coral', 'navy', 'emerald', 'purple'] as const;
@@ -59,40 +54,37 @@ export const AccountPage: React.FC = () => {
     reminders,
     pairing,
     habitLog,
+    cycleStartDate,
+    doctorChecklist,
+    healthJournal,
     lastSyncTime,
+    syncError,
     isSyncing,
     loginAccount,
-    startAnonymousMode,
     logoutToWelcome,
     updateProfile,
     syncCloudData,
-    switchDemoPersona,
     wipeAllData,
   } = useApp();
 
-  const t = getTranslations(locale);
   const isEn = locale === 'en';
   const navigate = useNavigate();
 
-  // Active Main Tab: 'profile' | 'security' | 'data' | 'auth'
   const isAccountActive = authMode === 'account' || authMode === 'nakes';
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'data' | 'auth'>(
     isAccountActive ? 'profile' : 'auth'
   );
 
-  // Switch account modal state & custom email form toggle
   const [showSwitchModal, setShowSwitchModal] = useState<boolean>(false);
-  const [showCustomLoginForm, setShowCustomLoginForm] = useState<boolean>(false);
 
-  // Automatically ensure logged-in user never lands on the login tab
   useEffect(() => {
     if (isAccountActive && activeTab === 'auth') {
       setActiveTab('profile');
     }
   }, [isAccountActive, activeTab]);
 
-  // Auth Sub-tab: 'login' | 'register' | 'magic'
-  const [authSubTab, setAuthSubTab] = useState<'login' | 'register' | 'magic'>('login');
+  // Auth Sub-tab: 'login' | 'register' (no fake OTP / Magic Link)
+  const [authSubTab, setAuthSubTab] = useState<'login' | 'register'>('login');
 
   // Input States
   const [emailInput, setEmailInput] = useState<string>('');
@@ -100,11 +92,12 @@ export const AccountPage: React.FC = () => {
   const [confirmPasswordInput, setConfirmPasswordInput] = useState<string>('');
   const [nameInput, setNameInput] = useState<string>('');
   const [roleInput, setRoleInput] = useState<'user' | 'nakes'>('user');
+  const [inviteCodeInput, setInviteCodeInput] = useState<string>('');
 
   // Password Visibility
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState<boolean>(false);
   const [showSecurityPassword, setShowSecurityPassword] = useState<boolean>(false);
 
   // Feedback states
@@ -112,14 +105,9 @@ export const AccountPage: React.FC = () => {
   const [authSuccess, setAuthSuccess] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Magic Link OTP simulation
-  const [generatedOtp, setGeneratedOtp] = useState<string>('');
-  const [otpInput, setOtpInput] = useState<string>('');
-  const [magicLinkSent, setMagicLinkSent] = useState<boolean>(false);
-
-  // Profile Edit State
+  // Profile & Security Edit State
   const [editName, setEditName] = useState<string>(displayName);
-  const [newPassword, setNewPassword] = useState<string>('');
+  const [currentPasswordInput, setCurrentPasswordInput] = useState<string>('');
   const [securityPasswordInput, setSecurityPasswordInput] = useState<string>('');
   const [profileMessage, setProfileMessage] = useState<string>('');
   const [profileSuccess, setProfileSuccess] = useState<boolean>(false);
@@ -137,8 +125,8 @@ export const AccountPage: React.FC = () => {
   const calculatePasswordStrength = (pwd: string) => {
     if (!pwd) return { score: 0, text: isEn ? 'Empty' : 'Kosong', color: 'bg-brand-navy/20' };
     let score = 0;
-    if (pwd.length >= 6) score += 1;
     if (pwd.length >= 8) score += 1;
+    if (pwd.length >= 10) score += 1;
     if (/[0-9]/.test(pwd)) score += 1;
     if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
 
@@ -149,14 +137,13 @@ export const AccountPage: React.FC = () => {
 
   const passwordStrength = calculatePasswordStrength(passwordInput);
 
-  // Dynamic client environment detection
   const getDeviceInfo = () => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    let os = isEn ? 'Apple Mac (macOS)' : 'Komputer Mac (macOS)';
+    let os = isEn ? 'Desktop / Workstation' : 'Komputer / Laptop';
     let isMobile = false;
 
     if (/Macintosh|Mac OS X/i.test(ua)) {
-      os = isEn ? 'Apple Mac (macOS)' : 'Apple Mac (macOS)';
+      os = 'Apple Mac (macOS)';
     } else if (/Windows/i.test(ua)) {
       os = 'Windows PC';
     } else if (/iPhone|iPad|iPod/i.test(ua)) {
@@ -178,79 +165,52 @@ export const AccountPage: React.FC = () => {
 
   const deviceInfo = getDeviceInfo();
 
-  const handleAutoFillDemo = (target: 'rendra' | 'sari' | 'maya') => {
-    setAuthSubTab('login');
-    setAuthError('');
-    if (target === 'rendra') {
-      setEmailInput('rendra@demo.id');
-      setPasswordInput('DemoAman123!');
-    } else if (target === 'sari') {
-      setEmailInput('sari@demo.id');
-      setPasswordInput('DemoAman123!');
-    } else if (target === 'maya') {
-      setEmailInput('maya@puskesmas.id');
-      setPasswordInput('DemoAman123!');
-    }
-  };
-
-  const handleInstantDemoSignIn = async (persona: 'rendra' | 'sari' | 'maya') => {
-    setIsSubmitting(true);
-    await switchDemoPersona(persona);
-    setIsSubmitting(false);
-    setShowSwitchModal(false);
-    setActiveTab('profile');
-    setAuthSuccess(
-      isEn
-        ? `Successfully switched to ${persona.toUpperCase()} profile!`
-        : `Berhasil masuk sebagai profil demo ${persona.toUpperCase()}!`
-    );
-    if (persona === 'rendra') navigate(isEn ? '/home' : '/');
-    if (persona === 'sari') navigate(isEn ? '/couple' : '/berdua');
-    if (persona === 'maya') navigate(isEn ? '/provider' : '/nakes');
-  };
-
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitAuth = async (mode: 'login' | 'register') => {
     setAuthError('');
     setAuthSuccess('');
 
-    if (authSubTab === 'magic') {
-      if (!emailInput.includes('@')) {
-        setAuthError(isEn ? 'Please enter a valid email address.' : 'Masukkan alamat email yang valid.');
-        return;
-      }
-      const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
-      setGeneratedOtp(randomCode);
-      setMagicLinkSent(true);
-      return;
-    }
-
-    if (authSubTab === 'register') {
-      if (passwordInput !== confirmPasswordInput) {
-        setAuthError(isEn ? 'Password confirmation does not match.' : 'Konfirmasi kata sandi tidak cocok.');
-        return;
-      }
-    }
-
-    if (!emailInput.includes('@') || passwordInput.length < 6) {
+    const normalizedEmail = emailInput.trim().toLowerCase();
+    if (!normalizedEmail.includes('@') || passwordInput.length < 8) {
       setAuthError(
         isEn
-          ? 'Enter a valid email and password with at least 6 characters.'
-          : 'Masukkan email valid dan kata sandi minimal 6 karakter.'
+          ? 'Enter a valid email and password with at least 8 characters.'
+          : 'Masukkan email valid dan kata sandi minimal 8 karakter.'
       );
       return;
     }
 
+    if (mode === 'register') {
+      if (passwordInput !== confirmPasswordInput) {
+        setAuthError(isEn ? 'Password confirmation does not match.' : 'Konfirmasi kata sandi tidak cocok.');
+        return;
+      }
+      if (roleInput === 'nakes' && !inviteCodeInput.trim()) {
+        setAuthError(
+          isEn
+            ? 'A clinic invite code is required to register as a Healthcare Provider.'
+            : 'Kode akses klinik wajib diisi untuk pendaftaran akun Tenaga Kesehatan.'
+        );
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      const endpoint = authSubTab === 'register' ? '/api/auth/register' : '/api/auth/login';
+      const endpoint = mode === 'register' ? '/api/auth/register' : '/api/auth/login';
       const body =
-        authSubTab === 'register'
-          ? { email: emailInput, password: passwordInput, role: roleInput, displayName: nameInput || undefined }
-          : { email: emailInput, password: passwordInput };
+        mode === 'register'
+          ? {
+              email: normalizedEmail,
+              password: passwordInput,
+              role: roleInput,
+              displayName: nameInput.trim() || undefined,
+              ...(roleInput === 'nakes' ? { inviteCode: inviteCodeInput.trim() } : {}),
+            }
+          : { email: normalizedEmail, password: passwordInput };
 
       const res = await fetch(endpoint, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
@@ -258,12 +218,14 @@ export const AccountPage: React.FC = () => {
       const isJson = res.headers.get('content-type')?.includes('application/json');
       if (res.ok && isJson) {
         const data = await res.json();
-        await loginAccount(data.email, data.role, data.displayName);
+        await loginAccount(data.email, data.role, data.displayName, data.id, {
+          preserveLocalOnRegister: mode === 'register',
+        });
         setAuthSuccess(
-          authSubTab === 'register'
+          mode === 'register'
             ? isEn
-              ? 'Account created successfully! Account Mode is now active.'
-              : 'Akun berhasil dibuat! Anda sekarang berada di Mode Akun.'
+              ? 'Account created successfully! Cloud sync is now active.'
+              : 'Akun berhasil dibuat! Sinkronisasi akun Anda sekarang aktif.'
             : isEn
             ? 'Successfully signed in to your account.'
             : 'Berhasil masuk ke akun Anda.'
@@ -272,95 +234,111 @@ export const AccountPage: React.FC = () => {
         setPasswordInput('');
         setConfirmPasswordInput('');
         setNameInput('');
-        setIsSubmitting(false);
+        setInviteCodeInput('');
         setShowSwitchModal(false);
         setActiveTab('profile');
-        return;
-      } else if (res.status === 404 || res.status >= 500 || !isJson) {
-        await loginAccount(emailInput, roleInput, nameInput || emailInput.split('@')[0]);
-        setAuthSuccess(isEn ? 'Signed in (offline safe mode).' : 'Berhasil masuk (mode luring).');
-        setShowSwitchModal(false);
-        setActiveTab('profile');
-      } else {
+      } else if (isJson) {
         const errData = await res.json();
         setAuthError(errData.error || (isEn ? 'Authentication failed.' : 'Gagal memproses autentikasi.'));
+      } else {
+        setAuthError(
+          isEn
+            ? 'Authentication server returned an invalid response.'
+            : 'Server autentikasi mengembalikan respons tidak valid.'
+        );
       }
     } catch {
-      await loginAccount(emailInput, roleInput, nameInput || emailInput.split('@')[0]);
-      setAuthSuccess(isEn ? 'Signed in (offline safe mode).' : 'Berhasil masuk (mode luring).');
-      setShowSwitchModal(false);
-      setActiveTab('profile');
+      setAuthError(
+        isEn
+          ? 'Unable to connect to the authentication server. Please verify the API is running and try again.'
+          : 'Tidak dapat terhubung ke server autentikasi. Pastikan server aktif dan coba lagi.'
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
-  const handleVerifyOtp = async () => {
-    if (otpInput.trim() === generatedOtp || otpInput.trim().length === 6) {
-      setIsSubmitting(true);
-      try {
-        const res = await fetch('/api/auth/magic-link', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: emailInput, role: roleInput }),
-        });
-        if (res.ok && res.headers.get('content-type')?.includes('application/json')) {
-          const data = await res.json();
-          await loginAccount(data.email, data.role, data.displayName);
-        } else {
-          await loginAccount(emailInput, roleInput);
-        }
-      } catch {
-        await loginAccount(emailInput, roleInput);
-      }
-      setMagicLinkSent(false);
-      setGeneratedOtp('');
-      setOtpInput('');
-      setAuthSuccess(isEn ? 'Successfully signed in via Magic Link OTP!' : 'Berhasil masuk via Magic Link OTP!');
-      setIsSubmitting(false);
-      setShowSwitchModal(false);
-      setActiveTab('profile');
-    } else {
-      setAuthError(isEn ? 'Invalid OTP code. Please try again.' : 'Kode OTP tidak cocok. Silakan periksa kembali.');
-    }
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitAuth(authSubTab);
+  };
+
+  const handleSwitchModalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitAuth('login');
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileMessage('');
-    if (!editName.trim()) return;
+    if (!editName.trim() || editName.trim().length < 2) {
+      setProfileSuccess(false);
+      setProfileMessage(
+        isEn ? 'Display name must be at least 2 characters.' : 'Nama panggilan minimal 2 karakter.'
+      );
+      return;
+    }
 
     setIsSubmitting(true);
-    const ok = await updateProfile(editName.trim(), newPassword ? newPassword : undefined);
+    const result = await updateProfile(editName.trim());
     setIsSubmitting(false);
-    if (ok) {
+    if (result.ok) {
       setProfileSuccess(true);
       setProfileMessage(isEn ? 'Profile updated successfully!' : 'Profil akun Anda berhasil diperbarui!');
-      setNewPassword('');
       setTimeout(() => setProfileMessage(''), 3500);
     } else {
       setProfileSuccess(false);
-      setProfileMessage(isEn ? 'Failed to update profile.' : 'Gagal memperbarui profil.');
+      setProfileMessage(
+        result.error || (isEn ? 'Failed to update profile.' : 'Gagal memperbarui profil.')
+      );
     }
   };
 
   const handleSecurityPasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!securityPasswordInput || securityPasswordInput.length < 6) {
+    setProfileMessage('');
+    if (!currentPasswordInput) {
       setProfileSuccess(false);
-      setProfileMessage(isEn ? 'Password must be at least 6 characters.' : 'Kata sandi baru minimal 6 karakter.');
+      setProfileMessage(
+        isEn ? 'Enter your current password to verify your identity.' : 'Masukkan kata sandi saat ini untuk verifikasi.'
+      );
+      return;
+    }
+    if (!securityPasswordInput || securityPasswordInput.length < 8) {
+      setProfileSuccess(false);
+      setProfileMessage(
+        isEn ? 'New password must be at least 8 characters.' : 'Kata sandi baru minimal 8 karakter.'
+      );
       return;
     }
     setIsSubmitting(true);
-    const ok = await updateProfile(displayName, securityPasswordInput);
+    const result = await updateProfile(displayName, {
+      currentPassword: currentPasswordInput,
+      newPassword: securityPasswordInput,
+    });
     setIsSubmitting(false);
-    if (ok) {
+    if (result.ok) {
       setProfileSuccess(true);
-      setProfileMessage(isEn ? 'Security password updated successfully!' : 'Kata sandi keamanan berhasil diperbarui!');
+      setProfileMessage(
+        isEn ? 'Security password updated successfully!' : 'Kata sandi keamanan berhasil diperbarui!'
+      );
+      setCurrentPasswordInput('');
       setSecurityPasswordInput('');
       setTimeout(() => setProfileMessage(''), 3500);
     } else {
       setProfileSuccess(false);
-      setProfileMessage(isEn ? 'Failed to update password.' : 'Gagal memperbarui kata sandi.');
+      setProfileMessage(
+        result.error || (isEn ? 'Failed to update password.' : 'Gagal memperbarui kata sandi.')
+      );
+    }
+  };
+
+  const handleManualSync = async () => {
+    setAuthSuccess('');
+    setAuthError('');
+    const ok = await syncCloudData();
+    if (ok) {
+      setAuthSuccess(isEn ? 'All records synced to your encrypted cloud account.' : 'Seluruh data berhasil disinkronkan ke akun Anda.');
     }
   };
 
@@ -376,6 +354,9 @@ export const AccountPage: React.FC = () => {
       reminders,
       pairing,
       habitLog,
+      cycleTracker: { cycleStartDate, habitLog },
+      doctorChecklist,
+      healthJournal,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -405,14 +386,12 @@ export const AccountPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* 1. TOP HERO PROFILE CARD (Modern Clean Studio Aesthetic) */}
+      {/* 1. TOP HERO PROFILE CARD */}
       <section className="card relative overflow-hidden">
-        {/* Decorative Top Accent Bar */}
         <div className="h-1.5 bg-gradient-to-r from-brand-teal via-[#17A7A0] to-brand-coral" />
 
         <div className="p-5 sm:p-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            {/* User Avatar & Info */}
             <div className="flex items-center gap-4 sm:gap-5 min-w-0">
               <div
                 className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center text-2xl sm:text-3xl font-black shadow-soft ring-4 ${avatarGradients[avatarTheme]} shrink-0`}
@@ -422,20 +401,21 @@ export const AccountPage: React.FC = () => {
 
               <div className="space-y-1.5 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                  <h1 className="page-title">
-                    {displayName}
-                  </h1>
+                  <h1 className="page-title">{displayName}</h1>
 
-                  {/* Mode Badge */}
-                  <span
-                    className={`badge ${isAccountActive ? 'badge-success' : 'badge-teal'}`}
-                  >
+                  <span className={`badge ${isAccountActive ? 'badge-success' : 'badge-teal'}`}>
                     <ShieldCheck className="w-3.5 h-3.5" />
                     {isAccountActive
                       ? authMode === 'nakes'
-                        ? isEn ? 'Verified Healthcare Provider' : 'Tenaga Kesehatan'
-                        : isEn ? 'Account Synced' : 'Mode Akun Aktif'
-                      : isEn ? '100% Anonymous (Local)' : 'Anonim Terenkripsi'}
+                        ? isEn
+                          ? 'Verified Healthcare Provider'
+                          : 'Tenaga Kesehatan Terverifikasi'
+                        : isEn
+                        ? 'Account Synced'
+                        : 'Mode Akun Aktif'
+                      : isEn
+                      ? '100% Anonymous (Local)'
+                      : 'Anonim Terenkripsi'}
                   </span>
                 </div>
 
@@ -460,11 +440,13 @@ export const AccountPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Actions (Switch Account / Sync / Sign Out) */}
             <div className="flex flex-wrap gap-2 lg:justify-end lg:max-w-xs shrink-0">
               <button
                 type="button"
-                onClick={() => setShowSwitchModal(true)}
+                onClick={() => {
+                  setAuthError('');
+                  setShowSwitchModal(true);
+                }}
                 className="btn btn-secondary"
               >
                 <Users className="w-4 h-4 text-brand-teal" />
@@ -475,12 +457,20 @@ export const AccountPage: React.FC = () => {
                 <>
                   <button
                     type="button"
-                    onClick={() => syncCloudData()}
+                    onClick={handleManualSync}
                     disabled={isSyncing}
                     className="btn btn-primary"
                   >
                     <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                    <span>{isSyncing ? (isEn ? 'Syncing...' : 'Menyinkronkan...') : (isEn ? 'Sync Cloud' : 'Sinkronkan')}</span>
+                    <span>
+                      {isSyncing
+                        ? isEn
+                          ? 'Syncing...'
+                          : 'Menyinkronkan...'
+                        : isEn
+                        ? 'Sync Cloud'
+                        : 'Sinkronkan'}
+                    </span>
                   </button>
 
                   <button
@@ -505,7 +495,7 @@ export const AccountPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Real-time Health Profile Stats Grid */}
+          {/* Health Profile Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-brand-navy/10 dark:border-white/10">
             <div className="well p-3.5 sm:p-4 space-y-1 min-w-0">
               <div className="flex items-center gap-1.5 text-xs text-brand-navy/60 dark:text-white/60 font-semibold">
@@ -513,7 +503,7 @@ export const AccountPage: React.FC = () => {
                 <span>{isEn ? 'Self Check' : 'Cek Awal'}</span>
               </div>
               <div className="text-sm font-bold text-brand-navy dark:text-white truncate">
-                {assessmentResult ? assessmentResult.levelLabel : (isEn ? 'Not Started' : 'Belum Ada')}
+                {assessmentResult ? assessmentResult.levelLabel : isEn ? 'Not Started' : 'Belum Ada'}
               </div>
             </div>
 
@@ -535,7 +525,9 @@ export const AccountPage: React.FC = () => {
               <div className="text-sm font-bold text-brand-navy dark:text-white truncate">
                 {pairing && pairing.status === 'active'
                   ? pairing.partner_b_alias
-                  : isEn ? 'Not Paired' : 'Belum Ditautkan'}
+                  : isEn
+                  ? 'Not Paired'
+                  : 'Belum Ditautkan'}
               </div>
             </div>
 
@@ -554,22 +546,26 @@ export const AccountPage: React.FC = () => {
 
       {/* FEEDBACK ALERTS */}
       {authSuccess && (
-        <div role="status" className="p-4 rounded-2xl bg-status-success-bg text-[#1F7A50] text-xs font-bold flex items-center gap-2.5 border border-status-success/30">
+        <div
+          role="status"
+          className="p-4 rounded-2xl bg-status-success-bg dark:bg-status-success/15 text-[#1F7A50] dark:text-[#7BD9AC] text-xs font-bold flex items-center gap-2.5 border border-status-success/30"
+        >
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{authSuccess}</span>
         </div>
       )}
 
-      {authError && (
-        <div role="alert" className="p-4 rounded-2xl bg-status-urgent-bg text-[#B33834] text-xs font-bold flex items-center gap-2.5 border border-status-urgent/30">
+      {(authError || syncError) && (
+        <div
+          role="alert"
+          className="p-4 rounded-2xl bg-status-urgent-bg dark:bg-status-urgent/15 text-[#B33834] dark:text-[#FF8A85] text-xs font-bold flex items-center gap-2.5 border border-status-urgent/30"
+        >
           <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>{authError}</span>
+          <span>{authError || syncError}</span>
         </div>
       )}
 
-
-
-      {/* 2. MODERN SEGMENTED NAVIGATION TABS */}
+      {/* 2. SEGMENTED NAVIGATION TABS */}
       <div className="card flex items-center gap-1.5 p-1.5 shadow-xs overflow-x-auto thin-scroll">
         {isAccountActive ? (
           <>
@@ -648,15 +644,12 @@ export const AccountPage: React.FC = () => {
         )}
       </div>
 
-      {/* 3. TAB CONTENT */}
-
-      {/* TAB A: PROFILE & PREFERENCES (Visible when logged in) */}
-      {activeTab === 'profile' && (
+      {/* TAB A: PROFILE & PREFERENCES */}
+      {activeTab === 'profile' && isAccountActive && (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Left Form (8 Cols) */}
           <div className="md:col-span-8 space-y-6">
             <section className="card p-6 sm:p-7 space-y-5">
-              <div className="border-b border-brand-navy/10 pb-3">
+              <div className="border-b border-brand-navy/10 dark:border-white/10 pb-3">
                 <h2 className="section-title flex items-center gap-2">
                   <User className="w-4 h-4 text-brand-teal" />
                   <span>{isEn ? 'Personal Profile Settings' : 'Pengaturan Profil Akun'}</span>
@@ -676,7 +669,11 @@ export const AccountPage: React.FC = () => {
                       : 'bg-status-urgent-bg text-status-urgent'
                   }`}
                 >
-                  {profileSuccess ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                  {profileSuccess ? (
+                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                  )}
                   <span>{profileMessage}</span>
                 </div>
               )}
@@ -690,13 +687,13 @@ export const AccountPage: React.FC = () => {
                     id="edit-name-field"
                     type="text"
                     required
+                    minLength={2}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     className="field w-full font-semibold"
                   />
                 </div>
 
-                {/* Avatar Color Picker */}
                 <div>
                   <label className="block text-xs font-bold mb-1.5 text-brand-navy dark:text-white flex items-center gap-1.5">
                     <Palette className="w-3.5 h-3.5 text-brand-teal" />
@@ -731,18 +728,13 @@ export const AccountPage: React.FC = () => {
                 </div>
 
                 <div className="pt-2 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="btn btn-primary"
-                  >
+                  <button type="submit" disabled={isSubmitting} className="btn btn-primary">
                     {isEn ? 'Save Profile Changes' : 'Simpan Perubahan'}
                   </button>
                 </div>
               </form>
             </section>
 
-            {/* Quick Demo Personas / Switch Account Hub */}
             <section className="card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-brand-teal/10 text-brand-teal flex items-center justify-center shrink-0">
@@ -750,18 +742,21 @@ export const AccountPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xs font-bold text-brand-navy dark:text-white">
-                    {isEn ? 'Switch Account or Demo Persona' : 'Ganti Akun & Persona Demo'}
+                    {isEn ? 'Switch Account' : 'Ganti Akun'}
                   </h3>
                   <p className="text-2xs text-brand-navy/70 dark:text-white/70">
                     {isEn
-                      ? 'Instantly switch between Husband, Wife, or Healthcare Provider profiles.'
-                      : 'Beralih instan antara profil Suami, Istri, atau Dokter Puskesmas untuk kemudahan evaluasi.'}
+                      ? 'Sign in with a different user or healthcare provider account on this device.'
+                      : 'Masuk dengan akun pengguna atau tenaga kesehatan lain di perangkat ini.'}
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setShowSwitchModal(true)}
+                onClick={() => {
+                  setAuthError('');
+                  setShowSwitchModal(true);
+                }}
                 className="px-4 py-2 rounded-btn bg-brand-teal/10 hover:bg-brand-teal text-brand-teal hover:text-white border border-brand-teal/30 text-xs font-bold transition flex items-center justify-center gap-2 shrink-0 shadow-xs"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5" />
@@ -770,9 +765,7 @@ export const AccountPage: React.FC = () => {
             </section>
           </div>
 
-          {/* Right Info Cards: Device & Network Protection Hub (4 Cols) */}
           <div className="md:col-span-4 space-y-4">
-            {/* Card 1: Perangkat Ini (Current Verified Session) */}
             <div className="card p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
@@ -785,45 +778,40 @@ export const AccountPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 space-y-2.5">
+              <div className="p-3.5 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/5 dark:border-white/10 space-y-2.5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-brand-teal/10 text-brand-teal flex items-center justify-center shrink-0">
                     {deviceInfo.isMobile ? <Smartphone className="w-5 h-5" /> : <Laptop className="w-5 h-5" />}
                   </div>
                   <div>
-                    <h4 className="font-bold text-xs text-brand-navy dark:text-white">
-                      {deviceInfo.os}
-                    </h4>
+                    <h4 className="font-bold text-xs text-brand-navy dark:text-white">{deviceInfo.os}</h4>
                     <p className="text-2xs text-brand-navy/60 dark:text-white/60">
-                      {deviceInfo.browser} • Standalone Web Client
+                      {deviceInfo.browser} • Web Client
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-brand-navy/10 text-2xs space-y-1.5">
+                <div className="pt-2 border-t border-brand-navy/10 dark:border-white/10 text-2xs space-y-1.5">
                   <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
-                    <span>{isEn ? 'Protection:' : 'Keamanan:'}</span>
-                    <strong className="text-brand-teal font-semibold">{isEn ? 'Protected & Secure' : 'Tersimpan Terlindungi'}</strong>
+                    <span>{isEn ? 'At-Rest Encryption:' : 'Enkripsi Server:'}</span>
+                    <strong className="text-brand-teal font-semibold">AES-256-GCM</strong>
                   </div>
                   <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
                     <span>{isEn ? 'Storage:' : 'Penyimpanan:'}</span>
                     <span className="font-medium text-brand-navy dark:text-white">
-                      {isAccountActive
-                        ? isEn ? 'Cloud Encrypted Sync' : 'Sinkron Cloud Terenkripsi'
-                        : isEn ? 'Device-Only (IndexedDB)' : 'Lokal Terenkripsi (IndexedDB)'}
+                      {isEn ? 'Encrypted Cloud Sync' : 'Sinkron Terenkripsi'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-brand-navy/70 dark:text-white/70">
                     <span>{isEn ? 'Last Sync:' : 'Terakhir Sinkron:'}</span>
                     <span className="font-mono text-3xs">
-                      {lastSyncTime ? lastSyncTime : (isEn ? 'Live Session' : 'Sesi Aktif')}
+                      {lastSyncTime ? lastSyncTime : isEn ? 'Synced on Sign-In' : 'Tersinkron'}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Card 2: Perangkat Pasangan (Couple Mode Sync Card) */}
             <div className="card p-5 space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
@@ -883,44 +871,23 @@ export const AccountPage: React.FC = () => {
                 </div>
               )}
             </div>
-
-            {/* Card 3: Jaminan Privasi */}
-            <div className="card p-5 space-y-2.5">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-brand-teal" />
-                <span>{isEn ? 'Privacy Shield' : 'Jaminan Privasi'}</span>
-              </h3>
-              <p className="text-xs text-brand-navy/75 dark:text-white/75 leading-relaxed">
-                {isAccountActive
-                  ? isEn
-                    ? 'Cross-device sync enabled with zero health-payload server logging.'
-                    : 'Sinkronisasi cloud aktif dengan zero health-payload server logging.'
-                  : isEn
-                    ? 'Pure client-side zero-knowledge encryption. No personal data leaves this device.'
-                    : 'Enkripsi zero-knowledge lokal. Tidak ada data pribadi dikirim ke server.'}
-              </p>
-              <div className="pt-1 flex items-center justify-between text-2xs font-semibold text-brand-teal">
-                <span>{isEn ? 'No Trackers • No Ads' : 'Bebas Pelacak • Bebas Iklan'}</span>
-                <span className="text-status-success font-bold">✓ Terproteksi</span>
-              </div>
-            </div>
           </div>
         </div>
       )}
 
-      {/* TAB B: PASSWORD & SECURITY (Visible when logged in) */}
+      {/* TAB B: PASSWORD & SECURITY */}
       {activeTab === 'security' && isAccountActive && (
         <div className="space-y-6">
           <section className="card p-6 sm:p-7 space-y-6">
-            <div className="border-b border-brand-navy/10 pb-4">
+            <div className="border-b border-brand-navy/10 dark:border-white/10 pb-4">
               <h2 className="section-title flex items-center gap-2">
                 <Lock className="w-4 h-4 text-brand-teal" />
                 <span>{isEn ? 'Security Credentials & Access Control' : 'Kredensial Keamanan & Akses Akun'}</span>
               </h2>
               <p className="text-xs text-brand-navy/70 dark:text-white/70">
                 {isEn
-                  ? 'Update your master password and review cryptographic session status.'
-                  : 'Perbarui kata sandi utama dan pantau status enkripsi kriptografi sesi Anda.'}
+                  ? 'Update your password (requires current password verification) and review encryption status.'
+                  : 'Perbarui kata sandi Anda (memerlukan verifikasi kata sandi lama) dan pantau status enkripsi sesi.'}
               </p>
             </div>
 
@@ -932,29 +899,55 @@ export const AccountPage: React.FC = () => {
                     : 'bg-status-urgent-bg text-status-urgent'
                 }`}
               >
-                {profileSuccess ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                {profileSuccess ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                )}
                 <span>{profileMessage}</span>
               </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Change Password Form */}
-              <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-4">
+              <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 dark:border-white/10 space-y-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy dark:text-white flex items-center gap-1.5">
                   <KeyRound className="w-4 h-4 text-brand-teal" />
                   <span>{isEn ? 'Change Account Password' : 'Ganti Kata Sandi Akun'}</span>
                 </h3>
                 <form onSubmit={handleSecurityPasswordChange} className="space-y-3">
                   <div>
+                    <label htmlFor="sec-cur-pwd" className="block text-xs font-semibold mb-1 text-brand-navy dark:text-white">
+                      {isEn ? 'Current Password' : 'Kata Sandi Saat Ini'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="sec-cur-pwd"
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        required
+                        value={currentPasswordInput}
+                        onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                        placeholder="••••••••"
+                        className="field w-full pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-2.5 text-brand-navy/40 dark:text-white/40 hover:text-brand-navy dark:hover:text-white"
+                      >
+                        {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
                     <label htmlFor="sec-new-pwd" className="block text-xs font-semibold mb-1 text-brand-navy dark:text-white">
-                      {isEn ? 'New Password (min. 6 characters)' : 'Kata Sandi Baru (min. 6 karakter)'}
+                      {isEn ? 'New Password (min. 8 characters)' : 'Kata Sandi Baru (min. 8 karakter)'}
                     </label>
                     <div className="relative">
                       <input
                         id="sec-new-pwd"
                         type={showSecurityPassword ? 'text' : 'password'}
                         required
-                        minLength={6}
+                        minLength={8}
                         value={securityPasswordInput}
                         onChange={(e) => setSecurityPasswordInput(e.target.value)}
                         placeholder="••••••••"
@@ -963,47 +956,39 @@ export const AccountPage: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowSecurityPassword(!showSecurityPassword)}
-                        className="absolute right-3 top-2.5 text-brand-navy/40 hover:text-brand-navy"
+                        className="absolute right-3 top-2.5 text-brand-navy/40 dark:text-white/40 hover:text-brand-navy dark:hover:text-white"
                       >
                         {showSecurityPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="btn btn-primary w-full"
-                  >
+                  <button type="submit" disabled={isSubmitting} className="btn btn-primary w-full">
                     {isEn ? 'Update Password' : 'Simpan Kata Sandi Baru'}
                   </button>
                 </form>
               </div>
 
-              {/* Cryptographic Session Diagnostics */}
-              <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-3.5">
+              <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 dark:border-white/10 space-y-3.5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-brand-navy dark:text-white flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-brand-teal" />
                   <span>{isEn ? 'Session Security Status' : 'Status Keamanan Sesi'}</span>
                 </h3>
                 <ul className="text-xs space-y-2 text-brand-navy/80 dark:text-white/80">
-                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
-                    <span>{isEn ? 'Storage Protection:' : 'Perlindungan Data:'}</span>
-                    <strong className="text-brand-teal font-semibold">{isEn ? 'Encrypted & Private' : 'Tersimpan Terenkripsi'}</strong>
+                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10 dark:border-white/10">
+                    <span>{isEn ? 'Client Encryption:' : 'Enkripsi Perangkat:'}</span>
+                    <strong className="text-brand-teal font-semibold">Web Crypto AES-GCM-256</strong>
                   </li>
-                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
-                    <span>{isEn ? 'Access Control:' : 'Kontrol Akses:'}</span>
-                    <strong className="text-brand-navy dark:text-white font-semibold">{isEn ? 'Secure Session Token' : 'Sesi Token Aman'}</strong>
+                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10 dark:border-white/10">
+                    <span>{isEn ? 'Server At-Rest:' : 'Enkripsi Basis Data:'}</span>
+                    <strong className="text-brand-teal font-semibold">AES-256-GCM Authenticated</strong>
                   </li>
-                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10">
-                    <span>{isEn ? 'Server Health Payload:' : 'Payload Kesehatan Server:'}</span>
-                    <span className="text-status-success font-bold font-mono">0 bytes (Zero-Knowledge)</span>
+                  <li className="flex items-center justify-between py-1 border-b border-brand-navy/10 dark:border-white/10">
+                    <span>{isEn ? 'Session Cookie:' : 'Cookie Sesi:'}</span>
+                    <strong className="text-brand-navy dark:text-white font-semibold">Signed HttpOnly SameSite=Lax</strong>
                   </li>
                   <li className="flex items-center justify-between py-1">
-                    <span>{isEn ? 'Session Verification:' : 'Verifikasi Sesi:'}</span>
-                    <span className="text-status-success font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      {isEn ? 'Verified Active' : 'Terverifikasi Aktif'}
-                    </span>
+                    <span>{isEn ? 'Health Payload Logging:' : 'Log Payload Kesehatan:'}</span>
+                    <span className="text-status-success font-bold font-mono">0 bytes (Redacted)</span>
                   </li>
                 </ul>
               </div>
@@ -1012,29 +997,28 @@ export const AccountPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB C: AUTHENTICATION (Visible only when in Anonymous mode) */}
+      {/* TAB C: AUTHENTICATION (Visible only when in Anonymous / Welcome mode) */}
       {activeTab === 'auth' && !isAccountActive && (
         <div className="space-y-6">
           <section className="card p-6 sm:p-8 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-navy/10 pb-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-brand-navy/10 dark:border-white/10 pb-5">
               <div>
                 <h2 className="section-title sm:text-xl">
                   {isEn ? 'Sign In or Create an Account' : 'Masuk atau Daftarkan Akun Anda'}
                 </h2>
                 <p className="text-xs text-brand-navy/70 dark:text-white/70 mt-0.5">
                   {isEn
-                    ? 'Sync your self-check answers, semen test records, and couple plan across phones and tablets.'
-                    : 'Sinkronkan hasil Cek Awal, catatan laboratorium, dan rencana berdua ke perangkat lain.'}
+                    ? 'Sync your self-check answers, semen test records, 72-day tracker, and couple plan securely across devices.'
+                    : 'Sinkronkan hasil Cek Awal, catatan lab, pelacak siklus 72 hari, dan rencana berdua antar perangkat.'}
                 </p>
               </div>
 
-              {/* Sub-tabs: Login / Register / Magic */}
-              <div className="flex p-1 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 shrink-0">
+              <div className="flex p-1 rounded-btn bg-surface-muted dark:bg-surface-dark border border-brand-navy/10 dark:border-white/10 shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setAuthSubTab('login');
-                    setMagicLinkSent(false);
+                    setAuthError('');
                   }}
                   className={`px-3.5 py-1.5 rounded-btn text-xs font-bold transition ${
                     authSubTab === 'login'
@@ -1048,7 +1032,7 @@ export const AccountPage: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setAuthSubTab('register');
-                    setMagicLinkSent(false);
+                    setAuthError('');
                   }}
                   className={`px-3.5 py-1.5 rounded-btn text-xs font-bold transition ${
                     authSubTab === 'register'
@@ -1058,288 +1042,163 @@ export const AccountPage: React.FC = () => {
                 >
                   {isEn ? 'Register' : 'Daftar Baru'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthSubTab('magic');
-                    setMagicLinkSent(false);
-                  }}
-                  className={`px-3.5 py-1.5 rounded-btn text-xs font-bold transition ${
-                    authSubTab === 'magic'
-                      ? 'bg-brand-teal text-white shadow-xs'
-                      : 'text-brand-navy/75 dark:text-white/75 hover:text-brand-navy'
-                  }`}
-                >
-                  {isEn ? 'Magic Link' : 'Magic Link'}
-                </button>
               </div>
             </div>
 
-            {/* MAGIC LINK / OTP SIMULATOR */}
-            {magicLinkSent ? (
-              <div className="p-5 rounded-card bg-brand-teal-light/40 dark:bg-brand-teal/15 border border-brand-teal/40 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm font-bold text-brand-teal">
-                    <Mail className="w-5 h-5" />
-                    <span>{isEn ? `Simulated OTP Sent to ${emailInput}` : `Kode OTP Terkirim ke ${emailInput}`}</span>
+            <form onSubmit={handleAuthSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="auth-email" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
+                    {isEn ? 'Email Address' : 'Alamat Email'}
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-brand-navy/40 absolute left-3.5 top-3" />
+                    <input
+                      id="auth-email"
+                      type="email"
+                      required
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      placeholder={isEn ? 'name@email.com' : 'nama@email.com'}
+                      className="field w-full pl-10 pr-4"
+                    />
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setMagicLinkSent(false)}
-                    className="text-xs text-brand-navy/70 dark:text-white/70 hover:underline"
-                  >
-                    {isEn ? 'Change Email' : 'Ganti Email'}
-                  </button>
                 </div>
 
-                <div className="p-3.5 rounded-btn bg-white dark:bg-surface-dark border border-brand-teal/30 flex items-center justify-between">
-                  <span className="text-xs text-brand-navy/70 dark:text-white/70">
-                    {isEn ? 'Simulated 6-Digit Code:' : 'Kode 6-Digit Simulasi:'}
-                  </span>
-                  <span className="font-mono text-lg font-black tracking-widest text-brand-teal">
-                    {generatedOtp}
-                  </span>
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={otpInput}
-                    onChange={(e) => setOtpInput(e.target.value)}
-                    placeholder="123456"
-                    className="field flex-1 text-center font-mono tracking-widest font-bold"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleVerifyOtp}
-                    className="btn btn-primary"
-                  >
-                    {isEn ? 'Verify & Enter' : 'Verifikasi & Masuk'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleAuthSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="auth-email" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
-                      {isEn ? 'Email Address' : 'Alamat Email'}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="auth-pwd" className="block text-xs font-bold text-brand-navy dark:text-white">
+                      {isEn ? 'Password' : 'Kata Sandi'}
                     </label>
-                    <div className="relative">
-                      <Mail className="w-4 h-4 text-brand-navy/40 absolute left-3.5 top-3" />
-                      <input
-                        id="auth-email"
-                        type="email"
-                        required
-                        value={emailInput}
-                        onChange={(e) => setEmailInput(e.target.value)}
-                        placeholder="rendra@demo.id"
-                        className="field w-full pl-10 pr-4"
-                      />
-                    </div>
+                    {authSubTab === 'register' && (
+                      <span className="text-3xs font-semibold text-brand-navy/60 dark:text-white/60">
+                        {passwordStrength.text}
+                      </span>
+                    )}
                   </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-brand-navy/40 absolute left-3.5 top-3" />
+                    <input
+                      id="auth-pwd"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      minLength={8}
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      placeholder={isEn ? 'Minimum 8 characters' : 'Minimal 8 karakter'}
+                      className="field w-full pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-2.5 text-brand-navy/40 hover:text-brand-navy"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
 
-                  {authSubTab !== 'magic' && (
+                {authSubTab === 'register' && (
+                  <>
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label htmlFor="auth-pwd" className="block text-xs font-bold text-brand-navy dark:text-white">
-                          {isEn ? 'Password' : 'Kata Sandi'}
-                        </label>
-                        {authSubTab === 'register' && (
-                          <span className="text-3xs font-semibold text-brand-navy/60 dark:text-white/60">
-                            {passwordStrength.text}
-                          </span>
-                        )}
-                      </div>
+                      <label htmlFor="auth-conf-pwd" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
+                        {isEn ? 'Confirm Password' : 'Ulangi Kata Sandi'}
+                      </label>
                       <div className="relative">
                         <Lock className="w-4 h-4 text-brand-navy/40 absolute left-3.5 top-3" />
                         <input
-                          id="auth-pwd"
-                          type={showPassword ? 'text' : 'password'}
+                          id="auth-conf-pwd"
+                          type={showConfirmPassword ? 'text' : 'password'}
                           required
-                          minLength={6}
-                          value={passwordInput}
-                          onChange={(e) => setPasswordInput(e.target.value)}
+                          minLength={8}
+                          value={confirmPasswordInput}
+                          onChange={(e) => setConfirmPasswordInput(e.target.value)}
                           placeholder="••••••••"
                           className="field w-full pl-10 pr-10"
                         />
                         <button
                           type="button"
-                          onClick={() => setShowPassword(!showPassword)}
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           className="absolute right-3.5 top-2.5 text-brand-navy/40 hover:text-brand-navy"
                         >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
-                  )}
 
-                  {authSubTab === 'register' && (
-                    <>
-                      <div>
-                        <label htmlFor="auth-conf-pwd" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
-                          {isEn ? 'Confirm Password' : 'Ulangi Kata Sandi'}
-                        </label>
-                        <div className="relative">
-                          <Lock className="w-4 h-4 text-brand-navy/40 absolute left-3.5 top-3" />
-                          <input
-                            id="auth-conf-pwd"
-                            type={showConfirmPassword ? 'text' : 'password'}
-                            required
-                            minLength={6}
-                            value={confirmPasswordInput}
-                            onChange={(e) => setConfirmPasswordInput(e.target.value)}
-                            placeholder="••••••••"
-                            className="field w-full pl-10 pr-10"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3.5 top-2.5 text-brand-navy/40 hover:text-brand-navy"
-                          >
-                            {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
+                    <div>
+                      <label htmlFor="auth-display-name" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
+                        {isEn ? 'Your Nickname / Call Name' : 'Nama Panggilan'}
+                      </label>
+                      <input
+                        id="auth-display-name"
+                        type="text"
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        placeholder={isEn ? 'Your nickname' : 'Nama panggilan Anda'}
+                        className="field w-full"
+                      />
+                    </div>
 
+                    <div>
+                      <label htmlFor="auth-role-select" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
+                        {isEn ? 'Account Role' : 'Peran Akun'}
+                      </label>
+                      <select
+                        id="auth-role-select"
+                        value={roleInput}
+                        onChange={(e) => setRoleInput(e.target.value as 'user' | 'nakes')}
+                        className="field w-full"
+                      >
+                        <option value="user">
+                          {isEn ? 'Patient / Partner Account' : 'Pengguna / Pasangan'}
+                        </option>
+                        <option value="nakes">
+                          {isEn ? 'Healthcare Provider (Clinic Invite Required)' : 'Tenaga Kesehatan (Butuh Kode Klinik)'}
+                        </option>
+                      </select>
+                    </div>
+
+                    {roleInput === 'nakes' && (
                       <div>
-                        <label htmlFor="auth-display-name" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
-                          {isEn ? 'Your Nickname / Call Name' : 'Nama Panggilan'}
+                        <label htmlFor="auth-invite-code" className="block text-xs font-bold mb-1 text-brand-navy dark:text-white">
+                          {isEn ? 'Clinic Invite Access Code' : 'Kode Akses Undangan Klinik'}
                         </label>
                         <input
-                          id="auth-display-name"
+                          id="auth-invite-code"
                           type="text"
-                          value={nameInput}
-                          onChange={(e) => setNameInput(e.target.value)}
-                          placeholder="Rendra"
-                          className="field w-full"
+                          required
+                          value={inviteCodeInput}
+                          onChange={(e) => setInviteCodeInput(e.target.value)}
+                          placeholder={isEn ? 'Issued by your clinic admin' : 'Kode resmi dari administrator klinik'}
+                          className="field w-full font-mono"
                         />
                       </div>
-                    </>
-                  )}
-                </div>
+                    )}
+                  </>
+                )}
+              </div>
 
-                <div className="pt-3 flex flex-wrap items-center justify-between gap-3">
-                  <span className="text-2xs text-brand-navy/60 dark:text-white/60">
-                    {isEn ? 'Client encryption & privacy preserved.' : 'Enkripsi data & hak privasi terjamin.'}
-                  </span>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="btn btn-primary"
-                  >
-                    <span>
-                      {authSubTab === 'register'
-                        ? isEn ? 'Create Protected Account' : 'Daftar Akun Terlindungi'
-                        : authSubTab === 'magic'
-                        ? isEn ? 'Send Magic OTP' : 'Kirim Kode OTP'
-                        : isEn ? 'Sign In to Account' : 'Masuk ke Akun'}
-                    </span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* QUICK DEMO PRESETS */}
-            <div className="pt-6 border-t border-brand-navy/10 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-brand-navy/70 dark:text-white/70">
-                  {isEn ? 'Or Test Drive with Demo Accounts:' : 'Atau Coba Akun Demo Cepat (Juri / Penguji):'}
+              <div className="pt-3 flex flex-wrap items-center justify-between gap-3">
+                <span className="text-2xs text-brand-navy/60 dark:text-white/60">
+                  {isEn
+                    ? 'Server-verified authentication with AES-256-GCM at-rest encryption.'
+                    : 'Autentikasi terverifikasi server dengan enkripsi AES-256-GCM.'}
                 </span>
-                <span className="text-2xs font-semibold text-brand-teal">1-Click Sign-in</span>
+                <button type="submit" disabled={isSubmitting} className="btn btn-primary">
+                  <span>
+                    {authSubTab === 'register'
+                      ? isEn
+                        ? 'Create Protected Account'
+                        : 'Daftar Akun Terlindungi'
+                      : isEn
+                      ? 'Sign In to Account'
+                      : 'Masuk ke Akun'}
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Rendra */}
-                <div className="p-4 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-2.5 hover:border-brand-teal transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-teal to-teal-700 text-white font-bold flex items-center justify-center shadow-xs">
-                      R
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-xs text-brand-navy dark:text-white">Rendra (Suami)</h4>
-                      <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono">rendra@demo.id</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleAutoFillDemo('rendra')}
-                      className="btn btn-secondary btn-sm flex-1"
-                    >
-                      {isEn ? 'Auto-Fill' : 'Isi Form'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleInstantDemoSignIn('rendra')}
-                      className="btn btn-primary btn-sm flex-1"
-                    >
-                      {isEn ? 'Instant' : 'Masuk'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Sari */}
-                <div className="p-4 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-2.5 hover:border-brand-coral transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-coral to-orange-600 text-white font-bold flex items-center justify-center shadow-xs">
-                      S
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-xs text-brand-navy dark:text-white">Sari (Istri)</h4>
-                      <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono">sari@demo.id</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleAutoFillDemo('sari')}
-                      className="btn btn-secondary btn-sm flex-1 hover:border-brand-coral"
-                    >
-                      {isEn ? 'Auto-Fill' : 'Isi Form'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleInstantDemoSignIn('sari')}
-                      className="btn btn-coral btn-sm flex-1"
-                    >
-                      {isEn ? 'Instant' : 'Masuk'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* dr. Maya */}
-                <div className="p-4 rounded-xl bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-2.5 hover:border-status-success transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-700 text-white font-bold flex items-center justify-center shadow-xs">
-                      M
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-xs text-brand-navy dark:text-white">dr. Maya (Dokter)</h4>
-                      <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono">maya@puskesmas.id</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleAutoFillDemo('maya')}
-                      className="btn btn-secondary btn-sm flex-1 hover:border-status-success"
-                    >
-                      {isEn ? 'Auto-Fill' : 'Isi Form'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleInstantDemoSignIn('maya')}
-                      className="btn btn-sm flex-1 bg-[#1F7A50] text-white shadow-xs hover:bg-[#186341]"
-                    >
-                      {isEn ? 'Instant' : 'Masuk'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </form>
           </section>
         </div>
       )}
@@ -1348,7 +1207,7 @@ export const AccountPage: React.FC = () => {
       {activeTab === 'data' && (
         <div className="space-y-6">
           <section className="card p-6 sm:p-7 space-y-5">
-            <div className="border-b border-brand-navy/10 pb-3">
+            <div className="border-b border-brand-navy/10 dark:border-white/10 pb-3">
               <h2 className="section-title flex items-center gap-2">
                 <Database className="w-4 h-4 text-brand-teal" />
                 <span>{isEn ? 'Data & Storage Management' : 'Kelola Data & Penyimpanan'}</span>
@@ -1361,8 +1220,7 @@ export const AccountPage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Export JSON Card */}
-              <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 space-y-3 flex flex-col justify-between">
+              <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-brand-navy/10 dark:border-white/10 space-y-3 flex flex-col justify-between">
                 <div className="space-y-1.5">
                   <div className="font-bold text-sm text-brand-navy dark:text-white flex items-center gap-2">
                     <Download className="w-4 h-4 text-brand-teal" />
@@ -1374,17 +1232,12 @@ export const AccountPage: React.FC = () => {
                       : 'Unduh seluruh riwayat jawaban Cek Awal, catatan analisis semen, jadwal kontrol, dan rencana berdua dalam format file JSON.'}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleExportDataJson}
-                  className="btn btn-navy w-full"
-                >
+                <button type="button" onClick={handleExportDataJson} className="btn btn-navy w-full">
                   <Download className="w-3.5 h-3.5" />
                   <span>{isEn ? 'Download JSON Backup' : 'Unduh Cadangan JSON'}</span>
                 </button>
               </div>
 
-              {/* Wipe / Delete Card */}
               <div className="p-5 rounded-card bg-surface-muted/60 dark:bg-surface-dark border border-status-urgent/30 space-y-3 flex flex-col justify-between">
                 <div className="space-y-1.5">
                   <div className="font-bold text-sm text-status-urgent flex items-center gap-2">
@@ -1393,8 +1246,8 @@ export const AccountPage: React.FC = () => {
                   </div>
                   <p className="text-xs text-brand-navy/70 dark:text-white/70 leading-relaxed">
                     {isEn
-                      ? 'Permanently delete your profile, encrypted local IndexedDB data, and active server sessions. This cannot be undone.'
-                      : 'Hapus permanen profil, data IndexedDB terenkripsi di perangkat ini, serta sesi server yang aktif. Tindakan ini tidak dapat dibatalkan.'}
+                      ? 'Permanently delete your profile, encrypted local IndexedDB data, and active server records. This cannot be undone.'
+                      : 'Hapus permanen profil, data IndexedDB terenkripsi di perangkat ini, serta data di server. Tindakan ini tidak dapat dibatalkan.'}
                   </p>
                 </div>
 
@@ -1463,7 +1316,7 @@ export const AccountPage: React.FC = () => {
         </div>
       )}
 
-      {/* 4. STUDIO-GRADE FLOATING SWITCH ACCOUNT MODAL */}
+      {/* 4. SWITCH ACCOUNT MODAL */}
       {showSwitchModal && (
         <div
           role="dialog"
@@ -1475,7 +1328,6 @@ export const AccountPage: React.FC = () => {
             className="bg-surface dark:bg-surface-dark-card w-full max-w-md rounded-2xl shadow-2xl border border-brand-navy/15 dark:border-white/10 overflow-hidden animate-rise-in"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="p-5 pb-4 border-b border-brand-navy/10 dark:border-white/10 flex items-center justify-between bg-surface-muted/30 dark:bg-surface-dark">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-brand-teal/15 text-brand-teal flex items-center justify-center shadow-xs">
@@ -1486,7 +1338,7 @@ export const AccountPage: React.FC = () => {
                     {isEn ? 'Switch Account' : 'Ganti Akun'}
                   </h3>
                   <p className="text-2xs text-brand-navy/60 dark:text-white/60">
-                    {isEn ? 'Select persona or switch account' : 'Pilih persona demo atau masuk ke akun lain'}
+                    {isEn ? 'Sign in with another account' : 'Masuk ke akun lain pada perangkat ini'}
                   </p>
                 </div>
               </div>
@@ -1500,9 +1352,7 @@ export const AccountPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Modal Scrollable Content */}
             <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
-              {/* Active Account Card */}
               <div>
                 <div className="text-3xs font-bold uppercase tracking-wider text-brand-navy/50 dark:text-white/50 mb-1.5">
                   {isEn ? 'Currently Active' : 'Akun Sedang Digunakan'}
@@ -1528,205 +1378,73 @@ export const AccountPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Demo Personas for Evaluators */}
-              <div>
-                <div className="text-3xs font-bold uppercase tracking-wider text-brand-navy/50 dark:text-white/50 mb-1.5 flex items-center justify-between">
-                  <span>{isEn ? 'Demo Personas (1-Click Switch)' : 'Persona Demo (Beralih 1-Klik)'}</span>
-                  <span className="text-3xs font-semibold text-brand-teal">
-                    {isEn ? 'Instant' : 'Instan'}
-                  </span>
+              <div className="pt-2 border-t border-brand-navy/10 dark:border-white/10 space-y-3">
+                <div className="text-xs font-semibold text-brand-navy/80 dark:text-white/80 flex items-center gap-2">
+                  <KeyRound className="w-3.5 h-3.5 text-brand-teal" />
+                  <span>{isEn ? 'Sign in with another email' : 'Masuk dengan email lain'}</span>
                 </div>
-                <div className="space-y-2">
-                  {/* Persona: Rendra (Suami) */}
-                  <button
-                    type="button"
-                    onClick={() => handleInstantDemoSignIn('rendra')}
-                    disabled={userEmail === 'rendra@demo.id'}
-                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition group ${
-                      userEmail === 'rendra@demo.id'
-                        ? 'border-brand-teal/30 bg-brand-teal/5 opacity-60 cursor-default'
-                        : 'border-brand-navy/10 hover:border-brand-teal hover:bg-brand-teal/5 bg-surface-muted/40 dark:bg-surface-dark hover:shadow-xs'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-teal to-teal-700 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                        R
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-brand-navy dark:text-white truncate">Rendra</span>
-                          <span className="text-3xs px-1.5 py-0.5 rounded bg-brand-teal/15 text-brand-teal font-semibold shrink-0">
-                            Suami
-                          </span>
-                        </div>
-                        <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono truncate">
-                          rendra@demo.id
-                        </p>
-                      </div>
-                    </div>
-                    {userEmail === 'rendra@demo.id' ? (
-                      <span className="text-2xs font-bold text-brand-teal shrink-0">
-                        {isEn ? 'Active' : 'Aktif'}
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold text-brand-teal group-hover:translate-x-0.5 transition flex items-center gap-0.5 shrink-0">
-                        <span>{isEn ? 'Switch' : 'Beralih'}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </span>
-                    )}
-                  </button>
 
-                  {/* Persona: Sari (Istri) */}
-                  <button
-                    type="button"
-                    onClick={() => handleInstantDemoSignIn('sari')}
-                    disabled={userEmail === 'sari@demo.id'}
-                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition group ${
-                      userEmail === 'sari@demo.id'
-                        ? 'border-brand-coral/30 bg-brand-coral/5 opacity-60 cursor-default'
-                        : 'border-brand-navy/10 hover:border-brand-coral hover:bg-brand-coral/5 bg-surface-muted/40 dark:bg-surface-dark hover:shadow-xs'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-coral to-orange-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                        S
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-brand-navy dark:text-white truncate">Sari</span>
-                          <span className="text-3xs px-1.5 py-0.5 rounded bg-brand-coral/15 text-brand-coral font-semibold shrink-0">
-                            Istri
-                          </span>
-                        </div>
-                        <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono truncate">
-                          sari@demo.id
-                        </p>
-                      </div>
-                    </div>
-                    {userEmail === 'sari@demo.id' ? (
-                      <span className="text-2xs font-bold text-brand-coral shrink-0">
-                        {isEn ? 'Active' : 'Aktif'}
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold text-brand-coral group-hover:translate-x-0.5 transition flex items-center gap-0.5 shrink-0">
-                        <span>{isEn ? 'Switch' : 'Beralih'}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Persona: dr. Maya (Nakes) */}
-                  <button
-                    type="button"
-                    onClick={() => handleInstantDemoSignIn('maya')}
-                    disabled={userEmail === 'maya@puskesmas.id'}
-                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition group ${
-                      userEmail === 'maya@puskesmas.id'
-                        ? 'border-status-success/30 bg-status-success/5 opacity-60 cursor-default'
-                        : 'border-brand-navy/10 hover:border-status-success hover:bg-status-success/5 bg-surface-muted/40 dark:bg-surface-dark hover:shadow-xs'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-700 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                        M
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-brand-navy dark:text-white truncate">dr. Maya</span>
-                          <span className="text-3xs px-1.5 py-0.5 rounded bg-status-success/15 text-[#1F7A50] dark:text-[#7BD9AC] font-semibold shrink-0">
-                            Nakes
-                          </span>
-                        </div>
-                        <p className="text-2xs text-brand-navy/60 dark:text-white/60 font-mono truncate">
-                          maya@puskesmas.id
-                        </p>
-                      </div>
-                    </div>
-                    {userEmail === 'maya@puskesmas.id' ? (
-                      <span className="text-2xs font-bold text-[#1F7A50] dark:text-[#7BD9AC] shrink-0">
-                        {isEn ? 'Active' : 'Aktif'}
-                      </span>
-                    ) : (
-                      <span className="text-xs font-semibold text-[#1F7A50] dark:text-[#7BD9AC] group-hover:translate-x-0.5 transition flex items-center gap-0.5 shrink-0">
-                        <span>{isEn ? 'Switch' : 'Beralih'}</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </span>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Custom Account Sign In Toggle (Accordion) */}
-              <div className="pt-2 border-t border-brand-navy/10 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setShowCustomLoginForm(!showCustomLoginForm)}
-                  className="w-full py-2 text-xs font-semibold text-brand-navy/80 dark:text-white/80 hover:text-brand-teal flex items-center justify-between transition"
-                >
-                  <span className="flex items-center gap-2">
-                    <KeyRound className="w-3.5 h-3.5 text-brand-teal" />
-                    <span>{isEn ? 'Sign in with another email' : 'Masuk dengan email lain'}</span>
-                  </span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                      showCustomLoginForm ? 'rotate-180 text-brand-teal' : ''
-                    }`}
-                  />
-                </button>
-
-                {showCustomLoginForm && (
-                  <form
-                    onSubmit={handleAuthSubmit}
-                    className="pt-2 space-y-3 animate-fade-in"
-                  >
-                    <div>
-                      <label className="block text-2xs font-medium text-brand-navy/70 dark:text-white/70 mb-1">
-                        Email
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="nama@domain.com"
-                        value={emailInput}
-                        onChange={(e) => setEmailInput(e.target.value)}
-                        className="field w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-2xs font-medium text-brand-navy/70 dark:text-white/70 mb-1">
-                        {isEn ? 'Password' : 'Kata Sandi'}
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          placeholder="••••••••"
-                          value={passwordInput}
-                          onChange={(e) => setPasswordInput(e.target.value)}
-                          className="field w-full pr-9"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-2.5 top-2 text-brand-navy/40 hover:text-brand-navy"
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full py-2.5 rounded-xl bg-brand-teal text-white text-xs font-bold hover:bg-brand-teal-dark transition shadow-xs disabled:opacity-50"
-                    >
-                      {isSubmitting ? (isEn ? 'Signing in...' : 'Memproses...') : (isEn ? 'Sign In to Account' : 'Masuk ke Akun')}
-                    </button>
-                  </form>
+                {authError && (
+                  <div className="p-2.5 rounded-lg bg-status-urgent-bg text-[#B33834] text-2xs font-medium flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{authError}</span>
+                  </div>
                 )}
+
+                <form onSubmit={handleSwitchModalSubmit} className="space-y-3">
+                  <div>
+                    <label className="block text-2xs font-medium text-brand-navy/70 dark:text-white/70 mb-1">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="nama@domain.com"
+                      value={emailInput}
+                      onChange={(e) => setEmailInput(e.target.value)}
+                      className="field w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-2xs font-medium text-brand-navy/70 dark:text-white/70 mb-1">
+                      {isEn ? 'Password' : 'Kata Sandi'}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        required
+                        minLength={8}
+                        placeholder="••••••••"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        className="field w-full pr-9"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2.5 top-2 text-brand-navy/40 hover:text-brand-navy"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-2.5 rounded-xl bg-brand-teal text-white text-xs font-bold hover:bg-brand-teal-dark transition shadow-xs disabled:opacity-50"
+                  >
+                    {isSubmitting
+                      ? isEn
+                        ? 'Signing in...'
+                        : 'Memproses...'
+                      : isEn
+                      ? 'Sign In to Account'
+                      : 'Masuk ke Akun'}
+                  </button>
+                </form>
               </div>
             </div>
 
-            {/* Modal Footer */}
             <div className="p-3.5 bg-surface-muted/40 dark:bg-surface-dark border-t border-brand-navy/10 dark:border-white/10 flex items-center justify-between">
               <button
                 type="button"

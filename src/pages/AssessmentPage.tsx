@@ -10,13 +10,17 @@ import {
   MapPin,
   Users,
   RotateCcw,
-  Sparkles,
   HeartHandshake,
   ShieldCheck,
+  Route,
+  LineChart,
+  Sparkles,
 } from 'lucide-react';
-import { assessmentRulesConfig } from '../config/schemas';
-import { RENDRA_DEMO_ANSWERS, type AssessmentAnswers } from '../lib/assessment-engine';
+import { getLocalizedAssessmentConfig } from '../config/schemas';
+import { type AssessmentAnswers } from '../lib/assessment-engine';
 import { useApp } from '../context/AppContext';
+import { RiskBreakdown } from '../components/RiskBreakdown';
+import { checkDistress, useAiStatus } from '../lib/ai-client';
 
 export const AssessmentPage: React.FC = () => {
   const {
@@ -24,11 +28,15 @@ export const AssessmentPage: React.FC = () => {
     assessmentAnswers,
     assessmentResult,
     saveAssessment,
+    consents,
   } = useApp();
+  const aiStatus = useAiStatus();
+  const [aiSupport, setAiSupport] = useState<boolean>(false);
   const isEn = locale === 'en';
   const navigate = useNavigate();
+  const localizedConfig = getLocalizedAssessmentConfig(locale);
 
-  const questions = assessmentRulesConfig.questions;
+  const questions = localizedConfig.questions;
   const totalQuestions = questions.length;
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -56,13 +64,21 @@ export const AssessmentPage: React.FC = () => {
   const currentQuestion = questions[currentIndex];
   const progressPct = Math.round(((currentIndex + 1) / totalQuestions) * 100);
 
+  // Deteksi tekanan emosional berbasis AI (opt-in) untuk catatan bebas, melengkapi kata kunci.
+  const runAiDistressCheck = (note: string, keywordFlag: boolean) => {
+    setAiSupport(false);
+    if (keywordFlag || !note.trim() || !consents.ai_assist || !aiStatus.enabled) return;
+    void checkDistress(note, isEn ? 'en' : 'id').then((r) => setAiSupport(r.showSupport));
+  };
+
   const handleSelectOption = async (value: string) => {
     const updated = { ...draftAnswers, [currentQuestion.id]: value };
     setDraftAnswers(updated);
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      await saveAssessment(updated, freeTextNote);
+      const saved = await saveAssessment(updated, freeTextNote);
+      runAiDistressCheck(freeTextNote, saved.showEmotionalSupport);
       setViewMode('result');
     }
   };
@@ -73,7 +89,8 @@ export const AssessmentPage: React.FC = () => {
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      await saveAssessment(updated, freeTextNote);
+      const saved = await saveAssessment(updated, freeTextNote);
+      runAiDistressCheck(freeTextNote, saved.showEmotionalSupport);
       setViewMode('result');
     }
   };
@@ -98,12 +115,6 @@ export const AssessmentPage: React.FC = () => {
     }
   };
 
-  const handleFillRendraDemo = async () => {
-    setDraftAnswers(RENDRA_DEMO_ANSWERS);
-    await saveAssessment(RENDRA_DEMO_ANSWERS, '');
-    setViewMode('result');
-  };
-
   const handleRetake = () => {
     setCurrentIndex(0);
     setViewMode('quiz');
@@ -120,7 +131,7 @@ export const AssessmentPage: React.FC = () => {
     return (
       <div className="space-y-6">
         {/* Banner Dukungan Emosional (Bila Terdeteksi Tekanan Emosional Berat) */}
-        {assessmentResult.showEmotionalSupport && (
+        {(assessmentResult.showEmotionalSupport || aiSupport) && (
           <section
             role="alert"
             className="bg-brand-coral-light dark:bg-brand-coral/15 border-2 border-brand-coral rounded-card p-5 space-y-3 text-brand-navy dark:text-white"
@@ -183,44 +194,15 @@ export const AssessmentPage: React.FC = () => {
             <span>{assessmentResult.disclaimer}</span>
           </div>
 
-          {/* Faktor yang Memengaruhi & Penjelasan "Mengapa Ini Relevan" */}
-          <div className="space-y-3 pt-2">
-            <h2 className="section-title">
-              Faktor yang Memengaruhi & Mengapa Ini Relevan
-            </h2>
-
-            {assessmentResult.factors.length === 0 ? (
-              <div className="p-4 rounded-btn bg-surface-muted dark:bg-surface-dark text-xs text-brand-navy/80 dark:text-white/80">
-                Tidak ditemukan faktor risiko khusus dari jawaban Anda. Tetap pertahankan pola tidur, olahraga rutin, dan komunikasi yang hangat bersama pasangan.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {assessmentResult.factors.map((f, idx) => (
-                  <div
-                    key={`${f.questionId}-${idx}`}
-                    className="well p-4 sm:p-5 space-y-2"
-                  >
-                    <div className="flex flex-col items-start gap-1.5">
-                      <span className="badge badge-teal">
-                        {f.topic}
-                      </span>
-                      <span className="font-bold text-sm leading-snug text-brand-navy dark:text-white">
-                        {f.factorTitle}
-                      </span>
-                    </div>
-                    <p className="text-xs text-brand-navy/80 dark:text-white/80 leading-relaxed">
-                      <strong>Mengapa ini relevan:</strong> {f.whyRelevant}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
+          {/* Rincian Risiko yang Dapat Dijelaskan (menggantikan daftar faktor sederhana) */}
+          <div className="pt-2">
+            <RiskBreakdown answers={assessmentAnswers} locale={locale} />
           </div>
 
           {/* Langkah Kecil Berikutnya */}
           <div className="space-y-3 pt-2">
             <h2 className="section-title">
-              Langkah Kecil Berikutnya
+              {isEn ? 'Next Small Steps' : 'Langkah Kecil Berikutnya'}
             </h2>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {assessmentResult.nextSteps.map((step, i) => (
@@ -236,11 +218,20 @@ export const AssessmentPage: React.FC = () => {
           </div>
 
           {/* Tombol Aksi Utama Sesuai Spesifikasi F2 */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-brand-navy/10 dark:border-white/10">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-4 border-t border-brand-navy/10 dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => navigate(isEn ? '/care-pathway' : '/jalur-perawatan')}
+              className="btn btn-primary btn-lg flex-1"
+            >
+              <Route className="w-4 h-4" />
+              {isEn ? 'Plan my care pathway' : 'Susun jalur perawatan saya'}
+            </button>
+
             <button
               type="button"
               onClick={() => navigate(isEn ? '/facilities' : '/layanan')}
-              className="btn btn-primary btn-lg flex-1"
+              className="btn btn-secondary btn-lg flex-1"
             >
               <MapPin className="w-4 h-4" />
               {isEn ? 'Find care clinics' : 'Cari layanan pemeriksaan'}
@@ -255,6 +246,31 @@ export const AssessmentPage: React.FC = () => {
               {isEn ? 'Invite partner' : 'Ajak pasangan'}
             </button>
           </div>
+
+          {aiStatus.enabled && (
+            <button
+              type="button"
+              onClick={() => navigate(isEn ? '/companion' : '/asisten')}
+              className="btn btn-soft w-full sm:w-auto"
+            >
+              <Sparkles className="w-4 h-4" />
+              {isEn ? 'Ask the AI companion about my result' : 'Tanyakan hasil saya ke Asisten AI'}
+            </button>
+          )}
+
+          <p className="text-2xs text-brand-navy/65 dark:text-white/65 flex items-center gap-1.5">
+            <LineChart className="w-3.5 h-3.5 text-brand-teal shrink-0" />
+            {isEn
+              ? 'Every completed self-check is saved privately (encrypted) to your progress history so you can compare over time.'
+              : 'Setiap Cek Awal yang selesai tersimpan privat (terenkripsi) di riwayat progres agar bisa dibandingkan dari waktu ke waktu.'}{' '}
+            <button
+              type="button"
+              onClick={() => navigate(isEn ? '/progress' : '/progres')}
+              className="font-bold text-brand-teal-dark dark:text-[#7FDADB] underline underline-offset-2"
+            >
+              {isEn ? 'View my progress' : 'Lihat progres saya'}
+            </button>
+          </p>
         </section>
       </div>
     );
@@ -264,7 +280,7 @@ export const AssessmentPage: React.FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <div className="lg:col-span-8 space-y-5">
-        {/* Header Progress & Pintasan Demo */}
+        {/* Header Progress */}
         <div className="card p-5 sm:p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
@@ -277,15 +293,6 @@ export const AssessmentPage: React.FC = () => {
                 {isEn ? 'Topic:' : 'Topik:'} {currentQuestion.topic}
               </h1>
             </div>
-
-            <button
-              type="button"
-              onClick={handleFillRendraDemo}
-              className="btn btn-coral-soft"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              {isEn ? 'Fill Rendra Demo (Instant Finish)' : 'Isi Contoh Rendra (Selesai Instan)'}
-            </button>
           </div>
 
           {/* Progress Bar Halus */}
@@ -467,7 +474,7 @@ export const AssessmentPage: React.FC = () => {
 
         <div className="text-center text-xs text-brand-navy/65 dark:text-white/65 flex items-center justify-center gap-1.5">
           <AlertTriangle className="w-3.5 h-3.5 text-brand-teal" />
-          <span>{assessmentRulesConfig.disclaimer}</span>
+          <span>{localizedConfig.disclaimer}</span>
         </div>
       </div>
 

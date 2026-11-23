@@ -55,7 +55,6 @@ export const translations = {
       tabs: {
         login: 'Masuk Akun',
         register: 'Daftar Akun Baru',
-        magic: 'Magic Link (Tanpa Sandi)',
       },
       labels: {
         email: 'Alamat Email',
@@ -70,12 +69,10 @@ export const translations = {
       buttons: {
         signIn: 'Masuk Sekarang',
         createAccount: 'Daftar & Aktifkan Mode Akun',
-        sendMagic: 'Kirim Magic Link',
         signOut: 'Keluar dari Akun',
         switchToAnon: 'Beralih ke Mode Anonim Lokal',
         upgradeToAccount: 'Tingkatkan ke Mode Akun (Sinkron Antar-Perangkat)',
         saveProfile: 'Simpan Perubahan Profil',
-        quickDemo: 'Pintasan Masuk Demo Cepat:',
       },
       sessions: {
         title: 'Sesi & Perangkat Terhubung',
@@ -138,7 +135,6 @@ export const translations = {
       tabs: {
         login: 'Sign In',
         register: 'Create New Account',
-        magic: 'Magic Link (Passwordless)',
       },
       labels: {
         email: 'Email Address',
@@ -153,12 +149,10 @@ export const translations = {
       buttons: {
         signIn: 'Sign In Now',
         createAccount: 'Register & Enable Account Mode',
-        sendMagic: 'Send Magic Link',
         signOut: 'Sign Out',
         switchToAnon: 'Switch to Local Anonymous Mode',
         upgradeToAccount: 'Upgrade to Account Mode (Multi-Device Sync)',
         saveProfile: 'Save Profile Changes',
-        quickDemo: 'Quick Demo Auto-Fill:',
       },
       sessions: {
         title: 'Active Sessions & Connected Devices',

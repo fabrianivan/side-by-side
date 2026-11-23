@@ -1,26 +1,65 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
+import React, { Suspense, lazy } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { AppProvider, useApp } from './context/AppContext';
 import { Layout } from './components/Layout';
-import { WelcomePage } from './pages/WelcomePage';
-import { HomePage } from './pages/HomePage';
-import { AssessmentPage } from './pages/AssessmentPage';
-import { FacilitiesPage } from './pages/FacilitiesPage';
-import { CoupleModePage } from './pages/CoupleModePage';
-import { ResultsPage } from './pages/ResultsPage';
-import { LibraryPage } from './pages/LibraryPage';
-import { ShareNakesPage } from './pages/ShareNakesPage';
-import { NakesDashboardPage } from './pages/NakesDashboardPage';
-import { AccountPage } from './pages/AccountPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { SemenSimulatorPage } from './pages/SemenSimulatorPage';
-import { SpermatogenesisTrackerPage } from './pages/SpermatogenesisTrackerPage';
-import { DoctorChecklistPage } from './pages/DoctorChecklistPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
-export function App() {
+function lazyNamed<T extends React.ComponentType<unknown>>(
+  loader: () => Promise<Record<string, unknown>>,
+  exportName: string,
+): React.LazyExoticComponent<T> {
+  return lazy(() =>
+    loader().then((mod) => ({ default: mod[exportName] as T })),
+  );
+}
+
+const WelcomePage = lazyNamed(() => import('./pages/WelcomePage'), 'WelcomePage');
+const HomePage = lazyNamed(() => import('./pages/HomePage'), 'HomePage');
+const AssessmentPage = lazyNamed(() => import('./pages/AssessmentPage'), 'AssessmentPage');
+const FacilitiesPage = lazyNamed(() => import('./pages/FacilitiesPage'), 'FacilitiesPage');
+const CoupleModePage = lazyNamed(() => import('./pages/CoupleModePage'), 'CoupleModePage');
+const ResultsPage = lazyNamed(() => import('./pages/ResultsPage'), 'ResultsPage');
+const LibraryPage = lazyNamed(() => import('./pages/LibraryPage'), 'LibraryPage');
+const ShareNakesPage = lazyNamed(() => import('./pages/ShareNakesPage'), 'ShareNakesPage');
+const NakesDashboardPage = lazyNamed(() => import('./pages/NakesDashboardPage'), 'NakesDashboardPage');
+const AccountPage = lazyNamed(() => import('./pages/AccountPage'), 'AccountPage');
+const SettingsPage = lazyNamed(() => import('./pages/SettingsPage'), 'SettingsPage');
+const SemenSimulatorPage = lazyNamed(() => import('./pages/SemenSimulatorPage'), 'SemenSimulatorPage');
+const SpermatogenesisTrackerPage = lazyNamed(
+  () => import('./pages/SpermatogenesisTrackerPage'),
+  'SpermatogenesisTrackerPage',
+);
+const CarePathwayPage = lazyNamed(() => import('./pages/CarePathwayPage'), 'CarePathwayPage');
+const ProgressPage = lazyNamed(() => import('./pages/ProgressPage'), 'ProgressPage');
+const CompanionPage = lazyNamed(() => import('./pages/CompanionPage'), 'CompanionPage');
+const DoctorChecklistPage = lazyNamed(
+  () => import('./pages/DoctorChecklistPage'),
+  'DoctorChecklistPage',
+);
+
+const PageLoader: React.FC = () => {
+  const { locale } = useApp();
   return (
-    <AppProvider>
-      <Layout>
+    <div
+      role="status"
+      aria-live="polite"
+      className="card p-8 max-w-2xl mx-auto my-6 text-center space-y-3"
+    >
+      <div className="w-8 h-8 mx-auto rounded-full border-2 border-[var(--brand-primary)] border-t-transparent animate-spin" />
+      <p className="text-sm font-medium text-[var(--ink-700)]">
+        {locale === 'en' ? 'Loading section…' : 'Memuat halaman…'}
+      </p>
+    </div>
+  );
+};
+
+const AppRoutes: React.FC = () => {
+  const { locale } = useApp();
+  const navigate = useNavigate();
+
+  return (
+    <ErrorBoundary locale={locale} onReset={() => navigate('/home')}>
+      <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Welcome Screen (ID & EN) */}
           <Route path="/welcome" element={<WelcomePage />} />
@@ -35,6 +74,19 @@ export function App() {
           <Route path="/cek-awal" element={<AssessmentPage />} />
           <Route path="/assessment" element={<AssessmentPage />} />
           <Route path="/self-check" element={<AssessmentPage />} />
+
+          {/* Connected Care Pathway / Jalur Perawatan (ID & EN) */}
+          <Route path="/jalur-perawatan" element={<CarePathwayPage />} />
+          <Route path="/care-pathway" element={<CarePathwayPage />} />
+          <Route path="/referral" element={<CarePathwayPage />} />
+
+          {/* Private Longitudinal Progress / Progres Saya (ID & EN) */}
+          <Route path="/progres" element={<ProgressPage />} />
+          <Route path="/progress" element={<ProgressPage />} />
+
+          {/* AI Companion / Asisten AI (ID & EN) */}
+          <Route path="/asisten" element={<CompanionPage />} />
+          <Route path="/companion" element={<CompanionPage />} />
 
           {/* Facilities / Direktori Layanan (ID & EN) */}
           <Route path="/layanan" element={<FacilitiesPage />} />
@@ -91,8 +143,20 @@ export function App() {
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Layout>
-    </AppProvider>
+      </Suspense>
+    </ErrorBoundary>
+  );
+};
+
+export function App() {
+  return (
+    <ErrorBoundary>
+      <AppProvider>
+        <Layout>
+          <AppRoutes />
+        </Layout>
+      </AppProvider>
+    </ErrorBoundary>
   );
 }
 
